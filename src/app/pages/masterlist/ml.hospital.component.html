@@ -1,0 +1,218 @@
+<div class="flex flex-col md:flex-row gap-8">
+    <!-- HOSPITAL TABLE -->
+    <div class="md:w-5/6">
+        <div class="card">
+            <p-table #dt [value]="hospitals()" [rows]="10" [columns]="cols" [paginator]="true"
+                [globalFilterFields]="['hospitalID', 'hospitalName', 'address', 'sections']"
+                [tableStyle]="{ 'min-width': '75rem' }" [(selection)]="selectHospitals" [rowHover]="true"
+                dataKey="hospitalID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} hospitals"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]">
+
+                <ng-template pTemplate="caption">
+                    <div class="flex row justify-center">
+                        <h5 class="m-0">Manage Hospitals</h5>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex row">
+                            <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
+                                (onClick)="openNew()" />
+                            <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
+                                (onClick)="deleteSelected()" [disabled]="!selectHospitals || !selectHospitals.length" />
+                        </div>
+                        <p-iconfield>
+                            <p-inputicon styleClass="pi pi-search" />
+                            <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" class="mr-2"
+                                placeholder="Search..." />
+                            <button pButton label="Clear" class="p-button-outlined mr-2" icon="pi pi-filter-slash"
+                                (click)="clear(dt)"></button>
+                            <p-button label="Export" icon="pi pi-upload" severity="info" (onClick)="exportCSV()" />
+                        </p-iconfield>
+
+                    </div>
+                </ng-template>
+                <ng-template #header>
+                    <tr>
+                        <!-- <th style="width: 3rem">
+                            <p-tableHeaderCheckbox />
+                        </th> -->
+                        <th pSortableColumn="hospitalID" style="min-width: 5rem">ID
+
+                            <p-sortIcon field="hospitalID" />
+                        </th>
+                        <th pSortableColumn="hospitalName" style="min-width:10rem">
+                            Name
+                            <p-sortIcon field="hospitalName" />
+                        </th>
+                        <th pSortableColumn="address" style="min-width:20rem">
+                            Address
+                            <p-sortIcon field="address" />
+                        </th>
+                        <th pSortableColumn="sections" style="min-width:20rem">
+                            Sections
+                            <p-sortIcon field="sections" />
+                        </th>
+                        <th style="min-width: 5rem">Action</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-hospital>
+                    <tr>
+                        <!-- <td style="width: 3rem">
+                            <p-tableCheckbox [value]="hospital" />
+                        </td> -->
+                        <td style="min-width: 5rem">{{ hospital.hospitalID }}</td>
+                        <td style="min-width: 10rem">{{ hospital.hospitalName }}</td>
+                        <td style="min-width: 20rem">{{ hospital.address }}</td>
+                        <td style="min-width: 10rem">
+                            <ng-container *ngIf="hospital.sections?.length > 0; else noSections">
+                                <!-- <p-chip *ngFor="let section of hospital.sections" [label]="section.sectionName"
+                                    class="mr-2 mb-2 bg-red-500" [removable]="false"
+                                    [ngClass]="getChipClass(section.sectionName)">
+                                </p-chip> -->
+
+                                <div class="flex flex-wrap gap-2">
+                                    <p-tag *ngFor="let section of hospital.sections" [value]="section.sectionName"
+                                        icon="pi pi-warehouse" class="mr-2 mb-2 bg-red-500"
+                                        [severity]="getChipClass(section.sectionName)">
+                                        <span class="px-2 py-0.5 text-xs rounded-full bg-blue-600 text-white">
+                                            {{ section.allocation || 0 }}
+                                        </span>
+                                    </p-tag>
+                                </div>
+                                <!-- <div class="flex flex-wrap gap-3">
+                                    <p-chip *ngFor="let section of hospital.sections" [label]="section.sectionName" severity="primary"
+                                        icon="pi pi-warehouse" class="px-3 py-2 rounded-2xl shadow-sm bg-slate-100">
+                                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-600 text-white">
+                                            {{ section.allocation || 0 }}
+                                        </span>
+                                    </p-chip>
+                                </div> -->
+
+
+                            </ng-container>
+                            <ng-template #noSections>
+                                <span class="text-gray-500 italic">No sections assigned</span>
+                            </ng-template>
+                        </td>
+                        <td>
+                            <div class="flex gap-1">
+                                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                                    pTooltip="Edit" tooltipPosition="top" (click)="edit(hospital)" />
+                                <p-button icon="pi pi-trash" class="mr-2" severity="danger" [rounded]="true"
+                                    [outlined]="true" pTooltip="Delete" tooltipPosition="top"
+                                    (click)="delete(hospital)" />
+
+                                <button class="mr-2" severity="danger" pTooltip="Allocated" tooltipPosition="top"
+                                    (click)="openAllocatedSections(hospital)">
+                                    <p-overlaybadge [value]="hospital.totalAllocations || 0">
+                                        <i class="pi pi-users" style="font-size: 1.7rem"></i>
+                                    </p-overlaybadge>
+                                </button>
+
+                            </div>
+
+                            <!-- <p-button label="" icon="pi pi-users" severity="info" [rounded]="true" [outlined]="false"
+                                badge="100" pTooltip="Total Allocated" tooltipPosition="top"
+                                badgeSeverity="primary"></p-button> -->
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+    <!-- SUBMENU -->
+    <div class="md:w-1/6">
+        <ml-hospital-properties></ml-hospital-properties>
+    </div>
+
+</div>
+
+<p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="Hospital Details" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-6">
+            <form [formGroup]="form" ng-reflect-form="[object Object]">
+                <div>
+                    <label for="hospitalName" class="block font-bold mb-3">Hospital Name</label>
+                    <input type="text" pInputText id="hospitalName" name="hospitalName" formControlName="hospitalName"
+                        required autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['hospitalName']"> Name is
+                        required.</small>
+                </div>
+                <div>
+                    <label for="address" class="block font-bold mb-3">Hospital Address</label>
+                    <textarea id="address" pTextarea name="address" formControlName="address" required rows="3"
+                        cols="20" fluid></textarea>
+                    <small class="text-red-500" *ngIf="submitted && !form.value['address']"> Name is required.</small>
+                    <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
+                </div>
+
+                <!-- [(ngModel)]="selectedSections" -->
+                <div>
+                    <label for="sections" class="block font-bold mb-3">Sections</label>
+                    <p-multiSelect id="sections" name="sections" [options]="allSections" placeholder="Select Sections"
+                        optionLabel="sectionName" display="chip" [filter]="true" appendTo="body" [showToggleAll]="true"
+                        optionValue="sectionID" formControlName="sections" (onChange)="onSectionsChange()" fluid>
+
+                        <!-- Selected items template -->
+                        <ng-template pTemplate="selectedItems" let-selected>
+                            <div class="flex flex-wrap gap-2">
+                                <div *ngFor="let section of selected"
+                                    class="inline-flex items-center py-1 px-2 bg-primary text-primary-contrast rounded-border mr-2">
+                                    <div>{{ section.sectionName }}</div>
+                                </div>
+                            </div>
+                        </ng-template>
+
+                        <!-- Dropdown item template -->
+                        <ng-template pTemplate="item" let-section>
+                            <div class="flex items-center">
+                                <div>{{ section.sectionName }}</div>
+                            </div>
+                        </ng-template>
+                    </p-multiSelect>
+                    <small class="text-red-500" *ngIf="submitted && form.controls['sections'].errors?.['required']">
+                        At least one section must be selected.
+                    </small>
+                </div>
+            </form>
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="save()" />
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="assignDialog" [style]="{ width: '480px' }" header="Manage Allocations" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-6">
+            <p-table [value]="allocations" responsiveLayout="scroll">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>#</th>
+                        <th>Section Name</th>
+                        <th>Allocation</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-allocations let-i="rowIndex">
+                    <tr>
+                        <td>{{ allocations.sectionID }}</td>
+                        <td>{{ allocations.sectionName }}</td>
+                        <td>
+                            <input type="number" pInputText [(ngModel)]="allocations.allocation"
+                                placeholder="Enter number" style="width:100px" min="1" required min="1"
+                                (input)="onAllocationInput(allocations.allocation)" />
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="saveAllocated()" />
+    </ng-template>
+</p-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }" />

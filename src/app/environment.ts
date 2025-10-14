@@ -1,0 +1,13 @@
+export const Environment = {
+  production: true,
+  appName: "SAPA",
+  // apiUrl: "http:///localhost/sapa/api/", //Local Live
+  // apiUrl: "http:///172.16.22.88/sapa/api/", //Local Live
+
+
+  
+  // ------------------------------------------------------------------ //
+  apiUrl: "https://localhost:7097/api/", //For Development
+  // apiUrl: "https://davnorsystems.gov.ph/SAPA_API/api/", //Live
+  // Add other global settings here
+};

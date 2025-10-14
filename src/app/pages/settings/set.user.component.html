@@ -1,0 +1,160 @@
+<div class="flex flex-col md:flex-row gap-8">
+    <!-- SECTION TABLE -->
+    <div class="md:w-5/6">
+        <div class="card">
+            <p-table #dt [value]="users()" [rows]="10" [columns]="cols" [paginator]="true"
+                [globalFilterFields]="['userID', 'email']" [tableStyle]="{ 'min-width': '75rem'}"
+                [(selection)]="selectUsers" [rowHover]="true" dataKey="userID"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true"
+                scrollHeight="flex">
+
+                <ng-template pTemplate="caption">
+                    <div class="flex row justify-center">
+                        <h5 class="m-0">Manage Users</h5>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex row">
+                            <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2"
+                                (onClick)="openNew()" />
+                            <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
+                                (onClick)="deleteSelected()" [disabled]="!selectUsers || !selectUsers.length" /> -->
+                        </div>
+                        <p-iconfield>
+                            <p-inputicon styleClass="pi pi-search" />
+                            <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" class="mr-2"
+                                placeholder="Search..." />
+                            <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+                        </p-iconfield>
+
+                    </div>
+                </ng-template>
+                <ng-template #header>
+                    <tr>
+                        <th style="width: 3rem">
+                            <p-tableHeaderCheckbox />
+                        </th>
+                        <th pSortableColumn="userID" style="min-width: 3rem">User ID
+                            <p-sortIcon field="userID" />
+                        </th>
+                        <th pSortableColumn="fullname" style="min-width:10rem">
+                            Fullname
+                            <p-sortIcon field="fullname" />
+                        </th>
+                        <th pSortableColumn="email" style="min-width:10rem">
+                            Email
+                            <p-sortIcon field="email" />
+                        </th>
+                        <th pSortableColumn="rolename" style="min-width:10rem">
+                            Role
+                            <p-sortIcon field="role" />
+                        </th>
+                        <th pSortableColumn="status" style="min-width:10rem">
+                            Status
+                            <p-sortIcon field="status" />
+                        </th>
+                        <th style="min-width: 5rem">Action</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-user>
+                    <tr>
+                        <td style="width: 3rem">
+                            <p-tableCheckbox [value]="user" />
+                        </td>
+                        <td style="min-width: 3rem">{{ user.userID }}</td>
+                        <td style="min-width: 10rem">{{ user.fullname }}</td>
+                        <td style="min-width: 10rem">{{ user.email }}</td>
+                        <td style="min-width: 10rem">{{ user.rolename }}</td>
+                        <td style="min-width: 10rem">
+                            <p-tag [value]="getStatus(user.status,'value')" [severity]="getStatus(user.status,'severirty')"
+                                styleClass="dark:bg-surface-900!" />
+                            @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
+                            <button class="ml-2" (click)="resendVerification(user)" pTooltip=" Resend Verification?" 
+                                tooltipPosition="top"> <i class="fa-solid fa-paper-plane text-blue-500 hover:animate-bounce transition-colors" ></i>
+                            </button>
+                            }@else if (getStatus(user.status,'value').toLowerCase() == 'pending') {
+                            <button class="ml-2" (click)="approve(user)" pTooltip=" Approve Account?" 
+                                tooltipPosition="top"> <i class="fa-solid fa-thumbs-up text-blue-500 hover:animate-bounce transition-colors" ></i>
+                            </button>
+                            }
+                        </td>
+                        <td>
+                            <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                                (click)="edit(user)" />
+                            <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                                (click)="delete(user)" />
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+    <!-- SUBMENU -->
+    <div class="md:w-1/6">
+        <set-users-properties></set-users-properties>
+    </div>
+
+</div>
+
+<p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="User Details" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-6">
+            <form [formGroup]="form" ng-reflect-form="[object Object]">
+                <div>
+
+                    <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
+
+                    <label for="lastname" class="block font-bold mb-3">Lastname</label>
+                    <input type="text" pInputText id="lastname" name="lastname" formControlName="lastname" required
+                        autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['lastname']"> Lastname is
+                        required.</small>
+                    <label for="firstname" class="block font-bold mb-3">Firstname</label>
+                    <input type="text" pInputText id="firstname" name="firstname" formControlName="firstname" required
+                        autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['firstname']"> Firstname is
+                        required.</small>
+                    <label for="middlename" class="block font-bold mb-3">Middlename</label>
+                    <input type="text" pInputText id="middlename" name="middlename" formControlName="middlename"
+                        required autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['middlename']"> Middlename is
+                        required.</small>
+
+                    <label for="email" class="block font-bold mb-3">Email</label>
+                    <input type="text" pInputText id="email" name="email" formControlName="email" required autofocus
+                        fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['email']"> Email is
+                        required.</small>
+
+                    <label for="username" class="block font-bold mb-3">Username</label>
+                    <input type="text" pInputText id="username" name="username" formControlName="username"
+                        (keyup)="updateUsername()" required autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['username']"> Username is
+                        required.</small>
+
+
+                    <label for="roleId" class="block font-bold mb-3">Role</label>
+                    <p-select inputId="roleId" [options]="roles" formControlName="roleId" optionLabel="roleName"
+                        optionValue="roleId" placeholder="Select a Role" [appendTo]="'body'" fluid>
+                    </p-select>
+                    <small class="text-red-500" *ngIf="submitted && !form.value['roleId']"> Role is
+                        required.</small>
+
+                </div>
+            </form>
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="save()" />
+    </ng-template>
+</p-dialog>
+
+<p-confirmDialog 
+  [style]="{ width: '450px' }"
+  acceptIcon="pi pi-check text-white" 
+  rejectIcon="pi pi-times text-white"
+  acceptButtonStyleClass="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg transition "
+  rejectButtonStyleClass="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition">
+</p-confirmDialog>
