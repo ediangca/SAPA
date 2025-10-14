@@ -1,0 +1,47 @@
+<div class="card h-200">
+
+    <div class="h-1/2">
+        <h5 class="m-0">Sub Component</h5>
+
+        <ul class="layout-menu">
+            <ng-container *ngFor="let item of subcomponent; let i = index">
+                <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
+                <li *ngIf="item.separator" class="menu-separator"></li>
+            </ng-container>
+        </ul>
+    </div>
+
+    <div class="h-1/2">
+
+        <h5 class="m-0">Properties</h5>
+
+        <ul class="layout-menu">
+            <ng-container *ngFor="let item of properties; let i = index">
+                <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
+                <li *ngIf="item.separator" class="menu-separator"></li>
+            </ng-container>
+        </ul>
+    </div>
+
+
+</div>
+
+<p-dialog [(visible)]="assignDialog" header="Print Dialog" [modal]="true" [style]="{width: '70vw',}"
+    [closable]="true" [resizable]="true" [draggable]="true"
+    [contentStyle]="{'height':'calc(100% - 60px)', 'overflow':'auto'}">
+
+    <ng-template #content>
+        <div class="flex flex-col lg:flex-row gap-6 h-full h-full divide-y lg:divide-y-0 lg:divide-x divide-gray-300">
+
+
+        </div>
+    </ng-template>
+
+    <!-- Footer -->
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-3 w-full">
+            <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Print" icon="pi pi-check" (click)="save()" />
+        </div>
+    </ng-template>
+</p-dialog>

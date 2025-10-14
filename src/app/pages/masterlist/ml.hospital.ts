@@ -32,6 +32,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import * as FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import { Tooltip } from "primeng/tooltip";
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
 
 
@@ -60,6 +61,7 @@ interface ExportColumn {
         RatingModule,
         InputTextModule,
         TextareaModule,
+        ToggleSwitchModule,
         SelectModule,
         RadioButtonModule,
         InputNumberModule,
@@ -102,7 +104,7 @@ export class Hospital implements OnInit {
 
 
     allocations: any[] = [];
-    allocated!: any;
+    allocation!: any;
     selectAllocated!: any[] | null;
 
     form!: FormGroup;
@@ -347,20 +349,20 @@ export class Hospital implements OnInit {
         const lower = sectionName.toLowerCase();
 
         if (lower.includes('emergency')) return 'danger';
-        if (lower.includes('opd') || lower.includes('ipd')) return 'primary';
+        if (lower.includes('station') || lower.includes('ward') || lower.includes('opd') || lower.includes('ipd')) return 'primary';
         if (lower.includes('icu') || lower.includes('or')) return 'warn';
         if (lower.includes('pediatrics')) return 'info';
         if (lower.includes('radiology')) return 'warning';
 
-        return 'secondary'; // default
+        return 'secondary'; // default  
     }
 
-    getAllocationsByHospitalID(id: string): any { // get sections by hospitalID
-        this.api.getAllocationsByHospitalID(id).subscribe({
-            next: (sections) => { this.allSections = sections; return this.allSections.filter((sec) => sec.hospitalID === id).length; },
-            error: (err) => { this.allSections = []; this.logger.printLogs('e', 'Failed to fetch allocations', err) }
-        });
-    }
+    // getAllocationsByHospitalID(id: string): any { // get sections by hospitalID
+    //     this.api.getAllocationsByHospitalID(id).subscribe({
+    //         next: (sections) => { this.allSections = sections; return this.allSections.filter((sec) => sec.hospitalID === id).length; },
+    //         error: (err) => { this.allSections = []; this.logger.printLogs('e', 'Failed to fetch allocations', err) }
+    //     });
+    // }
 
     onSectionsChange() {
         const selectedSections = this.form.value.sections;
@@ -469,6 +471,12 @@ export class Hospital implements OnInit {
 
     }
 
+    updateStatus(allocation: any) {
+        this.allocation = allocation;
+    }
+
+
+
 
     delete(hospital: any) {
         this.confirmationService.confirm({
@@ -532,6 +540,7 @@ export class Hospital implements OnInit {
             hospitalID: this.hospital.hospitalID,
             sectionId: s.sectionID,
             allocation: s.allocation || 1, // default to 1 if not set
+            status: s.status || true, // default to 1 if not set
             userID: this.tokenPayload.nameid || 1, // default to 1 if not set
         }));
 
@@ -553,6 +562,15 @@ export class Hospital implements OnInit {
         // TODO: Call service to save
         this.assignDialog = false;
 
+    }
+
+    onChangeStatus(selectedAllocation: any) {
+        this.logger.printLogs('i', `On Change allocation status from ${!selectedAllocation.status} to `,  selectedAllocation.status);
+        this.allocations.map((a:any) => {
+            if(a.allocationID == selectedAllocation.allocationID) {
+                a.status = selectedAllocation.status
+            }
+        });
     }
 
 
