@@ -28,6 +28,7 @@ import { UsersProperties } from "./set.user.sidebar";
 import { ToastrService } from 'ngx-toastr';
 import { NgToastService } from 'ng-angular-popup';
 import { Tooltip } from "primeng/tooltip";
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 interface Column {
     field: string;
@@ -54,6 +55,7 @@ interface ExportColumn {
         RatingModule,
         InputTextModule,
         TextareaModule,
+        ToggleSwitchModule,
         SelectModule,
         RadioButtonModule,
         InputNumberModule,
@@ -95,6 +97,10 @@ export class Users implements OnInit {
 
     roles: any | [];
 
+    emailPattern: string = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
+
+    autoUsername: boolean = false;
+
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
@@ -112,12 +118,9 @@ export class Users implements OnInit {
             firstname: ['', Validators.required],
             middlename: ['', Validators.required],
             roleId: ['', Validators.required],
-            email: ['', Validators.required]
+            email: ['', Validators.required],
+            autoUsername: [false]
         });
-    }
-
-    exportCSV() {
-        this.dt.exportCSV();
     }
 
     ngOnInit() {
@@ -131,6 +134,7 @@ export class Users implements OnInit {
                 ]
             }
         ];
+
 
     }
 
@@ -148,12 +152,38 @@ export class Users implements OnInit {
         });
 
         this.cols = [
-            { field: 'userID', header: 'ID', customExportHeader: 'User ID' },
-            { field: 'email', header: 'Name' },
+            { field: 'UserID', header: 'ID', customExportHeader: 'User ID' },
+            { field: 'fullname', header: 'Fullname' },
+            { field: 'email', header: 'Email' },
+            { field: 'role', header: 'Role' },
+            { field: 'status', header: 'Status' },
         ];
-
-        this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
+        
     }
+
+    exportCSV() {
+        const users = this.users();
+
+        if (!users || users.length === 0) {
+            this.logger.printLogs('i', 'No users to export', null)
+            return;
+        }
+        const csv = [
+            ['User ID', 'FullName', 'Email', 'User Role', 'Status'],
+            ...users.map(u => [u.userID, u.fullname, u.email, u.rolename, this.getStatus(u.status,'value')])
+        ]
+            .map(row => row.map(v => `"${v}"`).join(','))
+            .join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', `users_export_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
 
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
@@ -174,11 +204,46 @@ export class Users implements OnInit {
                 return (type == 'value' ? 'Suspend' : 'danger');
         }
     }
+    toggleAutoUsername() {
+        this.logger.printLogs('i', 'Auto Username toggled', this.form.get('autoUsername')?.value);
+        if (this.form.get('autoUsername')?.value) {
+            const email = this.form.get('email')?.value || '';
+            const username = email.split('@')[0];
+            this.form.get('username')?.setValue(username, { emitEvent: false });
+        } else {
+            this.form.get('username')?.setValue('', { emitEvent: false });
+        }
+    }
 
-    updateUsername() {
-        const email = this.form.get('email')?.value || '';
-        const username = email.split('@')[0];
-        this.form.get('username')?.setValue(username, { emitEvent: false });
+    // updateUsername() {
+    //     if (this.form.get('autoUsername')?.value) {
+    //         const email = this.form.get('email')?.value || '';
+    //         const username = email.split('@')[0];
+    //         this.form.get('username')?.setValue(username, { emitEvent: false });
+    //     }
+    // }
+
+    /**
+     * Filter if there are spaces in username field
+     */
+    filterSpace() {
+        const usernameControl = this.form.get('username');
+        if (usernameControl) {
+            const currentValue = usernameControl.value as string;
+            const filteredValue = currentValue.replace(/\s+/g, ''); // Remove all spaces
+            if (currentValue !== filteredValue) {
+                usernameControl.setValue(filteredValue, { emitEvent: false });
+            }
+        }
+    }
+    isEmailInvalid(): boolean {
+        const emailControl = this.form.get('email');
+        if (emailControl) {
+            const email = emailControl.value;
+            const emailRegex = new RegExp(this.emailPattern);
+            return !emailRegex.test(email);
+        }
+        return false;
     }
 
     openNew() {
@@ -306,6 +371,15 @@ export class Users implements OnInit {
             return;
         }
 
+
+        /**
+         * Validate valid email format
+         */
+        if (this.isEmailInvalid()) {
+            this.toast.warning("Please enter a valid email address!", "Invalid Email!", 2000);
+            return;
+        }
+
         this.itemDialog = false;
 
         if (this.user?.userID) {
@@ -344,6 +418,7 @@ export class Users implements OnInit {
             });
         }
     }
+
     delete(user: any) {
         this.confirmationService.confirm({
             message: `Are you sure you want to delete ${user.email}?`,

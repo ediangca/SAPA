@@ -24,16 +24,16 @@
                             <p-inputicon styleClass="pi pi-search" />
                             <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" class="mr-2"
                                 placeholder="Search..." />
-                            <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
+                            <p-button label="Export" icon="pi pi-upload" severity="info" (onClick)="exportCSV()" />
                         </p-iconfield>
 
                     </div>
                 </ng-template>
                 <ng-template #header>
                     <tr>
-                        <th style="width: 3rem">
+                        <!-- <th style="width: 3rem">
                             <p-tableHeaderCheckbox />
-                        </th>
+                        </th> -->
                         <th pSortableColumn="userID" style="min-width: 3rem">User ID
                             <p-sortIcon field="userID" />
                         </th>
@@ -58,23 +58,25 @@
                 </ng-template>
                 <ng-template #body let-user>
                     <tr>
-                        <td style="width: 3rem">
+                        <!-- <td style="width: 3rem">
                             <p-tableCheckbox [value]="user" />
-                        </td>
+                        </td> -->
                         <td style="min-width: 3rem">{{ user.userID }}</td>
                         <td style="min-width: 10rem">{{ user.fullname }}</td>
                         <td style="min-width: 10rem">{{ user.email }}</td>
                         <td style="min-width: 10rem">{{ user.rolename }}</td>
                         <td style="min-width: 10rem">
-                            <p-tag [value]="getStatus(user.status,'value')" [severity]="getStatus(user.status,'severirty')"
-                                styleClass="dark:bg-surface-900!" />
+                            <p-tag [value]="getStatus(user.status,'value')"
+                                [severity]="getStatus(user.status,'severirty')" styleClass="dark:bg-surface-900!" />
                             @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
-                            <button class="ml-2" (click)="resendVerification(user)" pTooltip=" Resend Verification?" 
-                                tooltipPosition="top"> <i class="fa-solid fa-paper-plane text-blue-500 hover:animate-bounce transition-colors" ></i>
+                            <button class="ml-2" (click)="resendVerification(user)" pTooltip=" Resend Verification?"
+                                tooltipPosition="top"> <i
+                                    class="fa-solid fa-paper-plane text-blue-500 hover:animate-bounce transition-colors"></i>
                             </button>
                             }@else if (getStatus(user.status,'value').toLowerCase() == 'pending') {
-                            <button class="ml-2" (click)="approve(user)" pTooltip=" Approve Account?" 
-                                tooltipPosition="top"> <i class="fa-solid fa-thumbs-up text-blue-500 hover:animate-bounce transition-colors" ></i>
+                            <button class="ml-2" (click)="approve(user)" pTooltip=" Approve Account?"
+                                tooltipPosition="top"> <i
+                                    class="fa-solid fa-thumbs-up text-blue-500 hover:animate-bounce transition-colors"></i>
                             </button>
                             }
                         </td>
@@ -123,12 +125,15 @@
                     <label for="email" class="block font-bold mb-3">Email</label>
                     <input type="text" pInputText id="email" name="email" formControlName="email" required autofocus
                         fluid />
-                    <small class="text-red-500" *ngIf="submitted && !form.value['email']"> Email is
+                    <small class="text-red-500" *ngIf="submitted && (!form.value['email'] || isEmailInvalid())"> Valid Email is
                         required.</small>
+                    <div>
+                        <p-toggleswitch formControlName="autoUsername" (onChange)="toggleAutoUsername()" />
+                    </div>
 
                     <label for="username" class="block font-bold mb-3">Username</label>
                     <input type="text" pInputText id="username" name="username" formControlName="username"
-                        (keyup)="updateUsername()" required autofocus fluid />
+                        (keyup)="filterSpace()" required autofocus fluid />
                     <small class="text-red-500" *ngIf="submitted && !form.value['username']"> Username is
                         required.</small>
 
@@ -151,10 +156,7 @@
     </ng-template>
 </p-dialog>
 
-<p-confirmDialog 
-  [style]="{ width: '450px' }"
-  acceptIcon="pi pi-check text-white" 
-  rejectIcon="pi pi-times text-white"
-  acceptButtonStyleClass="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg transition "
-  rejectButtonStyleClass="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition">
+<p-confirmDialog [style]="{ width: '450px' }" acceptIcon="pi pi-check text-white" rejectIcon="pi pi-times text-white"
+    acceptButtonStyleClass="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg transition "
+    rejectButtonStyleClass="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition">
 </p-confirmDialog>

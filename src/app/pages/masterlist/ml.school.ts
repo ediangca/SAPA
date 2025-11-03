@@ -1,11 +1,10 @@
 import { Component, OnInit, signal, ViewChild } from '@angular/core';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
-import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { RatingModule } from 'primeng/rating';
 import { InputTextModule } from 'primeng/inputtext';
@@ -17,8 +16,19 @@ import { DialogModule } from 'primeng/dialog';
 import { TagModule } from 'primeng/tag';
 import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
+import { PanelMenuModule } from 'primeng/panelmenu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { Product, ProductService } from '../service/product.service';
+import { AppMenuitem } from '@/layout/component/app.menuitem';
+import { ApiService } from '@/services/api.service';
+import { LogsService } from '@/services/logs.service';
+import ValidateForm from '@/helper/validator/validateForm';
+import Swal from 'sweetalert2';
+import { StoreService } from '@/services/store.service';
+import { ToastModule } from 'primeng/toast';
+import { HospitalProperties } from "./ml.hospital.sidebar";
+import { NgToastService } from 'ng-angular-popup';
+import { RouterModule } from '@angular/router';
 
 interface Column {
     field: string;
@@ -52,23 +62,26 @@ interface ExportColumn {
         TagModule,
         InputIconModule,
         IconFieldModule,
-        ConfirmDialogModule
+        ConfirmDialogModule,
+        PanelMenuModule,
+        ReactiveFormsModule,
+        FormsModule,
+        RouterModule,
     ],
     templateUrl: './ml.school.component.html',
     providers: [MessageService, ProductService, ConfirmationService]
 })
 export class School implements OnInit {
-    productDialog: boolean = false;
 
-    products = signal<Product[]>([]);
+    itemDialog: boolean = false;
 
-    product!: Product;
+    schools = signal<any[]>([]);
+    school!: any;
+    selectSchools!: any[] | null;
 
-    selectedProducts!: Product[] | null;
+    form!: FormGroup;
 
     submitted: boolean = false;
-
-    statuses!: any[];
 
     @ViewChild('dt') dt!: Table;
 
@@ -76,40 +89,57 @@ export class School implements OnInit {
 
     cols!: Column[];
 
-    constructor(
+    tokenPayload: any | null;
+
+    constructor(private fb: FormBuilder,
         private productService: ProductService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
-    ) {}
+        private confirmationService: ConfirmationService,
+        private store: StoreService,
+        private api: ApiService,
+        private logger: LogsService,
+        private vf: ValidateForm,
+        private toast: NgToastService
+
+    ) {
+
+        this.form = this.fb.group({
+            schoolID: [null],
+            schoolName: ['', Validators.required],
+            address: ['', Validators.required],
+            userID: ['', Validators.required]
+        });
+
+    }
 
     exportCSV() {
         this.dt.exportCSV();
     }
 
     ngOnInit() {
-        this.loadDemoData();
+        this.loadData();
     }
 
-    loadDemoData() {
-        this.productService.getProducts().then((data) => {
-            this.products.set(data);
-        });
+    loadData() {
 
-        this.statuses = [
-            { label: 'INSTOCK', value: 'instock' },
-            { label: 'LOWSTOCK', value: 'lowstock' },
-            { label: 'OUTOFSTOCK', value: 'outofstock' }
-        ];
+        this.store.getUserPayload()
+            .subscribe(res => {
+                this.tokenPayload = res;
+                this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
+            });
+        this.refreshTable();
 
         this.cols = [
-            { field: 'code', header: 'Code', customExportHeader: 'Product Code' },
-            { field: 'name', header: 'Name' },
-            { field: 'image', header: 'Image' },
-            { field: 'price', header: 'Price' },
-            { field: 'category', header: 'Category' }
+            { field: 'SchoolID', header: 'ID', customExportHeader: 'School ID' },
+            { field: 'schoolName', header: 'Name' },
+            { field: 'address', header: 'Address' },
         ];
 
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
+    }
+    
+    clear(table: Table,) {
+        table.clear();
     }
 
     onGlobalFilter(table: Table, event: Event) {
@@ -117,24 +147,35 @@ export class School implements OnInit {
     }
 
     openNew() {
-        this.product = {};
+        this.form.reset({
+            schoolName: '',
+            userID: this.tokenPayload.nameid
+        });
+        this.school = {};
         this.submitted = false;
-        this.productDialog = true;
+        this.itemDialog = true;
     }
 
-    editProduct(product: Product) {
-        this.product = { ...product };
-        this.productDialog = true;
+    openNewDialog() {
+        this.form.reset();
+        this.itemDialog = true;
     }
 
-    deleteSelectedProducts() {
+    edit(school: any) {
+        this.school = school;
+        this.logger.printLogs('e', 'Edit schools', school)
+        this.form.patchValue(school);
+        this.itemDialog = true;
+    }
+
+    deleteSelected() {
         this.confirmationService.confirm({
             message: 'Are you sure you want to delete the selected products?',
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.products.set(this.products().filter((val) => !this.selectedProducts?.includes(val)));
-                this.selectedProducts = null;
+                this.schools.set(this.schools().filter((val) => !this.selectSchools?.includes(val)));
+                this.selectSchools = null;
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Successful',
@@ -146,89 +187,123 @@ export class School implements OnInit {
     }
 
     hideDialog() {
-        this.productDialog = false;
+        this.itemDialog = false;
         this.submitted = false;
     }
 
-    deleteProduct(product: Product) {
+    refreshTable() {
+        this.api.getSchools().subscribe({
+            next: (schools) => this.schools.set(schools),
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
+        });
+    }
+
+    save() {
+        this.submitted = true;
+
+        if (!this.form.valid) {
+            // Swal.fire('Warning!', 'Please complete all required fields before proceeding!', 'warning');
+            this.toast.warning("Please complete all required fields before proceeding!", "Complete Fields!", 3000);
+            this.vf.validateFormFields(this.form);
+            return;
+        }
+
+        this.itemDialog = false;
+
+        if (this.school?.schoolID) {
+            // ✅ UPDATE school
+            let id = this.school.schoolID
+            this.school = this.form.value;
+            this.logger.printLogs('i', 'School details', this.school);
+            this.api.updateSchool(id, this.school).subscribe({
+                next: (res) => {
+                    this.logger.printLogs('i', 'School updated successfully', res);
+                    this.refreshTable(); // reload list
+                    this.closeDialog();
+                },
+                error: (err) => {
+                    this.showErrorAlert('Updating Failed', err, true);
+                },
+                complete: () => {
+                    this.submitted = false;
+                }
+            });
+        } else {
+            this.school = this.form.value;
+            // ✅ CREATE school
+            this.api.createSchool(this.school).subscribe({
+                next: (res) => {
+                    this.logger.printLogs('i', 'School created successfully', res);
+                    this.refreshTable(); // reload list
+                    this.closeDialog();
+                },
+                error: (err) => {
+                    this.showErrorAlert('Saving Failed', err, true);
+                },
+                complete: () => {
+                    this.submitted = false;
+                }
+            });
+        }
+    }
+    delete(school: any) {
         this.confirmationService.confirm({
-            message: 'Are you sure you want to delete ' + product.name + '?',
+            message: `Are you sure you want to delete ${school.schoolName}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.products.set(this.products().filter((val) => val.id !== product.id));
-                this.product = {};
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Product Deleted',
-                    life: 3000
+                this.logger.printLogs('i', `Deleting School ${school.schoolName}`, school);
+
+                this.api.deleteSchool(school.schoolID).subscribe({
+                    next: (res) => {
+                        this.logger.printLogs('i', 'School deleted successfully', res);
+                        this.refreshTable();
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Successful',
+                            detail: 'School Deleted',
+                            life: 3000
+                        });
+                    },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed to delete school', err);
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to delete school',
+                            life: 3000
+                        });
+                    }
                 });
             }
         });
     }
 
-    findIndexById(id: string): number {
-        let index = -1;
-        for (let i = 0; i < this.products().length; i++) {
-            if (this.products()[i].id === id) {
-                index = i;
-                break;
+
+    private showErrorAlert(title: string, message: string, dialogOpen: boolean) {
+        this.logger.printLogs('e', 'Failed to create school', message);
+        Swal.fire({
+            title: 'Saving Failed',
+            text: message,
+            icon: 'warning',
+            showCancelButton: false,
+            confirmButtonText: 'OK',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.itemDialog = dialogOpen;
             }
-        }
-
-        return index;
+        });
     }
 
-    createId(): string {
-        let id = '';
-        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (var i = 0; i < 5; i++) {
-            id += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return id;
+    // helper to reset and close
+    private closeDialog() {
+        this.itemDialog = false;
+        this.form.reset({
+            schoolName: '',
+            userID: this.tokenPayload.nameid
+        });
+        this.school = {}; // reset form
     }
 
-    getSeverity(status: string) {
-        switch (status) {
-            case 'INSTOCK':
-                return 'success';
-            case 'LOWSTOCK':
-                return 'warn';
-            case 'OUTOFSTOCK':
-                return 'danger';
-            default:
-                return 'info';
-        }
-    }
 
-    saveProduct() {
-        this.submitted = true;
-        let _products = this.products();
-        if (this.product.name?.trim()) {
-            if (this.product.id) {
-                _products[this.findIndexById(this.product.id)] = this.product;
-                this.products.set([..._products]);
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Product Updated',
-                    life: 3000
-                });
-            } else {
-                this.product.id = this.createId();
-                this.product.image = 'product-placeholder.svg';
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Product Created',
-                    life: 3000
-                });
-                this.products.set([..._products, this.product]);
-            }
-
-            this.productDialog = false;
-            this.product = {};
-        }
-    }
 }

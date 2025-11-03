@@ -148,7 +148,15 @@ export class Hospital implements OnInit {
     //     this.dt.exportCSV();
     // }
     exportCSV() {
-        const exportData = this.hospitals().map((h: any) => ({
+
+        const hospitals = this.hospitals();
+
+        if (!hospitals || hospitals.length === 0) {
+            this.logger.printLogs('i', 'No hospitals to export', null)
+            return;
+        }
+
+        const exportData = hospitals.map((h: any) => ({
             hospitalID: h.hospitalID,
             hospitalName: h.hospitalName,
             address: h.address,
@@ -315,6 +323,12 @@ export class Hospital implements OnInit {
                 hospitals.forEach(hospital => {
                     this.api.getAllocationsByHospitalID(hospital.hospitalID).subscribe({
                         next: (sections) => {
+                            // ✅ Sort sections alphabetically by section name or numerically by ID/order
+                            sections.sort((a: any, b: any) => {
+                                // Change 'sectionName' or 'order' to whatever field defines the order
+                                return a.sectionName.localeCompare(b.sectionName);
+                                // or for numeric order: return a.order - b.order;
+                            });
                             hospital.sections = sections; // Assign sections properly
                             this.logger.printLogs('i', `Loaded sections for ${hospital.hospitalID}`, sections);
                             // Sum all allocations across sections
@@ -345,8 +359,10 @@ export class Hospital implements OnInit {
     }
     chipSeverities = ['primary', 'success', 'info', 'warn', 'danger'];
 
-    getChipClass(sectionName: string): string {
-        const lower = sectionName.toLowerCase();
+    getChipClass(section: any): string {
+        const lower = section.sectionName.toLowerCase();
+
+        if (section.status === false) return 'secondary';
 
         if (lower.includes('emergency')) return 'danger';
         if (lower.includes('station') || lower.includes('ward') || lower.includes('opd') || lower.includes('ipd')) return 'primary';
@@ -505,7 +521,7 @@ export class Hospital implements OnInit {
     private showAlert(title: string, message: string, dialogOpen: boolean, icon: 'error' | 'warning' | 'success' = 'success') {
         this.logger.printLogs('e', 'Failed to create hospital', message);
 
-        Swal.fire('Connectivity Error!', "Failed to establish connection!<br>Please contact the system administrator.", 'error');
+        // Swal.fire('Connectivity Error!', "Failed to establish connection!<br>Please contact the system administrator.", 'error');
 
         Swal.fire({
             title: title,
@@ -537,14 +553,13 @@ export class Hospital implements OnInit {
         }
 
         const allocations = this.allocations.map(s => ({
-            hospitalID: this.hospital.hospitalID,
-            sectionId: s.sectionID,
-            allocation: s.allocation || 1, // default to 1 if not set
-            status: s.status || true, // default to 1 if not set
-            userID: this.tokenPayload.nameid || 1, // default to 1 if not set
+            sectionID: s.sectionID,
+            allocation: s.allocation, // || 1 default to 1 if not set
+            status: s.status, // || false default to 1 if not set
+            userID: this.tokenPayload.nameid, //  || 'USR0001' default to 1 if not set
         }));
 
-        this.logger.printLogs('i', 'Saving allocated sections for hospital', this.allocations);
+        this.logger.printLogs('i', `Saving allocated sections for hospital ${this.hospital.hospitalID} ==> `, this.allocations);
 
         this.api.updateAllocationsBulk(this.hospital.hospitalID, allocations).subscribe({
             next: (res) => {
@@ -565,9 +580,9 @@ export class Hospital implements OnInit {
     }
 
     onChangeStatus(selectedAllocation: any) {
-        this.logger.printLogs('i', `On Change allocation status from ${!selectedAllocation.status} to `,  selectedAllocation.status);
-        this.allocations.map((a:any) => {
-            if(a.allocationID == selectedAllocation.allocationID) {
+        this.logger.printLogs('i', `On Change allocation status from ${!selectedAllocation.status} to `, selectedAllocation.status);
+        this.allocations.map((a: any) => {
+            if (a.allocationID == selectedAllocation.allocationID) {
                 a.status = selectedAllocation.status
             }
         });
@@ -587,4 +602,3 @@ export class Hospital implements OnInit {
 
 
 }
-

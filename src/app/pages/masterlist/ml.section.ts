@@ -115,7 +115,26 @@ export class Section implements OnInit {
     }
 
     exportCSV() {
-        this.dt.exportCSV();
+        const sections = this.sections();
+
+        if (!sections || sections.length === 0) {
+            this.logger.printLogs('i', 'No sections to export', null)
+            return;
+        }
+        const csv = [
+            ['Section ID', 'Section Name'],
+            ...sections.map(u => [u.sectionID, u.sectionName])
+        ]
+            .map(row => row.map(v => `"${v}"`).join(','))
+            .join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', `section_export_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     ngOnInit() {
@@ -148,7 +167,7 @@ export class Section implements OnInit {
 
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
     }
-    
+
     clear(table: Table,) {
         table.clear();
     }

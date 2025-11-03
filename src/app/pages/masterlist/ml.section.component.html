@@ -19,6 +19,7 @@
 
                         <h5 class="m-0">Manage Sections</h5>
                     </div>
+
                     <div class="flex items-center justify-between">
                         <div class="flex row">
                             <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2"
@@ -32,12 +33,13 @@
                                 placeholder="Search..." />
                             <button pButton label="Clear" class="p-button-outlined mr-2" icon="pi pi-filter-slash"
                                 (click)="clear(dt)"></button>
-                            <button pButton label="Export" class="p-button-outlined" icon="pi pi-upload" severity="info"
-                                (onClick)="exportCSV()"></button>
+                            
+                            <p-button label="Export" icon="pi pi-upload" severity="info" (onClick)="exportCSV()" />
                         </p-iconfield>
 
                     </div>
                 </ng-template>
+                
                 <ng-template #header>
                     <tr>
                         <th style="width: 3rem">

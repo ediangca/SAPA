@@ -16,8 +16,8 @@
                         <div class="flex row">
                             <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
                                 (onClick)="openNew()" />
-                            <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
-                                (onClick)="deleteSelected()" [disabled]="!selectHospitals || !selectHospitals.length" />
+                            <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
+                                (onClick)="deleteSelected()" [disabled]="!selectHospitals || !selectHospitals.length" /> -->
                         </div>
                         <p-iconfield>
                             <p-inputicon styleClass="pi pi-search" />
@@ -68,16 +68,24 @@
                                     class="mr-2 mb-2 bg-red-500" [removable]="false"
                                     [ngClass]="getChipClass(section.sectionName)">
                                 </p-chip> -->
-
                                 <div class="flex flex-wrap gap-2">
-                                    <p-tag *ngFor="let section of hospital.sections" [value]="section.sectionName"
-                                        icon="pi pi-warehouse" class="mr-2 mb-2 bg-red-500"
-                                        [severity]="getChipClass(section.sectionName)">
-                                        <i class="pi pi-{{ section.status==true? 'check': 'times' }}"></i>
-                                        <span class="px-2 py-0.5 text-xs rounded-full bg-blue-600 text-white">
-                                            {{ section.allocation || 0 }}
-                                        </span>
-                                    </p-tag>
+                                    <ng-container *ngFor="let section of hospital.sections">
+                                        @if (section.status) {
+                                        <!-- icon="pi pi-warehouse" -->
+                                        <p-tag [value]="section.sectionName"
+                                            class="mr-2 mb-2 px-3 py-2 rounded-2xl shadow-lg bg-slate-100"
+                                            [severity]="getChipClass(section)"
+                                            pTooltip="{{ section.status? 'Active': 'Inactive' }}" tooltipPosition="top">
+
+                                            <!-- <i
+                                                class="pi pi-{{ section.status==true? 'check': 'times text-black' }} "></i> -->
+                                            <span
+                                                class="px-2 py-0.5 text-xs rounded-full bg-{{section.status? 'blue-600 text-white': 'black-600 text-black'}} ">
+                                                {{ section.allocation || 0 }}
+                                            </span>
+                                        </p-tag>
+                                        }
+                                    </ng-container>
                                 </div>
                                 <!-- <div class="flex flex-wrap gap-3">
                                     <p-chip *ngFor="let section of hospital.sections" [label]="section.sectionName" severity="primary"
@@ -108,11 +116,7 @@
                                     </p-overlaybadge>
                                 </button>
 
-
-
-
                             </div>
-
                             <!-- <p-button label="" icon="pi pi-users" severity="info" [rounded]="true" [outlined]="false"
                                 badge="100" pTooltip="Total Allocated" tooltipPosition="top"
                                 badgeSeverity="primary"></p-button> -->
@@ -208,8 +212,7 @@
                                 (input)="onAllocationInput(allocation.allocation)" />
                         </td>
                         <td>
-                            <p-toggleswitch [(ngModel)]="allocation.status"
-                                (onChange)="onChangeStatus(allocation)" />
+                            <p-toggleswitch [(ngModel)]="allocation.status" (onChange)="onChangeStatus(allocation)" />
                         </td>
                     </tr>
                 </ng-template>

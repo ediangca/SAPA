@@ -78,11 +78,18 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
           authService.exit();
 
         } else if (err.status === 404) {
+          messages = err.error?.message;
+          // toast.warning(err.error.message, "Not Found!", 5000);
+        } else if (err.status === 409) {
+          logger.printLogs('i', 'Conflict Error', err);
           messages = err.error.message;
-          toast.warning(err.error.message, "Not Found!", 5000);
+          // toast.warning(err.error.message, "Conflict Error!", 5000);
+        }else if (err.status === 500) {
+          messages = err.error.message;
+          // toast.error("Internal Server Error! Please contact the system administrator.", "Server Error!", 0);
         }
       }
-      return throwError(() => new Error(`${messages! || err?.message || err.error?.message}\n Please contact the system administrator.`));
+      return throwError(() => new Error(`${messages! || err?.message || err.error?.message}`));
     })
   );
 };

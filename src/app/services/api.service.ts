@@ -136,7 +136,7 @@ export class ApiService {
         if (res && Array.isArray(res.items)) return res.items;
         return res;
       }),
-      catchError(this.handleError.bind(this)),
+      catchError(this.handleError),
       finalize(() => {
         const elapsed = Date.now() - startTime;
         const remaining = minDuration - elapsed;
@@ -155,6 +155,22 @@ export class ApiService {
   }
 
 
+  /*----------------------- SCHOOLS -----------------------*/
+  getSchools() {
+    return this.handleRequest<any[]>('get', 'Schools', { logAction: 'Fetching Schools' });
+  }
+
+  createSchool(section: any) {
+    return this.handleRequest('post', 'Schools', { body: section, logAction: 'Creating Schools' });
+  }
+
+  updateSchool(id: number, section: any) {
+    return this.handleRequest('put', 'Schools', { id, body: section, logAction: 'Updating Schools' });
+  }
+
+  deleteSchool(id: number) {
+    return this.handleRequest('delete', 'Schools', { id, logAction: 'Deleting Schools' });
+  }
 
 
   /*----------------------- HOSPITAL -----------------------*/
@@ -431,47 +447,47 @@ export class ApiService {
 */
 
   /*----------------------- ERROR HANDLING -----------------------*/
+private handleError(error: HttpErrorResponse) {
+  let errorMessage = 'Unknown error!';
 
-  private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'Unknown error!';
+  if (error.error instanceof ErrorEvent) {
+    // Client-side or network error
+    errorMessage = `Error: ${error.error.message}`;
+  } else {
+    // Backend (server-side) error
+    if (error.error) {
+      if (typeof error.error === 'string') {
+        // In case backend accidentally returns plain text
+        errorMessage = error.error +"-error.error.String";
+      } else if (error.error.message) {
+        // Your backend always sends: { message: "..." }
+        errorMessage = error.error.message +"-error.error.message";;
+      } else if (error.error.errors) {
+        // ASP.NET Core validation errors (ModelState)
+        const validationErrors = error.error.errors;
+        const messages: string[] = [];
 
-    if (error.error instanceof ErrorEvent) {
-      // Client-side error
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      // Server-side error
-      if (error.error) {
-        // Case 1: Custom message from backend
-        if (error.error.message) {
-          errorMessage = error.error.message;
-
-          // Case 2: ASP.NET Core validation errors
-        } else if (error.error.errors) {
-          const validationErrors = error.error.errors;
-          const messages: string[] = [];
-
-          for (const field in validationErrors) {
-            if (validationErrors.hasOwnProperty(field)) {
-              messages.push(`${field}: ${validationErrors[field].join(', ')} <br>`);
-            }
+        for (const field in validationErrors) {
+          if (validationErrors.hasOwnProperty(field)) {
+            messages.push(`${field}: ${validationErrors[field].join(', ')} <br>`);
           }
-
-          errorMessage = messages.join(' | ');
-
-          // Case 3: Fallback to "title" if provided
-        } else if (error.error.title) {
-          errorMessage = error.error.title;
-
-        } else {
-          errorMessage = `Server returned code ${error.status} <br> Please contact the system administrator.`;
         }
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-    }
 
-    return throwError(() => `${errorMessage}`);
+        errorMessage = messages.join(' | ');
+      } else if (error.error.title) {
+        // Fallback for default problem details object
+        errorMessage = error.error.title +"-error.error.title";;;
+      } else {
+        // errorMessage = `Server returned code ${error.status}<br>Please contact the system administrator.`;
+      }
+    } else {
+      errorMessage = error.message || `Server returned code ${error.status}`+"-else.Server.returned.code" ;
+    }
   }
+
+  return throwError(() => errorMessage);
+}
+
 
 
 }
