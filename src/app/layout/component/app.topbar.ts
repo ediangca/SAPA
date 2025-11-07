@@ -10,13 +10,19 @@ import { MenuModule } from 'primeng/menu';
 import { BadgeModule } from 'primeng/badge';
 import { AuthService } from '@/services/auth.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { AppLayout } from './app.layout';
-
+import { ButtonModule } from 'primeng/button';
 @Component({
     selector: 'app-topbar',
     standalone: true,
-    imports: [RouterModule, CommonModule, StyleClassModule, MenubarModule,
-        AppFloatingConfigurator, TooltipModule, BadgeModule, ProgressSpinnerModule,
+    imports: [RouterModule,
+        ButtonModule,
+        CommonModule,
+        StyleClassModule,
+        MenubarModule,
+        AppFloatingConfigurator,
+        TooltipModule,
+        BadgeModule,
+        ProgressSpinnerModule,
         MenuModule],
     templateUrl: './topbar.component.html',
     styleUrl: './css/topbar.component.css'
@@ -61,11 +67,11 @@ export class AppTopbar {
                         icon: 'pi pi-fw pi-cog',
                         routerLink: '/dashboard/settings'
                     },
-                    {
-                        label: 'Mode',
-                        icon: this.layoutService.isDarkTheme() ? 'pi pi-moon' : 'pi pi-sun',
-                        command: () => this.toggleDarkMode(),
-                    },
+                    // {
+                    //     label: 'Mode',
+                    //     icon: this.layoutService.isDarkTheme() ? 'pi pi-moon' : 'pi pi-sun',
+                    //     command: () => this.toggleDarkMode(),
+                    // },
                     {
                         label: 'SignOut',
                         icon: 'pi pi-fw pi-sign-out',

@@ -29,6 +29,7 @@ import { ToastrService } from 'ngx-toastr';
 import { NgToastService } from 'ng-angular-popup';
 import { Tooltip } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { CheckboxModule } from "primeng/checkbox";
 
 interface Column {
     field: string;
@@ -50,6 +51,7 @@ interface ExportColumn {
         FormsModule,
         ButtonModule,
         RippleModule,
+        CheckboxModule,
         ToastModule,
         ToolbarModule,
         RatingModule,
@@ -158,7 +160,7 @@ export class Users implements OnInit {
             { field: 'role', header: 'Role' },
             { field: 'status', header: 'Status' },
         ];
-        
+
     }
 
     exportCSV() {
@@ -170,7 +172,7 @@ export class Users implements OnInit {
         }
         const csv = [
             ['User ID', 'FullName', 'Email', 'User Role', 'Status'],
-            ...users.map(u => [u.userID, u.fullname, u.email, u.rolename, this.getStatus(u.status,'value')])
+            ...users.map(u => [u.userID, u.fullname, u.email, u.rolename, this.getStatus(u.status, 'value')])
         ]
             .map(row => row.map(v => `"${v}"`).join(','))
             .join('\n');
@@ -204,16 +206,42 @@ export class Users implements OnInit {
                 return (type == 'value' ? 'Suspend' : 'danger');
         }
     }
-    toggleAutoUsername() {
-        this.logger.printLogs('i', 'Auto Username toggled', this.form.get('autoUsername')?.value);
-        if (this.form.get('autoUsername')?.value) {
-            const email = this.form.get('email')?.value || '';
+
+    // toggleAutoUsername() {
+    //     this.logger.printLogs('i', 'Auto Username toggled', this.form.get('autoUsername')?.value);
+    //     if (this.form.get('autoUsername')?.value) {
+    //         const email = this.form.get('email')?.value || '';
+    //         const username = email.split('@')[0];
+    //         this.form.get('username')?.setValue(username, { emitEvent: false });
+    //     } else {
+    //         this.form.get('username')?.setValue('', { emitEvent: false });
+    //     }
+    // }
+    
+    toggleAutoUsername(event: any) {
+        const email = this.form.get('email')?.value || null;
+
+        // If email is missing and user tried to check the box
+        if (!email && event.checked) {
+            this.toast.warning("Please enter email first!", "Email Validation!", 2000);
+
+            // Revert checkbox to its original unchecked state
+            this.form.get('autoUsername')?.setValue(false, { emitEvent: false });
+            return;
+        }
+
+        if (event.checked) {
+            // Auto-generate username from email
             const username = email.split('@')[0];
-            this.form.get('username')?.setValue(username, { emitEvent: false });
+            this.form.get('username')?.setValue(username);
+            this.form.get('username')?.disable();
         } else {
-            this.form.get('username')?.setValue('', { emitEvent: false });
+            // Allow manual entry again
+            this.form.get('username')?.reset();
+            this.form.get('username')?.enable();
         }
     }
+
 
     // updateUsername() {
     //     if (this.form.get('autoUsername')?.value) {
@@ -331,6 +359,12 @@ export class Users implements OnInit {
             message: 'Are you sure you want to delete the selected products?',
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.users.set(this.users().filter((val) => !this.selectUsers?.includes(val)));
                 this.selectUsers = null;
@@ -421,9 +455,15 @@ export class Users implements OnInit {
 
     delete(user: any) {
         this.confirmationService.confirm({
-            message: `Are you sure you want to delete ${user.email}?`,
+            message: `Are you sure you want to delete <b>${user.email}</b>?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.logger.printLogs('i', `Deleting User ${user.email}`, user);
 

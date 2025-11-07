@@ -1,0 +1,5 @@
+::ng-deep .p-confirm-dialog .p-confirm-dialog-accept {
+  background-color: #4caf50 !important; /* custom green */
+  border-color: #4caf50 !important;
+  color: white !important;
+}

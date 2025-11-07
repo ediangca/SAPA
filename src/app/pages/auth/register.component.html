@@ -2,10 +2,10 @@
 <div
     class="bg-[url('https://shs-components.infopark.io/siemens-healthcare/countries/us/services/cs-workforce-honeycomb/assets/workforce-people-illustration.png')] 
     bg-cover bg-top bg-no-repeat bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-screen overflow-hidden">
-    
+
     <!-- Overlay -->
     <div class="absolute inset-0 bg-black/30 dark:bg-white/30"></div>
-    
+
     <div class="flex flex-col items-center justify-center" data-aos="flip-left" data-aos-easing="ease-out-cubic"
         data-aos-duration="500">
         <div
@@ -52,7 +52,15 @@
                         </label>
                         <input [class.error]="form.controls['email'].dirty && form.hasError('required', 'email')"
                             pInputText id="email" type="text" placeholder="Email address" formControlName="email"
-                            name="email" class="w-full md:w-120 mb-8" />
+                            name="email" class="w-full md:w-120" />
+
+                        <div class="flex flex-row gap-2 item-center justify-end mt-2">
+                            <p-check-box id="autoUsername" formControlName="autoUsername"
+                                (onChange)="toggleAutoUsername($event)" binary="true" label="Auto-generate username"
+                                binary="true" />
+
+                            <small class="text-cyan-500">Copy Email ID to Username</small>
+                        </div>
 
                         <label for="username"
                             class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
@@ -120,7 +128,8 @@
                                 password?</span> -->
                         </div>
 
-                        <p-button type="button" label="Sign Up" styleClass="w-full" [loading]="isLoading" (click)="onSubmit()" />
+                        <p-button type="button" label="Sign Up" styleClass="w-full" [loading]="isLoading"
+                            (click)="onSubmit()" />
 
 
                         <div class="mt-4">

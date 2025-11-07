@@ -1,83 +1,127 @@
 <div class="flex flex-col md:flex-row gap-8">
 
-    <div class="card">
-        <p-table #dt [value]="schools()" [rows]="10" [columns]="cols" [paginator]="true"
-            [globalFilterFields]="['sectionID', 'sectionName']"
-            [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSchools"
-            [rowHover]="true" dataKey="sectionID"
-            currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
-            [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex">
+    <div class="md:w-5/6">
+        <div class="card">
+            <p-table #dt [value]="schools()" [rows]="10" [columns]="cols" [paginator]="true"
+                [globalFilterFields]="['sectionID', 'sectionName']"
+                [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSchools"
+                [rowHover]="true" dataKey="schoolID"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
+                (selectionChange)="onSchoolSelectionChange($event)">
 
-            <ng-template pTemplate="caption">
+                <ng-template pTemplate="caption">
 
-                <p-button class="float-left " icon="pi pi-arrow-left" severity="secondary"
-                    routerLink="/dashboard/masterlist/hospitals" text raised rounded />
+                    <p-button class="float-left " icon="pi pi-arrow-left" severity="secondary"
+                        routerLink="/dashboard/masterlist/hospitals" text raised rounded />
 
-                <div class="flex row justify-center">
+                    <div class="flex row justify-center">
 
-                    <h5 class="m-0">Manage Schools</h5>
-                </div>
-                <div class="flex items-center justify-between">
-                    <div class="flex row">
-                        <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2"
-                            (onClick)="openNew()" />
-                        <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
-                            (onClick)="deleteSelected()" [disabled]="!selectSchools || !selectSchools.length" /> -->
+                        <h5 class="m-0">Manage Schools</h5>
                     </div>
-                    <p-iconfield>
-                        <p-inputicon styleClass="pi pi-search" />
-                        <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" class="mr-2"
-                            placeholder="Search..." />
-                        <button pButton label="Clear" class="p-button-outlined mr-2" icon="pi pi-filter-slash"
-                            (click)="clear(dt)"></button>
-                        <button pButton label="Export" class="p-button-outlined" icon="pi pi-upload" severity="info"
-                            (onClick)="exportCSV()"></button>
-                    </p-iconfield>
-
-                </div>
-            </ng-template>
-            <ng-template #header>
-                <tr>
-                    <!-- <th style="width: 3rem">
-                        <p-tableHeaderCheckbox />
-                    </th> -->
-                    <th pSortableColumn="schoolID" style="max-width: 1rem">School ID
-                        <p-sortIcon field="schoolID" />
-                    </th>
-                    <th pSortableColumn="schoolName" style="min-width:3rem">
-                        School 3rem
-                        <p-sortIcon field="schoolName" />
-                    </th>
-                    <th pSortableColumn="address" style="min-width:10rem">
-                        Address
-                        <p-sortIcon field="address" />
-                    </th>
-                    <th pSortableColumn="address" style="min-width:3rem">
-                        Coordinator
-                        <p-sortIcon field="coordinator" />
-                    </th>
-                    <th style="min-width: 5rem">Action</th>
-                </tr>
-            </ng-template>
-            <ng-template #body let-school>
-                <tr>
-                    <!-- <td style="width: 3rem">
-                        <p-tableCheckbox [value]="section" />
-                    </td> -->
-                    <td style="max-width: 1rem">{{ school.schoolID }}</td>
-                    <td style="min-width: 3rem">{{ school.schoolName }}</td>
-                    <td style="min-width: 10rem">{{ school.address }}</td>
-                    <td style="min-width: 3rem">{{ 'to be created' }}</td>
-                    <td>
-                        <div class="flex flex-row gap-2">
-                            <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (click)="edit(school)" />
-                            <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                                (click)="delete(school)" />
+                    <div class="flex items-center justify-between">
+                        <div class="flex row">
+                            <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
+                                (onClick)="openNew()" />
+                            <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
+                            (onClick)="deleteSelected()" [disabled]="!selectSchools || !selectSchools.length" /> -->
                         </div>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+                        <p-iconfield>
+                            <p-inputicon styleClass="pi pi-search" />
+                            <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" class="mr-2"
+                                placeholder="Search..." />
+                            <button pButton label="Clear" class="p-button-outlined mr-2" icon="pi pi-filter-slash"
+                                (click)="clear(dt)"></button>
+                            <button pButton label="Export" class="p-button-outlined" icon="pi pi-upload" severity="info"
+                                (onClick)="exportCSV()"></button>
+                        </p-iconfield>
+
+                    </div>
+                </ng-template>
+                <ng-template #header>
+                    <tr>
+                        <th style="width: 3rem">
+                            <p-tableHeaderCheckbox />
+                        </th>
+                        <th pSortableColumn="schoolID" style="max-width: 1rem">School ID
+                            <p-sortIcon field="schoolID" />
+                        </th>
+                        <th pSortableColumn="schoolName" style="min-width:3rem">
+                            School
+                            <p-sortIcon field="schoolName" />
+                        </th>
+                        <th pSortableColumn="address" style="min-width:10rem">
+                            Address
+                            <p-sortIcon field="address" />
+                        </th>
+                        <th pSortableColumn="coordinator" style="min-width:3rem">
+                            Coordinator
+                            <p-sortIcon field="coordinator" />
+                        </th>
+                        <th pSortableColumn="status" style="min-width:10rem">
+                            Status
+                            <p-sortIcon field="status" />
+                        </th>
+                        <th pSortableColumn="date_created" style="min-width:10rem">
+                            Date Created
+                            <p-sortIcon field="date_created" />
+                        </th>
+                        <th style="min-width: 5rem">Action</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-school>
+                    <tr>
+                        <td style="width: 3rem">
+                            <p-tableCheckbox [value]="school" />
+                        </td>
+                        <td style="max-width: 1rem">{{ school.schoolID }}</td>
+                        <td style="min-width: 3rem">{{ school.schoolName }}</td>
+                        <td style="min-width: 10rem">{{ school.address }}</td>
+                        <td style="min-width: 3rem">{{ school.createdBy }}</td>
+                        <td style="min-width: 3rem">
+                            <p-tag [value]="getStatus(school.status,'value')"
+                                [severity]="getStatus(school.status,'severirty')" styleClass="dark:bg-surface-900!" />
+                        </td>
+                        <td style="min-width: 3rem">{{ school.date_Created }}</td>
+                        <td>
+                            <div class="flex flex-row gap-2">
+                                <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true"
+                                    (click)="edit(school)" />
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                                    (click)="delete(school)" />
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+
+
+    <!-- SUBMENU -->
+    <div class="md:w-1/6">
+        <div class="card h-200 px-0">
+            <div class="h-1/2">
+                <h5 class="m-0">Sub Component</h5>
+
+                <ul class="layout-menu">
+                    <ng-container *ngFor="let item of subcomponent; let i = index">
+                        <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
+                        <li *ngIf="item.separator" class="menu-separator"></li>
+                    </ng-container>
+                </ul>
+            </div>
+
+            <div class="h-1/2">
+                <div class="font-semibold text-xl mb-4">Properties</div>
+                <p-panelmenu [model]="properties" />
+            </div>
+            <!-- <div class="h-1/2">
+                <h5 class="m-0">Properties</h5>
+                <p-tieredMenu [model]="properties" class="w-full"></p-tieredMenu>
+            </div> -->
+
+        </div>
     </div>
 
 </div>
@@ -110,4 +154,39 @@
     </ng-template>
 </p-dialog>
 
-<p-confirmdialog [style]="{ width: '450px' }" />
+<p-dialog [(visible)]="assignDialog" header="Assign Coordinator" [modal]="true" [style]="{width: '30vw',}"
+    [closable]="true" [draggable]="true" [contentStyle]="{'height':'calc(100% - 60px)', 'overflow':'auto'}">
+
+    <ng-template #content>
+        <div class="flex flex-row gap-4">
+
+            <div class="flex flex-wrap gap-2" *ngIf="selectSchools.length > -1; else noSelection">
+                <ng-container id="schools" name="schools" *ngFor="let school of selectSchools">
+                    <!-- School name -->
+                    <p-tag [value]="school.schoolName" class="mr-2 mb-2 px-3 py-2 rounded-2xl shadow-lg bg-slate-100"
+                        severity="success">
+                    </p-tag>
+                </ng-container>
+
+                <p-select [options]="coordinators" optionLabel="fullname" optionValue="userID"
+                    placeholder="Select Coordinator" [(ngModel)]="coordinatorID" appendTo="body"
+                    class="w-full"></p-select>
+            </div>
+
+            <ng-template #noSelection>
+                <p class="text-center text-gray-500 italic">No schools selected.</p>
+            </ng-template>
+        </div>
+    </ng-template>
+
+
+    <!-- Footer -->
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-3 w-full">
+            <p-button label="Cancel" icon="pi pi-times" text (click)="hideAssignDialog()" />
+            <p-button label="Assign" icon="pi pi-check" (click)="saveAssignCoor()" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+<p-confirmdialog [style]="{ width: '450px' }">

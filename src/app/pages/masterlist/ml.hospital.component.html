@@ -74,8 +74,8 @@
                                         <!-- icon="pi pi-warehouse" -->
                                         <p-tag [value]="section.sectionName"
                                             class="mr-2 mb-2 px-3 py-2 rounded-2xl shadow-lg bg-slate-100"
-                                            [severity]="getChipClass(section)"
-                                            pTooltip="{{ section.status? 'Active': 'Inactive' }}" tooltipPosition="top">
+                                            [severity]="getChipClass(section)">
+                                            <!-- pTooltip="{{ section.status? 'Active': 'Inactive' }}" tooltipPosition="top" -->
 
                                             <!-- <i
                                                 class="pi pi-{{ section.status==true? 'check': 'times text-black' }} "></i> -->
@@ -109,7 +109,7 @@
                                 <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
                                     pTooltip="Delete" tooltipPosition="top" (click)="delete(hospital)" />
 
-                                <button class="mr-2" severity="danger" pTooltip="Allocated" tooltipPosition="top"
+                                <button class="mr-2" severity="danger" pTooltip="Maximum Allocation" tooltipPosition="top"
                                     (click)="openAllocatedSections(hospital)">
                                     <p-overlaybadge [value]="hospital.totalAllocations || 0">
                                         <i class="pi pi-users" style="font-size: 1.7rem"></i>
@@ -133,6 +133,7 @@
 
 </div>
 
+<!-- ADD/EDIT -->
 <p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="Hospital Details" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
@@ -190,6 +191,7 @@
     </ng-template>
 </p-dialog>
 
+<!-- MAX ALLOCATION -->
 <p-dialog [(visible)]="assignDialog" [style]="{ width: '480px' }" header="Manage Allocations" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">

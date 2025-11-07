@@ -1,4 +1,4 @@
-import { Component, OnInit} from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -6,10 +6,11 @@ import { ProductService } from '../service/product.service';
 import { AppMenuitem } from '@/layout/component/app.menuitem';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { PdfService } from '@/services/pdf.service';
 
 
 @Component({
-    selector: 'set-users-properties',
+    selector: 'set-users-sidebar',
     standalone: true,
     imports: [
         CommonModule,
@@ -30,7 +31,10 @@ export class UsersProperties implements OnInit {
     submitted: boolean = false;
     assignDialog: boolean = false;
 
-    constructor() {
+  @Input() users: any[] | undefined;
+
+    constructor(
+        private pdfService: PdfService) {
 
     }
 
@@ -39,7 +43,7 @@ export class UsersProperties implements OnInit {
             {
                 items: [
                     { label: 'Roles', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                    { label: 'Print All', icon: 'fas fa-table-columns', command: () => this.printDialog() },
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
                 ]
             }
         ];
@@ -70,5 +74,15 @@ export class UsersProperties implements OnInit {
         this.submitted = true;
         this.assignDialog = false;
     }
-    
+
+
+    printAll() {
+    if (!this.users || this.users.length === 0) {
+      console.warn('No users found to print');
+      return;
+    }
+
+    this.pdfService.generateUserReport(this.users);
+    }
+
 }

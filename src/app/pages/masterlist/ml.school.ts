@@ -18,17 +18,19 @@ import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { Product, ProductService } from '../service/product.service';
-import { AppMenuitem } from '@/layout/component/app.menuitem';
+import { ProductService } from '../service/product.service';
 import { ApiService } from '@/services/api.service';
 import { LogsService } from '@/services/logs.service';
 import ValidateForm from '@/helper/validator/validateForm';
 import Swal from 'sweetalert2';
 import { StoreService } from '@/services/store.service';
 import { ToastModule } from 'primeng/toast';
-import { HospitalProperties } from "./ml.hospital.sidebar";
 import { NgToastService } from 'ng-angular-popup';
 import { RouterModule } from '@angular/router';
+import { AppMenuitem } from '@/layout/component/app.menuitem';
+import { MenuModule } from 'primeng/menu';
+import { TieredMenuModule } from 'primeng/tieredmenu';
+import { PdfService } from '@/services/pdf.service';
 
 interface Column {
     field: string;
@@ -46,9 +48,12 @@ interface ExportColumn {
     standalone: true,
     imports: [
         CommonModule,
+        MenuModule,
+        TieredMenuModule,
         TableModule,
         FormsModule,
         ButtonModule,
+        AppMenuitem,
         RippleModule,
         ToastModule,
         ToolbarModule,
@@ -69,15 +74,20 @@ interface ExportColumn {
         RouterModule,
     ],
     templateUrl: './ml.school.component.html',
+    styleUrl: './css/masterlist.css',
     providers: [MessageService, ProductService, ConfirmationService]
 })
 export class School implements OnInit {
+
+
+    subcomponent: MenuItem[] = [];
+    properties: MenuItem[] = [];
 
     itemDialog: boolean = false;
 
     schools = signal<any[]>([]);
     school!: any;
-    selectSchools!: any[] | null;
+    selectSchools!: any[] | [];
 
     form!: FormGroup;
 
@@ -88,8 +98,14 @@ export class School implements OnInit {
     exportColumns!: ExportColumn[];
 
     cols!: Column[];
+    coordinators: any[] = [];
 
     tokenPayload: any | null;
+
+    assignDialog: boolean = false;
+
+    coordinatorID: any | null;
+
 
     constructor(private fb: FormBuilder,
         private productService: ProductService,
@@ -99,7 +115,8 @@ export class School implements OnInit {
         private api: ApiService,
         private logger: LogsService,
         private vf: ValidateForm,
-        private toast: NgToastService
+        private toast: NgToastService,
+        private pdfService: PdfService
 
     ) {
 
@@ -112,11 +129,98 @@ export class School implements OnInit {
 
     }
 
+
     exportCSV() {
         this.dt.exportCSV();
     }
+    /*
+        getStatus(status: any) {
+            switch (status) {
+                case 1:
+                    return 'Approved'
+                case 2:
+                    return  'Inactive' 
+                case 3:
+                    return 'Suspemd'
+    
+                default:
+                    return 'Pending'
+            }
+        }
+    */
+
+    getStatus(status: any, type: string) {
+        switch (status) {
+            case 1:
+                return (type == 'value' ? 'Approved' : 'info')
+            case 2:
+                return (type == 'value' ? 'Inactive' : 'contrast')
+            case 3:
+                return (type == 'value' ? 'Suspemd' : 'danger')
+
+            default:
+                return (type == 'value' ? 'Pending' : 'warn');
+        }
+    }
+
 
     ngOnInit() {
+        this.subcomponent = [
+            {
+                items: [
+                    // { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+
+                ]
+            }
+        ];
+
+        /*
+        this.properties = [
+            {
+                label: 'Status',
+                icon: 'fas fa-layer-group',
+                items: [
+                    { label: 'Approve', icon: 'fas fa-check-circle', command: () => this.changeStatus(1) },
+                    { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
+                    { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+                    { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
+                ]
+            },
+            {
+                separator: true
+            },
+            {
+                label: 'Coordinator',
+                icon: 'fas fa-user-edit',
+                items: [
+                    {
+                        label: 'Re-assign Coordinator',
+                        icon: 'fas fa-user-pen',
+                        command: () => this.reAssignDialog()
+                    }
+                ]
+            }
+        ];
+        */
+        this.properties = [
+            {
+                label: 'Status',
+                icon: 'fas fa-layer-group',
+                items: [
+                    { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
+                    { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
+                    { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+                    { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
+                ]
+            },
+            {
+                label: 'Re-assign Coordinator',
+                icon: 'pi pi-user-edit',
+                command: () => this.reAssignDialog()
+            }
+        ];
+
         this.loadData();
     }
 
@@ -133,11 +237,33 @@ export class School implements OnInit {
             { field: 'SchoolID', header: 'ID', customExportHeader: 'School ID' },
             { field: 'schoolName', header: 'Name' },
             { field: 'address', header: 'Address' },
+            { field: 'coordinator', header: 'Coordinator' },
+            { field: 'date_created', header: 'Date Created' },
         ];
 
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
     }
-    
+
+    refreshTable() {
+        this.api.getSchools().subscribe({
+            next: (schools) => this.schools.set(schools),
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
+        });
+    }
+
+    loadCoordinators() {
+        this.api.getUsers().subscribe({
+            next: (users) => { this.coordinators = users.filter((user: any) => user.roleId === 'UGR0003') || [], this.logger.printLogs('i', 'Users loaded', this.coordinators) },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+        });
+    }
+
+
+    onSchoolSelectionChange(selected: any[]) {
+        this.logger.printLogs('i', "Select schools : ", selected)
+        this.selectSchools = selected; // optional, if you want to keep it synced manually
+    }
+
     clear(table: Table,) {
         table.clear();
     }
@@ -161,6 +287,7 @@ export class School implements OnInit {
         this.itemDialog = true;
     }
 
+
     edit(school: any) {
         this.school = school;
         this.logger.printLogs('e', 'Edit schools', school)
@@ -170,12 +297,19 @@ export class School implements OnInit {
 
     deleteSelected() {
         this.confirmationService.confirm({
-            message: 'Are you sure you want to delete the selected products?',
+            message: 'Are you sure you want to delete the selected school?',
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+
             accept: () => {
-                this.schools.set(this.schools().filter((val) => !this.selectSchools?.includes(val)));
-                this.selectSchools = null;
+
+                this.selectSchools = [];
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Successful',
@@ -191,12 +325,139 @@ export class School implements OnInit {
         this.submitted = false;
     }
 
-    refreshTable() {
-        this.api.getSchools().subscribe({
-            next: (schools) => this.schools.set(schools),
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
+    reAssignDialog() {
+        if (!this.selectSchools || this.selectSchools.length === 0) {
+            this.toast.warning("Please select at least one school first!", "No selelected School", 3000);
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected School',
+                detail: 'Please select at least one school first!',
+                life: 3000
+            });
+            return;
+        }
+
+        this.assignDialog = true;
+        this.coordinatorID = null;
+        this.loadCoordinators();
+    }
+
+
+    hideAssignDialog() {
+        this.assignDialog = false;
+        this.submitted = false;
+    }
+
+    private closeDialog() {
+        this.form.reset({
+            schoolName: '',
+            userID: this.tokenPayload.nameid
+        });
+        this.school = {};
+        this.itemDialog = false;
+        this.submitted = false;
+    }
+
+    changeStatus(status: number) {
+        const schoolIDs = this.selectSchools?.map((school: any) => school.schoolID) ?? [];
+
+        if (!schoolIDs.length) {
+            this.toast.warning("Please select at least one school first!", "No selelected School", 3000);
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected School',
+                detail: 'Please select at least one school first!',
+                life: 3000
+            });
+            return;
+        }
+
+        this.confirmationService.confirm({
+            message: `Are you sure you want to change the status of selected schools to  <b>${this.getStatus(status, 'value')}</b>?`,
+            header: 'Confirm Status Update',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: "Yes! I'm Sure",
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+
+            accept: () => {
+                this.api.updateSchoolStatus(status, schoolIDs).subscribe({
+                    next: (res: any) => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: res.message,
+                            life: 3000
+                        });
+
+                        this.logger.printLogs('s', 'Status updated successfully', res);
+                        this.refreshTable();
+                        this.selectSchools = [];
+                    },
+                    error: (err) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to update school status.',
+                            life: 3000
+                        });
+                        this.logger.printLogs('e', 'Failed to update status', err);
+                    }
+                });
+            }
         });
     }
+
+
+    saveAssignCoor() {
+        const schoolIDs = this.selectSchools?.map((school: any) => school.schoolID) ?? [];
+        const schools = this.selectSchools?.map((school: any) => school.schoolName) ?? [];
+
+        if (this.coordinatorID == null) {
+            this.toast.warning("Please select at coordinator first!", "No selelected Coordinator", 3000);
+            return
+        }
+        // Find the selected coordinator object
+        const coordinator = this.coordinators?.find(
+            (c: any) => c.userID === this.coordinatorID
+        );
+
+        const coordinatorName = coordinator?.fullname || coordinator?.name || 'Unknown';
+
+        this.logger.printLogs('s', `Assign selected schoolIDs [${schoolIDs}] to coordinator : `, coordinatorName);
+
+        this.confirmationService.confirm({
+            message: `Are you sure you want to assign the selected school(s):<br><br>${schools.join('<br>')}<br><br>to <b>${coordinatorName}</b>?`,
+            header: 'Assign Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+
+            accept: () => {
+                this.selectSchools = [];
+
+                this.api.assignCoordinator(this.coordinatorID, schoolIDs).subscribe({
+                    next: (res) => {
+                        this.logger.printLogs('s', 'Coordinator assigned successfully', res);
+                        this.refreshTable();
+                    },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed to assign coordinator', err);
+                    }
+                });
+                this.assignDialog = false;
+            }
+        });
+    }
+
+
+
+
 
     save() {
         this.submitted = true;
@@ -251,6 +512,13 @@ export class School implements OnInit {
             message: `Are you sure you want to delete ${school.schoolName}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+
             accept: () => {
                 this.logger.printLogs('i', `Deleting School ${school.schoolName}`, school);
 
@@ -279,6 +547,11 @@ export class School implements OnInit {
         });
     }
 
+    printAll() {
+        this.pdfService.generateSchoolsReport(this.schools());
+    }
+
+
 
     private showErrorAlert(title: string, message: string, dialogOpen: boolean) {
         this.logger.printLogs('e', 'Failed to create school', message);
@@ -294,16 +567,4 @@ export class School implements OnInit {
             }
         });
     }
-
-    // helper to reset and close
-    private closeDialog() {
-        this.itemDialog = false;
-        this.form.reset({
-            schoolName: '',
-            userID: this.tokenPayload.nameid
-        });
-        this.school = {}; // reset form
-    }
-
-
 }

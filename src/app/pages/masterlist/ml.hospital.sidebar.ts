@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProductService } from '../service/product.service';
 import { AppMenuitem } from '@/layout/component/app.menuitem';
-import { OrderListModule, OrderListSelectionChangeEvent } from 'primeng/orderlist';
+import { OrderListModule } from 'primeng/orderlist';
 import { PickListModule } from 'primeng/picklist';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -12,16 +12,6 @@ import { TableModule } from "primeng/table";
 import { ApiService } from '@/services/api.service';
 import { LogsService } from '@/services/logs.service';
 
-interface Column {
-    field: string;
-    header: string;
-    customExportHeader?: string;
-}
-
-interface ExportColumn {
-    title: string;
-    dataKey: string;
-}
 
 @Component({
     selector: 'ml-hospital-properties',

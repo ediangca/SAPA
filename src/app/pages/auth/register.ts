@@ -15,12 +15,22 @@ import ValidateForm from '@/helper/validator/validateForm';
 import { LogsService } from '@/services/logs.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { validatePasswordMatch } from '@/helper/validator/validatePasswordMatch';
+import { NgToastService } from 'ng-angular-popup';
 
 @Component({
     selector: 'app-register',
     standalone: true,
-    imports: [RouterLink, ReactiveFormsModule, ButtonModule, CheckboxModule, InputTextModule, PasswordModule, FormsModule,
-        RouterModule, RippleModule, AppFloatingConfigurator, ProgressSpinnerModule],
+    imports: [RouterLink, 
+        ReactiveFormsModule, 
+        ButtonModule, 
+        CheckboxModule, 
+        InputTextModule, 
+        PasswordModule, 
+        FormsModule,
+        RouterModule, 
+        RippleModule,
+         AppFloatingConfigurator, 
+         ProgressSpinnerModule],
     templateUrl: './register.component.html'
 
 })
@@ -40,13 +50,15 @@ export class Register {
 
     constructor(private fb: FormBuilder, private auth: AuthService,
         private router: Router, private api: ApiService,
-        private vf: ValidateForm, private logger: LogsService) {
+        private vf: ValidateForm, private logger: LogsService,
+        private toast: NgToastService) {
 
         this.form = this.fb.group({
             email: ['', Validators.required],
             username: ['', Validators.required],
             password: ['', [Validators.required, Validators.minLength(6)]],
             confirmPassword: ['', Validators.required],
+            autoUsername: [false],
         }, { validators: validatePasswordMatch('password', 'confirmPassword') });
 
         this.errorMessage = '';
@@ -60,6 +72,32 @@ export class Register {
     get passwordMismatch(): boolean {
         const form = this.form;
         return form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched === true;
+    }
+
+
+
+    toggleAutoUsername(event: any) {
+        const email = this.form.get('email')?.value || null;
+
+        // If email is missing and user tried to check the box
+        if (!email && event.checked) {
+            this.toast.warning("Please enter email first!", "Email Validation!", 2000);
+
+            // Revert checkbox to its original unchecked state
+            this.form.get('autoUsername')?.setValue(false, { emitEvent: false });
+            return;
+        }
+
+        if (event.checked) {
+            // Auto-generate username from email
+            const username = email.split('@')[0];
+            this.form.get('username')?.setValue(username);
+            this.form.get('username')?.disable();
+        } else {
+            // Allow manual entry again
+            this.form.get('username')?.reset();
+            this.form.get('username')?.enable();
+        }
     }
 
     onSubmit() {

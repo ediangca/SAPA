@@ -154,25 +154,6 @@ export class ApiService {
     );
   }
 
-
-  /*----------------------- SCHOOLS -----------------------*/
-  getSchools() {
-    return this.handleRequest<any[]>('get', 'Schools', { logAction: 'Fetching Schools' });
-  }
-
-  createSchool(section: any) {
-    return this.handleRequest('post', 'Schools', { body: section, logAction: 'Creating Schools' });
-  }
-
-  updateSchool(id: number, section: any) {
-    return this.handleRequest('put', 'Schools', { id, body: section, logAction: 'Updating Schools' });
-  }
-
-  deleteSchool(id: number) {
-    return this.handleRequest('delete', 'Schools', { id, logAction: 'Deleting Schools' });
-  }
-
-
   /*----------------------- HOSPITAL -----------------------*/
   getHospitals() {
     return this.handleRequest<any[]>('get', 'Hospitals', { logAction: 'Fetching Hospitals' });
@@ -225,8 +206,8 @@ export class ApiService {
   createAllocationsBulk(allocation: any) {
     return this.handleRequest('post', 'Allocations/sections', { body: allocation, logAction: 'Creating Bulk Allocations' });
   }
-  
-  updateAllocationsBulk(id: string , allocations : any[]) {
+
+  updateAllocationsBulk(id: string, allocations: any[]) {
     return this.handleRequest('put', 'Allocations/sections', { id, body: allocations, logAction: 'Updating Allocations' });
   }
 
@@ -273,6 +254,40 @@ export class ApiService {
 
   approve(email: string) {
     return this.handleStringRequest('post', 'Users/approve', email, 'Account Approval');
+  }
+
+
+
+  /*----------------------- SCHOOLS -----------------------*/
+  getSchools() {
+    return this.handleRequest<any[]>('get', 'Schools', { logAction: 'Fetching Schools' });
+  }
+
+  createSchool(section: any) {
+    return this.handleRequest('post', 'Schools', { body: section, logAction: 'Creating Schools' });
+  }
+
+  updateSchool(id: number, section: any) {
+    return this.handleRequest('put', 'Schools', { id, body: section, logAction: 'Updating Schools' });
+  }
+  updateSchoolStatus(status: number, schoolIDs: string[]) {
+    return this.handleRequest('put', `Schools/status/${status}`, {
+      body: schoolIDs,
+      logAction: 'Update School Status'
+    });
+  }
+
+  assignCoordinator(coordinatorID: string, schoolIDs: string[]): Observable<any> {
+    return this.handleRequest<any>('put', 'Schools/assignCoordinator', {
+      id: coordinatorID,
+      body: schoolIDs,
+      logAction: 'Assign Coordinator'
+    });
+  }
+
+
+  deleteSchool(id: number) {
+    return this.handleRequest('delete', 'Schools', { id, logAction: 'Deleting Schools' });
   }
 
 
@@ -447,46 +462,46 @@ export class ApiService {
 */
 
   /*----------------------- ERROR HANDLING -----------------------*/
-private handleError(error: HttpErrorResponse) {
-  let errorMessage = 'Unknown error!';
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = 'Unknown error!';
 
-  if (error.error instanceof ErrorEvent) {
-    // Client-side or network error
-    errorMessage = `Error: ${error.error.message}`;
-  } else {
-    // Backend (server-side) error
-    if (error.error) {
-      if (typeof error.error === 'string') {
-        // In case backend accidentally returns plain text
-        errorMessage = error.error +"-error.error.String";
-      } else if (error.error.message) {
-        // Your backend always sends: { message: "..." }
-        errorMessage = error.error.message +"-error.error.message";;
-      } else if (error.error.errors) {
-        // ASP.NET Core validation errors (ModelState)
-        const validationErrors = error.error.errors;
-        const messages: string[] = [];
-
-        for (const field in validationErrors) {
-          if (validationErrors.hasOwnProperty(field)) {
-            messages.push(`${field}: ${validationErrors[field].join(', ')} <br>`);
-          }
-        }
-
-        errorMessage = messages.join(' | ');
-      } else if (error.error.title) {
-        // Fallback for default problem details object
-        errorMessage = error.error.title +"-error.error.title";;;
-      } else {
-        // errorMessage = `Server returned code ${error.status}<br>Please contact the system administrator.`;
-      }
+    if (error.error instanceof ErrorEvent) {
+      // Client-side or network error
+      errorMessage = `Error: ${error.error.message}`;
     } else {
-      errorMessage = error.message || `Server returned code ${error.status}`+"-else.Server.returned.code" ;
-    }
-  }
+      // Backend (server-side) error
+      if (error.error) {
+        if (typeof error.error === 'string') {
+          // In case backend accidentally returns plain text
+          errorMessage = error.error + "-error.error.String";
+        } else if (error.error.message) {
+          // Your backend always sends: { message: "..." }
+          errorMessage = error.error.message + "-error.error.message";;
+        } else if (error.error.errors) {
+          // ASP.NET Core validation errors (ModelState)
+          const validationErrors = error.error.errors;
+          const messages: string[] = [];
 
-  return throwError(() => errorMessage);
-}
+          for (const field in validationErrors) {
+            if (validationErrors.hasOwnProperty(field)) {
+              messages.push(`${field}: ${validationErrors[field].join(', ')} <br>`);
+            }
+          }
+
+          errorMessage = messages.join(' | ');
+        } else if (error.error.title) {
+          // Fallback for default problem details object
+          errorMessage = error.error.title + "-error.error.title";;;
+        } else {
+          // errorMessage = `Server returned code ${error.status}<br>Please contact the system administrator.`;
+        }
+      } else {
+        errorMessage = error.message || `Server returned code ${error.status}` + "-else.Server.returned.code";
+      }
+    }
+
+    return throwError(() => errorMessage);
+  }
 
 
 

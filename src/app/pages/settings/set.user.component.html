@@ -93,7 +93,7 @@
     </div>
     <!-- SUBMENU -->
     <div class="md:w-1/6">
-        <set-users-properties></set-users-properties>
+        <set-users-sidebar  [users]="users()"></set-users-sidebar>
     </div>
 
 </div>
@@ -125,10 +125,15 @@
                     <label for="email" class="block font-bold mb-3">Email</label>
                     <input type="text" pInputText id="email" name="email" formControlName="email" required autofocus
                         fluid />
-                    <small class="text-red-500" *ngIf="submitted && (!form.value['email'] || isEmailInvalid())"> Valid Email is
+                    <small class="text-red-500" *ngIf="submitted && (!form.value['email'] || isEmailInvalid())"> Valid
+                        Email is
                         required.</small>
-                    <div>
-                        <p-toggleswitch formControlName="autoUsername" (onChange)="toggleAutoUsername()" />
+                    <div class="flex flex-row gap-2 item-center justify-end mt-2">
+                        <p-check-box id="autoUsername" formControlName="autoUsername"
+                            (onChange)="toggleAutoUsername($event)" binary="true" label="Auto-generate username"
+                            binary="true"/>
+
+                        <small class="text-cyan-500">Copy Email ID to Username</small>
                     </div>
 
                     <label for="username" class="block font-bold mb-3">Username</label>

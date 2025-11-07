@@ -203,6 +203,12 @@ export class Section implements OnInit {
             message: 'Are you sure you want to delete the selected products?',
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.sections.set(this.sections().filter((val) => !this.selectSections?.includes(val)));
                 this.selectSections = null;
@@ -286,6 +292,12 @@ export class Section implements OnInit {
             message: `Are you sure you want to delete ${section.sectionName}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.logger.printLogs('i', `Deleting Section ${section.sectionName}`, section);
 

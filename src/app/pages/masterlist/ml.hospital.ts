@@ -297,6 +297,12 @@ export class Hospital implements OnInit {
             message: 'Are you sure you want to delete the selected products?',
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.hospitals.set(this.hospitals().filter((val) => !this.selectHospitals?.includes(val)));
                 this.selectHospitals = null;
@@ -499,6 +505,12 @@ export class Hospital implements OnInit {
             message: `Are you sure you want to delete ${hospital.hospitalName}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.logger.printLogs('i', `Deleting hospital ${hospital.hospitalName}`, hospital);
 
