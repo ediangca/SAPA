@@ -3,3 +3,31 @@
   border-color: #4caf50 !important;
   color: white !important;
 }
+
+/* Accept button */
+.custom-accept {
+  background-color: #28a745 !important; /* green */
+  border: none !important;
+  color: white !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 8px !important;
+  transition: 0.3s;
+}
+
+.custom-accept:hover {
+  background-color: #218838 !important;
+}
+
+/* Reject button */
+.custom-reject {
+  background-color: #dc3545 !important; /* red */
+  border: none !important;
+  color: white !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 8px !important;
+  transition: 0.3s;
+}
+
+.custom-reject:hover {
+  background-color: #c82333 !important;
+}

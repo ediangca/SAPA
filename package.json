@@ -31,7 +31,7 @@
         "pdfmake": "^0.2.20",
         "primeclt": "^0.1.5",
         "primeicons": "^7.0.0",
-        "primeng": "^20.1.1",
+        "primeng": "^20.3.0",
         "rxjs": "~7.8.2",
         "sweetalert2": "^11.23.0",
         "tailwindcss-primeui": "^0.6.1",

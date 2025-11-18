@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
+import { LogsService } from './logs.service';
 
 const pdfMakeLib: any = pdfMake;
 pdfMakeLib.vfs = (pdfFonts as any).pdfMake?.vfs || (pdfFonts as any).vfs;
@@ -12,7 +13,8 @@ export class PdfService {
   private leftLogo: string | null = null;
   private rightLogo: string | null = null;
 
-  constructor() {
+  constructor(
+    private logger: LogsService,) {
     // Preload logos
     this.loadLogos();
   }
@@ -173,6 +175,85 @@ export class PdfService {
 
     pdfMakeLib.createPdf(docDefinition).open();
   }
+
+  async generateHopitalsReport(hospitals: any[]) {
+    this.logger.printLogs('i', "Generate PDF for Hospitals : ", hospitals);
+
+    // Ensure logos are loaded
+    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+
+    const docDefinition: any = {
+      content: [
+        this.getHeader('LIST OF HOSPITALS'),
+        { text: '\n' },
+
+        {
+          table: {
+            headerRows: 1,
+            widths: [25, '20%', '30%', '25%', '10%', '15%'],
+            // # | Hospital Name | Address | Total Alloc | Sections | Created Date
+            body: [
+              [
+                { text: '#', bold: true, fontSize: 10, alignment: 'center' },
+                { text: 'Hospital Name', bold: true, fontSize: 10 },
+                { text: 'Address', bold: true, fontSize: 10 },
+                { text: 'Sections [Allocation]', bold: true, fontSize: 10 },
+                { text: 'Total Alloc.', bold: true, fontSize: 10, alignment: 'center' },
+                { text: 'Created', bold: true, fontSize: 10, alignment: 'center' },
+              ],
+
+              ...hospitals.map((h, i) => [
+                { text: (i + 1).toString(), alignment: 'center', fontSize: 9 },
+                { text: h.hospitalName || '—', fontSize: 9, noWrap: false },
+                { text: h.address || '—', fontSize: 9, noWrap: false },
+                {
+                  stack: h.sections?.length
+                    ? h.sections.map((s: any) => ({
+                      text: `• ${s.sectionName} [${s.allocation}]`,
+                      fontSize: 8,
+                      margin: [0, 1, 0, 1]
+                    }))
+                    : [{ text: '—', fontSize: 8 }]
+                },
+                { text: h.totalAllocations?.toString() || '0', alignment: 'center', fontSize: 9 },
+                {
+                  text: h.dateCreated
+                    ? new Date(h.dateCreated).toLocaleDateString()
+                    : '—',
+                  alignment: 'center',
+                  fontSize: 9
+                },
+              ])
+            ]
+          },
+
+          layout: {
+            fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#aaa',
+            vLineColor: () => '#aaa',
+            paddingLeft: () => 4,
+            paddingRight: () => 4,
+            paddingTop: () => 2,
+            paddingBottom: () => 2,
+          },
+
+          margin: [0, 10, 30, 10]
+        }
+      ],
+
+      footer: this.getFooter(),
+
+      styles: {
+        header: { bold: true, alignment: 'center', fontSize: 13 },
+        tableCell: { fontSize: 9, noWrap: false, lineHeight: 1.1 },
+      }
+    };
+
+    pdfMakeLib.createPdf(docDefinition).open();
+  }
+
 
   /** ✅ Map status IDs to readable labels */
   private mapStatus(status: number): string {

@@ -3,7 +3,7 @@
     <div class="md:w-5/6">
         <div class="card">
             <p-table #dt [value]="schools()" [rows]="10" [columns]="cols" [paginator]="true"
-                [globalFilterFields]="['sectionID', 'sectionName']"
+                [globalFilterFields]="['schoolID', 'schoolName', 'address', 'coordinator', 'status', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSchools"
                 [rowHover]="true" dataKey="schoolID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
@@ -89,6 +89,8 @@
                                     (click)="edit(school)" />
                                 <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
                                     (click)="delete(school)" />
+                                <p-button icon="pi pi-qrcode" severity="info" [rounded]="true" [outlined]="true"
+                                    (click)="showQR(school)" />
                             </div>
                         </td>
                     </tr>
@@ -149,12 +151,12 @@
     </ng-template>
 
     <ng-template #footer>
-        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
         <p-button label="Save" icon="pi pi-check" (click)="save()" />
     </ng-template>
 </p-dialog>
 
-<p-dialog [(visible)]="assignDialog" header="Assign Coordinator" [modal]="true" [style]="{width: '30vw',}"
+<p-dialog [(visible)]="assignDialog" header="Assign Coordinator" [modal]="true" [style]="{width: '25vw',}"
     [closable]="true" [draggable]="true" [contentStyle]="{'height':'calc(100% - 60px)', 'overflow':'auto'}">
 
     <ng-template #content>
@@ -168,7 +170,7 @@
                     </p-tag>
                 </ng-container>
 
-                <p-select [options]="coordinators" optionLabel="fullname" optionValue="userID"
+                <p-select [options]="coordinators" filter="true" optionLabel="fullname" optionValue="userID"
                     placeholder="Select Coordinator" [(ngModel)]="coordinatorID" appendTo="body"
                     class="w-full"></p-select>
             </div>
@@ -183,10 +185,39 @@
     <!-- Footer -->
     <ng-template pTemplate="footer">
         <div class="flex justify-end gap-3 w-full">
-            <p-button label="Cancel" icon="pi pi-times" text (click)="hideAssignDialog()" />
+            <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
             <p-button label="Assign" icon="pi pi-check" (click)="saveAssignCoor()" />
         </div>
     </ng-template>
 </p-dialog>
+
+
+
+<p-dialog [(visible)]="qrDialog" header="School QR Code" [modal]="true" [style]="{width: '20vw'}" [closable]="true">
+
+    <div class="flex flex-col items-center my-3 mx-3">
+        <!-- QR IMAGE -->
+        <img *ngIf="school?.qrCode" [src]="'data:image/png;base64,' + school.qrCode" alt="QR Code"
+            style="width: 200px; height: 200px;" />
+
+        <!-- SCHOOL NAME -->
+        <h4 class="text-sm font-semibold text-center mt-0 leading-tight">
+    {{ school?.schoolName }}
+</h4>
+
+        <!-- SCHOOL ID (optional) -->
+        <p class="text-sm text-gray-500">
+            powered by <em class="font-bold text-blue-500">SAP Application</em>
+        </p>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-3 w-full">
+            <p-button label="Close" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Download" icon="pi pi-download" (click)="saveAsImage()" />
+        </div>
+    </ng-template>
+</p-dialog>
+
 
 <p-confirmdialog [style]="{ width: '450px' }">

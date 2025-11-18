@@ -240,7 +240,7 @@ export class ApiService {
     return this.handleRequest('post', 'Users', { body: section, logAction: 'Creating User' });
   }
 
-  updateUser(id: number, section: any) {
+  updateUser(id: string, section: any) {
     return this.handleRequest('put', 'Users', { id, body: section, logAction: 'Updating User' });
   }
 
@@ -254,6 +254,10 @@ export class ApiService {
 
   approve(email: string) {
     return this.handleStringRequest('post', 'Users/approve', email, 'Account Approval');
+  }
+  
+  changePassword(id: string, newPassword: any) {
+    return this.handleStringRequest('put', `Users/${id}/change-password`, newPassword, 'Change Password');
   }
 
 

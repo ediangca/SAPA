@@ -3,7 +3,7 @@
     <div class="md:w-5/6">
         <div class="card">
             <p-table #dt [value]="hospitals()" [rows]="10" [columns]="cols" [paginator]="true"
-                [globalFilterFields]="['hospitalID', 'hospitalName', 'address', 'sections']"
+                [globalFilterFields]="['hospitalID', 'hospitalName', 'address', 'sections.sectionName']"
                 [tableStyle]="{ 'min-width': '75rem' }" [(selection)]="selectHospitals" [rowHover]="true"
                 dataKey="hospitalID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} hospitals"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]">
@@ -128,7 +128,7 @@
     </div>
     <!-- SUBMENU -->
     <div class="md:w-1/6">
-        <ml-hospital-properties></ml-hospital-properties>
+        <ml-hospital-properties [hospitals]="hospitals()" ></ml-hospital-properties>
     </div>
 
 </div>

@@ -79,6 +79,7 @@ interface ExportColumn {
 export class Users implements OnInit {
 
     itemDialog: boolean = false;
+    changePassDialog: boolean = false;
 
     users = signal<any[]>([]);
     user!: any;
@@ -102,6 +103,7 @@ export class Users implements OnInit {
     emailPattern: string = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
     autoUsername: boolean = false;
+    newPassword: string = '';
 
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
@@ -217,7 +219,7 @@ export class Users implements OnInit {
     //         this.form.get('username')?.setValue('', { emitEvent: false });
     //     }
     // }
-    
+
     toggleAutoUsername(event: any) {
         const email = this.form.get('email')?.value || null;
 
@@ -231,14 +233,12 @@ export class Users implements OnInit {
         }
 
         if (event.checked) {
-            // Auto-generate username from email
             const username = email.split('@')[0];
-            this.form.get('username')?.setValue(username);
-            this.form.get('username')?.disable();
+            this.form.get('username')?.patchValue(username);
+            // this.form.get('username')?.disable();
         } else {
-            // Allow manual entry again
             this.form.get('username')?.reset();
-            this.form.get('username')?.enable();
+            // this.form.get('username')?.enable();
         }
     }
 
@@ -291,9 +291,13 @@ export class Users implements OnInit {
 
     resendVerification(user: any) {
         this.confirmationService.confirm({
-            message: `Do you really want to resend email verification to ${user.email}?`,
+            message: `Are you sur you really want to resend email verification to ${user.email}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
             accept: () => {
                 this.logger.printLogs('i', `Resending Email verification to ${user.email}`, user);
 
@@ -320,9 +324,15 @@ export class Users implements OnInit {
 
     approve(user: any) {
         this.confirmationService.confirm({
-            message: `Do you really want to approve <br> Mr./Ms. ${user.fullname}?`,
+            message: `Are you sure you really want to approve <br> Mr./Ms. ${user.fullname}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
             accept: () => {
                 this.logger.printLogs('i', `Approving Account of Mr./Ms. ${user.fullname}`, user);
 
@@ -378,9 +388,16 @@ export class Users implements OnInit {
         });
     }
 
+    changePassword(user: any) {
+        this.user = user
+        this.changePassDialog = true;
+    }
+
+
     hideDialog() {
         this.itemDialog = false;
         this.submitted = false;
+        this.changePassDialog = false;
     }
 
     refreshTable() {
@@ -484,6 +501,43 @@ export class Users implements OnInit {
                         });
                     }
                 });
+            }
+        });
+    }
+
+    isPasswordInvalid(): boolean {
+        return this.submitted && (!this.newPassword || this.newPassword.trim() === '');
+    }
+
+    updatePassword() {
+        this.submitted = true;
+        if (!this.newPassword) {
+            this.toast.warning("Password is required!", "Required Password", 2000);
+            return;
+        }
+
+        this.changePassDialog = false;
+
+        this.api.changePassword(this.user.userID, this.newPassword).subscribe({
+            next: () => {
+                this.showErrorAlert('Password changed', 'Password updated & email sent to user!', 'success', false);
+                this.toast.success("Password successfully changed!", "Password changed", 2000);
+
+                this.newPassword = '';
+            },
+            error: (err) => {
+                this.changePassDialog = false;
+                this.logger.printLogs('e', 'Failed to change password', err);
+                this.showErrorAlert('Change Password Failed', err, 'error', true);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: 'Failed to change password',
+                    life: 3000
+                });
+            },
+            complete: () => {
+                this.submitted = false;
             }
         });
     }

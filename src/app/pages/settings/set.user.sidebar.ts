@@ -31,10 +31,9 @@ export class UsersProperties implements OnInit {
     submitted: boolean = false;
     assignDialog: boolean = false;
 
-  @Input() users: any[] | undefined;
+    @Input() users: any[] = [];
 
-    constructor(
-        private pdfService: PdfService) {
+    constructor(private pdfService: PdfService) {
 
     }
 
@@ -66,10 +65,6 @@ export class UsersProperties implements OnInit {
         this.assignDialog = true;
     }
 
-    printDialog() {
-        this.assignDialog = true;
-    }
-
     save() {
         this.submitted = true;
         this.assignDialog = false;
@@ -77,12 +72,12 @@ export class UsersProperties implements OnInit {
 
 
     printAll() {
-    if (!this.users || this.users.length === 0) {
-      console.warn('No users found to print');
-      return;
-    }
+        if (!this.users || this.users.length === 0) {
+            console.warn('No users found to print');
+            return;
+        }
 
-    this.pdfService.generateUserReport(this.users);
+        this.pdfService.generateUserReport(this.users);
     }
 
 }

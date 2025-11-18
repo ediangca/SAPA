@@ -3,7 +3,7 @@
     <div class="md:w-5/6">
         <div class="card">
             <p-table #dt [value]="users()" [rows]="10" [columns]="cols" [paginator]="true"
-                [globalFilterFields]="['userID', 'email']" [tableStyle]="{ 'min-width': '75rem'}"
+                [globalFilterFields]="['userID', 'email', 'rolename', 'status`']" [tableStyle]="{ 'min-width': '75rem'}"
                 [(selection)]="selectUsers" [rowHover]="true" dataKey="userID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true"
@@ -66,8 +66,9 @@
                         <td style="min-width: 10rem">{{ user.email }}</td>
                         <td style="min-width: 10rem">{{ user.rolename }}</td>
                         <td style="min-width: 10rem">
+                            <!-- [severity]="getStatus(user.status,'severirty')" -->
                             <p-tag [value]="getStatus(user.status,'value')"
-                                [severity]="getStatus(user.status,'severirty')" styleClass="dark:bg-surface-900!" />
+                                 styleClass="dark:bg-surface-900!" />
                             @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
                             <button class="ml-2" (click)="resendVerification(user)" pTooltip=" Resend Verification?"
                                 tooltipPosition="top"> <i
@@ -82,9 +83,11 @@
                         </td>
                         <td>
                             <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                                (click)="edit(user)" />
-                            <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                                (click)="delete(user)" />
+                                pTooltip="Edit" (click)="edit(user)" />
+                            <p-button icon="pi pi-trash" class="mr-2" severity="danger" [rounded]="true"
+                                [outlined]="true" pTooltip="Delete" (click)="delete(user)" />
+                            <p-button icon="pi pi-key" severity="warn" [rounded]="true" [outlined]="true"
+                                pTooltip="Change Password" (click)="changePassword(user)" />
                         </td>
                     </tr>
                 </ng-template>
@@ -93,7 +96,7 @@
     </div>
     <!-- SUBMENU -->
     <div class="md:w-1/6">
-        <set-users-sidebar  [users]="users()"></set-users-sidebar>
+        <set-users-sidebar [users]="users()"></set-users-sidebar>
     </div>
 
 </div>
@@ -131,7 +134,7 @@
                     <div class="flex flex-row gap-2 item-center justify-end mt-2">
                         <p-check-box id="autoUsername" formControlName="autoUsername"
                             (onChange)="toggleAutoUsername($event)" binary="true" label="Auto-generate username"
-                            binary="true"/>
+                            binary="true" />
 
                         <small class="text-cyan-500">Copy Email ID to Username</small>
                     </div>
@@ -158,6 +161,29 @@
     <ng-template #footer>
         <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
         <p-button label="Save" icon="pi pi-check" (click)="save()" />
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="changePassDialog" [style]="{ width: '450px' }" header="Change Password" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-4 p-3">
+
+            <div class="flex flex-col gap-3">
+                <label>New Password</label>
+                <input pInputText [(ngModel)]="newPassword" placeholder="Enter new password" [ngClass]="{
+               'border !border-red-500 rounded px-2 py-2': isPasswordInvalid()
+             }" />
+                <small class="text-red-500 mt-1" *ngIf="isPasswordInvalid()">
+                    Password is required.
+                </small>
+            </div>
+
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="updatePassword()" />
     </ng-template>
 </p-dialog>
 

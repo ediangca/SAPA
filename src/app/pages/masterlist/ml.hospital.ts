@@ -365,7 +365,7 @@ export class Hospital implements OnInit {
     }
     chipSeverities = ['primary', 'success', 'info', 'warn', 'danger'];
 
-    getChipClass(section: any): string {
+    getChipClass(section: any): any {
         const lower = section.sectionName.toLowerCase();
 
         if (section.status === false) return 'secondary';

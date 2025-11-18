@@ -103,7 +103,7 @@ export class School implements OnInit {
     tokenPayload: any | null;
 
     assignDialog: boolean = false;
-
+    qrDialog: boolean = false;
     coordinatorID: any | null;
 
 
@@ -127,40 +127,6 @@ export class School implements OnInit {
             userID: ['', Validators.required]
         });
 
-    }
-
-
-    exportCSV() {
-        this.dt.exportCSV();
-    }
-    /*
-        getStatus(status: any) {
-            switch (status) {
-                case 1:
-                    return 'Approved'
-                case 2:
-                    return  'Inactive' 
-                case 3:
-                    return 'Suspemd'
-    
-                default:
-                    return 'Pending'
-            }
-        }
-    */
-
-    getStatus(status: any, type: string) {
-        switch (status) {
-            case 1:
-                return (type == 'value' ? 'Approved' : 'info')
-            case 2:
-                return (type == 'value' ? 'Inactive' : 'contrast')
-            case 3:
-                return (type == 'value' ? 'Suspemd' : 'danger')
-
-            default:
-                return (type == 'value' ? 'Pending' : 'warn');
-        }
     }
 
 
@@ -224,6 +190,31 @@ export class School implements OnInit {
         this.loadData();
     }
 
+
+    getStatus(status: any, type: string): any {
+        switch (status) {
+            case 1:
+                return (type == 'value' ? 'Approved' : 'info')
+            case 2:
+                return (type == 'value' ? 'Inactive' : 'contrast')
+            case 3:
+                return (type == 'value' ? 'Suspend' : 'danger')
+
+            default:
+                return (type == 'value' ? 'Pending' : 'warn');
+        }
+    }
+
+    // getStatusSeverity(status: number): "success" | "info" | "warn" | "danger" | "secondary" | "contrast" {
+    //     switch (status) {
+    //         case 1: return 'info';
+    //         case 2: return 'contrast';
+    //         case 3: return 'danger';
+    //         default: return 'warn';
+    //     }
+    // }
+
+
     loadData() {
 
         this.store.getUserPayload()
@@ -244,6 +235,11 @@ export class School implements OnInit {
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
     }
 
+
+    exportCSV() {
+        this.dt.exportCSV();
+    }
+
     refreshTable() {
         this.api.getSchools().subscribe({
             next: (schools) => this.schools.set(schools),
@@ -253,7 +249,10 @@ export class School implements OnInit {
 
     loadCoordinators() {
         this.api.getUsers().subscribe({
-            next: (users) => { this.coordinators = users.filter((user: any) => user.roleId === 'UGR0003') || [], this.logger.printLogs('i', 'Users loaded', this.coordinators) },
+            next: (users) => {
+                this.coordinators = users.filter((user: any) => user.roleId === 'UGR0003' && user.status === 'A') || []; //Role ID - Coordinators
+                this.logger.printLogs('i', 'Users loaded', this.coordinators)
+            },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
         });
     }
@@ -320,12 +319,8 @@ export class School implements OnInit {
         });
     }
 
-    hideDialog() {
-        this.itemDialog = false;
-        this.submitted = false;
-    }
-
     reAssignDialog() {
+        this.loadCoordinators();
         if (!this.selectSchools || this.selectSchools.length === 0) {
             this.toast.warning("Please select at least one school first!", "No selelected School", 3000);
             this.messageService.add({
@@ -339,27 +334,24 @@ export class School implements OnInit {
 
         this.assignDialog = true;
         this.coordinatorID = null;
-        this.loadCoordinators();
     }
 
 
-    hideAssignDialog() {
-        this.assignDialog = false;
-        this.submitted = false;
-    }
-
-    private closeDialog() {
+    hideDialog() {
         this.form.reset({
             schoolName: '',
             userID: this.tokenPayload.nameid
         });
         this.school = {};
         this.itemDialog = false;
+        this.assignDialog = false;
+        this.qrDialog = false;
         this.submitted = false;
     }
 
     changeStatus(status: number) {
         const schoolIDs = this.selectSchools?.map((school: any) => school.schoolID) ?? [];
+        const schools = this.selectSchools?.map((school: any) => school.schoolName) ?? [];
 
         if (!schoolIDs.length) {
             this.toast.warning("Please select at least one school first!", "No selelected School", 3000);
@@ -373,13 +365,13 @@ export class School implements OnInit {
         }
 
         this.confirmationService.confirm({
-            message: `Are you sure you want to change the status of selected schools to  <b>${this.getStatus(status, 'value')}</b>?`,
+            message: `Are you sure you want to change the status of selected schools <br><br>${schools.join('<br>')}<br><br>to<b>${this.getStatus(status, 'value')}</b>?`,
             header: 'Confirm Status Update',
             icon: 'pi pi-exclamation-triangle',
             acceptLabel: "Yes! I'm Sure",
             rejectLabel: 'Cancel',
-            acceptButtonStyleClass: 'p-button-outlined p-button-success',
-            rejectButtonStyleClass: 'p-button-danger',
+            acceptButtonStyleClass: 'p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined  p-button-secondary',
 
             accept: () => {
                 this.api.updateSchoolStatus(status, schoolIDs).subscribe({
@@ -393,12 +385,13 @@ export class School implements OnInit {
 
                         this.logger.printLogs('s', 'Status updated successfully', res);
                         this.refreshTable();
+                        this.toast.success(res.message, 'Status Updated Successfully', 3000);
                         this.selectSchools = [];
                     },
                     error: (err) => {
                         this.messageService.add({
                             severity: 'error',
-                            summary: 'Error',
+                            summary: err,
                             detail: 'Failed to update school status.',
                             life: 3000
                         });
@@ -435,8 +428,8 @@ export class School implements OnInit {
             acceptLabel: "Yes! I'm Sure",
             rejectIcon: 'pi pi-times',
             acceptIcon: 'pi pi-check',
-            acceptButtonStyleClass: 'p-button-outlined p-button-success',
-            rejectButtonStyleClass: 'p-button-danger',
+            acceptButtonStyleClass: 'p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
 
             accept: () => {
                 this.selectSchools = [];
@@ -474,13 +467,17 @@ export class School implements OnInit {
         if (this.school?.schoolID) {
             // ✅ UPDATE school
             let id = this.school.schoolID
-            this.school = this.form.value;
+            this.school.schoolName = this.form.get('schoolName')?.value;
+            this.school.address = this.form.get('address')?.value;
+
             this.logger.printLogs('i', 'School details', this.school);
             this.api.updateSchool(id, this.school).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'School updated successfully', res);
                     this.refreshTable(); // reload list
-                    this.closeDialog();
+                    this.hideDialog();
+                    this.toast.success('School updated successfully', 'Updated Successfully', 3000);
+                    // this.showErrorAlert('Updated Successfully', "School updated successfully", false);
                 },
                 error: (err) => {
                     this.showErrorAlert('Updating Failed', err, true);
@@ -496,7 +493,9 @@ export class School implements OnInit {
                 next: (res) => {
                     this.logger.printLogs('i', 'School created successfully', res);
                     this.refreshTable(); // reload list
-                    this.closeDialog();
+                    this.hideDialog();
+                    this.toast.success('School created successfully', 'Created Successfully', 3000);
+                    // this.showErrorAlert('Created Successfully', "School created successfully", false);
                 },
                 error: (err) => {
                     this.showErrorAlert('Saving Failed', err, true);
@@ -551,6 +550,104 @@ export class School implements OnInit {
         this.pdfService.generateSchoolsReport(this.schools());
     }
 
+    showQR(school: any) {
+        this.school = school;
+        this.qrDialog = true;
+    }
+
+    saveAsImage() {
+        if (!this.school?.qrCode) return;
+
+        const qrImage = new Image();
+        qrImage.src = 'data:image/png;base64,' + this.school.qrCode;
+
+        qrImage.onload = () => {
+            const qrSize = 200;
+            const padding = 20;
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d')!;
+
+            const nameFont = "bold 20px Arial";
+            const poweredFont = "14px Arial";
+            const poweredBlueFont = "italic 14px Arial";
+
+            ctx.font = nameFont;
+
+            // Wrap function
+            const wrapText = (text: string, maxWidth: number): string[] => {
+                const words = text.split(" ");
+                const lines: string[] = [];
+                let line = "";
+
+                words.forEach(word => {
+                    const testLine = line + word + " ";
+                    if (ctx.measureText(testLine).width > maxWidth) {
+                        lines.push(line.trim());
+                        line = word + " ";
+                    } else {
+                        line = testLine;
+                    }
+                });
+
+                lines.push(line.trim());
+                return lines;
+            };
+
+            const maxWidth = qrSize + padding * 2;
+            const nameLines = wrapText(this.school.schoolName, maxWidth - 20);
+            const lineHeight = 26;
+
+            const nameSectionHeight = nameLines.length * lineHeight;
+
+            // ⬇ Add extra bottom margin here (+40px)
+            const poweredHeight = 30;
+            const extraBottomMargin = 70;
+
+            canvas.width = maxWidth;
+            canvas.height =
+                qrSize +
+                padding +
+                nameSectionHeight +
+                poweredHeight +
+                extraBottomMargin;
+
+            // Background
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw QR
+            ctx.drawImage(qrImage, (canvas.width - qrSize) / 2, padding, qrSize, qrSize);
+
+            // Draw school name
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#2c3e50";
+            ctx.font = nameFont;
+
+            let textY = qrSize + padding + 40;
+
+            nameLines.forEach(line => {
+                ctx.fillText(line, canvas.width / 2, textY);
+                textY += lineHeight;
+            });
+
+            // Draw “powered by”
+            ctx.font = poweredFont;
+            ctx.fillStyle = "#7f8c8d";
+            ctx.fillText("powered by", canvas.width / 2, textY + 10);
+
+            // Draw SAP Application (blue)
+            ctx.font = poweredBlueFont;
+            ctx.fillStyle = "#007bff";
+            ctx.fillText("SAP Application", canvas.width / 2, textY + 28);
+
+            // Download
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL("image/png");
+            link.download = `${this.school.schoolID}_qrcode.png`;
+            link.click();
+        };
+    }
 
 
     private showErrorAlert(title: string, message: string, dialogOpen: boolean) {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -11,6 +11,7 @@ import { ButtonModule } from 'primeng/button';
 import { TableModule } from "primeng/table";
 import { ApiService } from '@/services/api.service';
 import { LogsService } from '@/services/logs.service';
+import { PdfService } from '@/services/pdf.service';
 
 
 @Component({
@@ -40,14 +41,15 @@ export class HospitalProperties implements OnInit {
     submitted: boolean = false;
     assignDialog: boolean = false;
 
-    hospitals: any[] = [];
     sourceSections: any[] = [];
     assignSections: any[] = [];
 
     selectedHospital: any[] = [];
 
+    @Input() hospitals: any[] = [];
 
-    constructor(private api: ApiService, private logger: LogsService) {
+    constructor(private api: ApiService, private logger: LogsService, 
+            private pdfService: PdfService) {
 
     }
 
@@ -56,7 +58,7 @@ export class HospitalProperties implements OnInit {
             {
                 items: [
                     { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                    { label: 'Print All', icon: 'fas fa-table-columns', command: () => this.printDialog() },
+                    { label: 'Print All', icon: 'fas fa-table-columns', command: () => this.printAll() },
 
                 ]
             }
@@ -100,10 +102,15 @@ export class HospitalProperties implements OnInit {
         this.assignDialog = true;
     }
 
-    printDialog() {
-        this.assignDialog = true;
+    printAll() {
+        if (!this.hospitals || this.hospitals.length === 0) {
+            console.warn('No hospital found to print');
+            return;
+        }
+        
+        this.pdfService.generateHopitalsReport(this.hospitals);
     }
-    
+
 }
 
 
