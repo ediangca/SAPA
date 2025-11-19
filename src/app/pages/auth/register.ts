@@ -15,30 +15,49 @@ import ValidateForm from '@/helper/validator/validateForm';
 import { LogsService } from '@/services/logs.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { validatePasswordMatch } from '@/helper/validator/validatePasswordMatch';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { MessageService } from 'primeng/api';
+import { Toast, ToastModule } from "primeng/toast";
 import { NgToastService } from 'ng-angular-popup';
+import { StepperModule } from 'primeng/stepper';
+import { Tooltip } from "primeng/tooltip";
+import { Badge, BadgeModule } from "primeng/badge";
 
 @Component({
     selector: 'app-register',
     standalone: true,
-    imports: [RouterLink, 
-        ReactiveFormsModule, 
-        ButtonModule, 
-        CheckboxModule, 
-        InputTextModule, 
-        PasswordModule, 
+    imports: [
+        CommonModule,
+        RouterLink,
+        ReactiveFormsModule,
+        ButtonModule,
+        CheckboxModule,
+        InputTextModule,
+        PasswordModule,
         FormsModule,
-        RouterModule, 
+        RouterModule,
         RippleModule,
-         AppFloatingConfigurator, 
-         ProgressSpinnerModule],
-    templateUrl: './register.component.html'
-
+        ToastModule,
+        SelectButtonModule,
+        AppFloatingConfigurator,
+        ProgressSpinnerModule,
+        StepperModule,
+        Tooltip,
+        BadgeModule,
+    ],
+    templateUrl: './register.component.html',
+    styleUrls: ['./css/auth.component.scss'],
+    providers: [MessageService]
 })
+
 export class Register {
 
+    isStudent: boolean = false;
 
     @ViewChild('loadingModal') loadingModal!: ElementRef;
     @ViewChild('usernameInput') usernameInput!: ElementRef;
+
+    @ViewChild('schoolCodeInput') schoolCodeInput!: ElementRef;
 
     checked: boolean = false;
 
@@ -47,18 +66,31 @@ export class Register {
     form!: FormGroup;
     errorMessage: string = '';
 
+    currentStep = 1;
+
+    roleOptions = [
+        { label: 'Coordinator', value: false, icon: 'pi pi-briefcase' },
+        { label: 'Student', value: true, icon: 'pi pi-graduation-cap' }
+    ];
+
 
     constructor(private fb: FormBuilder, private auth: AuthService,
         private router: Router, private api: ApiService,
-        private vf: ValidateForm, private logger: LogsService,
-        private toast: NgToastService) {
+        private vf: ValidateForm, private logger: LogsService, private toast: NgToastService) {
 
         this.form = this.fb.group({
-            email: ['', Validators.required],
+            lastname: ['', Validators.required],
+            firstname: ['', Validators.required],
+            middlename: ['', Validators.required],
+            email: ['', Validators.required, Validators.email,
+                Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), { validateEmailFormat: true, }
+            ],
             username: ['', Validators.required],
             password: ['', [Validators.required, Validators.minLength(6)]],
             confirmPassword: ['', Validators.required],
             autoUsername: [false],
+            isStudent: [false],
+            schoolCode: ['']
         }, { validators: validatePasswordMatch('password', 'confirmPassword') });
 
         this.errorMessage = '';
@@ -68,21 +100,47 @@ export class Register {
         }
     }
 
-    // Validate Match Password and Confirm Password
+    onRoleToggle() {
+        const isStudent = this.form.get('isStudent')?.value;
+
+        if (isStudent) {
+            this.form.get('schoolCode')?.setValidators([Validators.required]);
+        } else {
+            this.form.get('schoolCode')?.clearValidators();
+            this.form.get('schoolCode')?.setValue('');
+        }
+
+        this.form.get('schoolCode')?.updateValueAndValidity();
+    }
+
+    goToStep(step: number) {
+        this.currentStep = step;
+    }
+
+    formStep1Valid() {
+        return (
+            this.form.get('firstName')?.valid &&
+            this.form.get('lastName')?.valid &&
+            (this.form.get('isStudent')?.value === false ||
+                this.form.get('schoolCode')?.valid)
+        );
+    }
+
     get passwordMismatch(): boolean {
         const form = this.form;
         return form.hasError('passwordMismatch') && form.get('confirmPassword')?.touched === true;
     }
 
-
+    get isvalidEmailFormat(): boolean {
+        const form = this.form;
+        return form.hasError('validateEmailFormat') && form.get('email')?.touched === true ||
+            this.vf.validateEmailFormat(this.form.value['email']) === false;
+    }
 
     toggleAutoUsername(event: any) {
         const email = this.form.get('email')?.value || null;
-
-        // If email is missing and user tried to check the box
         if (!email && event.checked) {
-            this.toast.warning("Please enter email first!", "Email Validation!", 2000);
-
+            this.toast.warning('Please enter email first to copy email ID as username.', 'Warning', 5000);
             // Revert checkbox to its original unchecked state
             this.form.get('autoUsername')?.setValue(false, { emitEvent: false });
             return;
@@ -92,30 +150,130 @@ export class Register {
             // Auto-generate username from email
             const username = email.split('@')[0];
             this.form.get('username')?.setValue(username);
-            this.form.get('username')?.disable();
+            // this.form.get('username')?.disable();
         } else {
             // Allow manual entry again
             this.form.get('username')?.reset();
-            this.form.get('username')?.enable();
+            // this.form.get('username')?.enable();
         }
     }
 
+    onCheckSchoolCode() {
+        const schoolCode = this.form.get('schoolCode')?.value || '';
+        if (schoolCode) {
+            this.api.checkSchoolCode(schoolCode).subscribe({
+                next: (res: any) => {
+                    // res return true or false if it is valid School Code
+                    if (res === true) {
+                        this.toast.success('Valid school code.', 'Success', 3000);
+                    } else {
+                        this.toast.danger('Invalid school code. Please check and try again.', 'Error', 5000);
+                        this.form.get('schoolCode')?.setValue('');
+                        this.form.get('schoolCode')?.markAsUntouched();
+                        this.form.get('schoolCode')?.markAsPristine();
+
+                        this.schoolCodeInput.nativeElement.focus();
+                    }
+                },
+                error: (err: any) => {
+                    this.toast.danger('Invalid school code. Please check and try again.', 'Error', 5000);
+
+                    this.schoolCodeInput.nativeElement.focus();
+                }
+            });
+        }
+    }
+
+    step1HasError(): boolean {
+        return ((this.form.controls['lastname'].invalid &&
+            this.form.hasError('required', 'lastname') &&
+            this.form.get('lastname')?.touched ||
+            (this.form.controls['lastname'].dirty &&
+                this.form.hasError('required', 'lastname'))) ||
+            (this.form.controls['firstname'].invalid &&
+                this.form.hasError('required', 'firstname') &&
+                this.form.get('firstname')?.touched ||
+                (this.form.controls['firstname'].dirty &&
+                    this.form.hasError('required', 'firstname'))) ||
+            (this.form.controls['middlename'].invalid &&
+                this.form.hasError('required', 'middlename') &&
+                this.form.get('middlename')?.touched ||
+                (this.form.controls['middlename'].dirty &&
+                    this.form.hasError('required', 'middlename')))
+        );
+    }
+
+    step2HasError(): boolean {
+        return (
+            (this.form.controls['email'].invalid &&
+                this.form.hasError('required', 'email') &&
+                this.form.get('email')?.touched ||
+                (this.form.controls['email'].dirty &&
+                    this.form.hasError('required', 'email'))) ||
+            (this.form.controls['email']?.touched &&
+                (this.form.get('email')?.hasError('required') ||
+                    this.form.get('email')?.hasError('email'))) ||
+            (this.form.controls['username'].invalid &&
+                this.form.hasError('required', 'username') &&
+                this.form.get('username')?.touched ||
+                (this.form.controls['username'].dirty &&
+                    this.form.hasError('required', 'username'))) ||
+            (this.form.controls['password'].invalid &&
+                this.form.hasError('required', 'password') &&
+                this.form.get('password')?.touched ||
+                (this.form.controls['password'].dirty &&
+                    this.form.hasError('required', 'password'))) ||
+            (this.form.controls['confirmPassword'].invalid &&
+                this.form.hasError('required', 'confirmPassword') &&
+                this.form.get('confirmPassword')?.touched ||
+                (this.form.controls['confirmPassword'].dirty &&
+                    this.form.hasError('required', 'confirmPassword'))) ||
+            (this.form.hasError('minlength', 'password') &&
+                this.form.get('password')?.touched) ||
+            (!!this.passwordMismatch &&
+                !!this.form.get('confirmPassword')?.touched)
+        );
+
+    }
+
+
     onSubmit() {
+
+
+        if (this.form.invalid) {
+            this.form.markAllAsTouched();
+            this.form.updateValueAndValidity();
+            return;
+        }
+        if (this.vf.validateEmailFormat(this.form.value['email']) === false) {
+            this.toast.danger('Invalid email format. Please check and try again.', 'Error', 5000);
+            this.form.get('email')?.setValue('');
+            this.form.get('email')?.markAsUntouched();
+            this.form.get('email')?.markAsPristine();
+
+            this.usernameInput.nativeElement.focus();
+            return;
+        }
         if (this.form.valid) {
             this.isLoading = true;
             this.logger.printLogs('i', 'Fetching Login Form', this.form.value);
 
 
+            const roleId = this.isStudent ? 'UGR0004' : 'UGR0003'; // Example: Student / Coordinator
+
             const userAccount = {
+                "lastname": this.form.value['lastname'],
+                "firstname": this.form.value['firstname'],
+                "middlename": this.form.value['middlename'],
                 "email": this.form.value['email'],
                 "username": this.form.value['username'],
                 "password": this.form.value['password'],
-                "roleId": "UGR0003"
+                "roleId": roleId,
+                "schoolId": this.isStudent ? this.form.value['schoolCode'] : undefined
             }
 
             setTimeout(() => {
-
-                this.auth.registerCoordinator(userAccount)
+                this.auth.register(userAccount)
                     .subscribe({
                         next: (res) => {
 
@@ -149,8 +307,5 @@ export class Register {
 
         }
         this.vf.validateFormFields(this.form);
-
-
-        // Swal.fire('Successfully Registered!', 'Please check you email to verify you account.', 'success');
     }
 }

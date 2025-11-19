@@ -25,8 +25,6 @@ import Swal from 'sweetalert2';
 import { StoreService } from '@/services/store.service';
 import { ToastModule } from 'primeng/toast';
 import { UsersProperties } from "./set.user.sidebar";
-import { ToastrService } from 'ngx-toastr';
-import { NgToastService } from 'ng-angular-popup';
 import { Tooltip } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { CheckboxModule } from "primeng/checkbox";
@@ -112,7 +110,6 @@ export class Users implements OnInit {
         private api: ApiService,
         private logger: LogsService,
         private vf: ValidateForm,
-        private toast: NgToastService
     ) {
 
         this.form = this.fb.group({
@@ -193,7 +190,7 @@ export class Users implements OnInit {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
 
-    getStatus(status: any, type: string) {
+    getStatus(status: any, type: string): any {
         switch (status) {
             case 'P':
                 return (type == 'value' ? 'Pending' : 'warn')
@@ -225,7 +222,12 @@ export class Users implements OnInit {
 
         // If email is missing and user tried to check the box
         if (!email && event.checked) {
-            this.toast.warning("Please enter email first!", "Email Validation!", 2000);
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Warning',
+                detail: 'Please enter email first!',
+                life: 3000
+            });
 
             // Revert checkbox to its original unchecked state
             this.form.get('autoUsername')?.setValue(false, { emitEvent: false });
@@ -296,7 +298,7 @@ export class Users implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             rejectLabel: 'Cancel',
             acceptLabel: "Yes! I'm Sure",
-            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            acceptButtonStyleClass: 'p-button-success',
             rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
             accept: () => {
                 this.logger.printLogs('i', `Resending Email verification to ${user.email}`, user);
@@ -305,11 +307,11 @@ export class Users implements OnInit {
                     next: (res) => {
                         this.logger.printLogs('i', 'Verification sent', res);
                         this.refreshTable();
-                        this.showErrorAlert('Vefification Sent', 'Verification Successfully sent!', 'success', false);
+                        this.showErrorAlert('Vefification Sent', 'Verification Successfully sent!', false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to resend verification', err);
-                        this.showErrorAlert('Failed to resend verification', err, 'error', false);
+                        this.showErrorAlert('Failed to resend verification', err, false, 'error');
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Error',
@@ -331,7 +333,7 @@ export class Users implements OnInit {
             acceptIcon: 'pi pi-check',
             rejectLabel: 'Cancel',
             acceptLabel: "Yes! I'm Sure",
-            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            acceptButtonStyleClass: 'p-button-success',
             rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
             accept: () => {
                 this.logger.printLogs('i', `Approving Account of Mr./Ms. ${user.fullname}`, user);
@@ -340,11 +342,11 @@ export class Users implements OnInit {
                     next: (res: any) => {
                         this.logger.printLogs('i', 'Approved Account', res);
                         this.refreshTable();
-                        this.showErrorAlert('Account Approved', res.message, 'success', false);
+                        this.showErrorAlert('Account Approved', res.message, false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to approve account', err);
-                        this.showErrorAlert('Failed to approve account', err, 'error', false);
+                        this.showErrorAlert('Failed to approve account', err, false, 'error');
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Error',
@@ -373,8 +375,8 @@ export class Users implements OnInit {
             acceptLabel: "Yes! I'm Sure",
             rejectIcon: 'pi pi-times',
             acceptIcon: 'pi pi-check',
-            acceptButtonStyleClass: 'p-button-outlined p-button-success',
-            rejectButtonStyleClass: 'p-button-danger',
+            acceptButtonStyleClass: 'p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
             accept: () => {
                 this.users.set(this.users().filter((val) => !this.selectUsers?.includes(val)));
                 this.selectUsers = null;
@@ -416,8 +418,12 @@ export class Users implements OnInit {
         this.submitted = true;
 
         if (!this.form.valid) {
-            // Swal.fire('Warning!', 'Please complete all required fields before proceeding!', 'warning');
-            this.toast.warning("Please complete all required fields before proceeding!", "Complete Fields!", 2000);
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Warning',
+                detail: 'Please complete all required fields before proceeding!',
+                life: 3000
+            });
             this.vf.validateFormFields(this.form);
             return;
         }
@@ -427,7 +433,12 @@ export class Users implements OnInit {
          * Validate valid email format
          */
         if (this.isEmailInvalid()) {
-            this.toast.warning("Please enter a valid email address!", "Invalid Email!", 2000);
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Warning',
+                detail: 'Please enter a valid email address!',
+                life: 3000
+            });
             return;
         }
 
@@ -442,10 +453,10 @@ export class Users implements OnInit {
                 next: (res) => {
                     this.logger.printLogs('i', 'User updated successfully', res);
                     this.refreshTable(); // reload list
-                    this.showErrorAlert('User Updated', 'User has been Successfully updated!', 'success', false);
+                    this.showErrorAlert('User Updated', 'User has been Successfully updated!', false, 'success');
                 },
                 error: (err) => {
-                    this.showErrorAlert('Updating Failed', err, 'error', true);
+                    this.showErrorAlert('Updating Failed', err, true, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -461,7 +472,7 @@ export class Users implements OnInit {
                     this.closeDialog();
                 },
                 error: (err) => {
-                    this.showErrorAlert('Saving Failed', err, 'error', true);
+                    this.showErrorAlert('Saving Failed', err, true, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -479,8 +490,8 @@ export class Users implements OnInit {
             acceptLabel: "Yes! I'm Sure",
             rejectIcon: 'pi pi-times',
             acceptIcon: 'pi pi-check',
-            acceptButtonStyleClass: 'p-button-outlined p-button-success',
-            rejectButtonStyleClass: 'p-button-danger',
+            acceptButtonStyleClass: 'p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
             accept: () => {
                 this.logger.printLogs('i', `Deleting User ${user.email}`, user);
 
@@ -488,11 +499,11 @@ export class Users implements OnInit {
                     next: (res) => {
                         this.logger.printLogs('i', 'User deleted', res);
                         this.refreshTable();
-                        this.showErrorAlert('User Deleted', 'User has been Successfully deleted!', 'success', false);
+                        this.showErrorAlert('User Deleted', 'User has been Successfully deleted!', false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to delete user', err);
-                        this.showErrorAlert('Deleting Failed', err, 'error', true);
+                        this.showErrorAlert('Deleting Failed', err, true, 'error');
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Error',
@@ -512,45 +523,65 @@ export class Users implements OnInit {
     updatePassword() {
         this.submitted = true;
         if (!this.newPassword) {
-            this.toast.warning("Password is required!", "Required Password", 2000);
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Warning',
+                detail: 'Password is required!',
+                life: 3000
+            });
             return;
         }
 
-        this.changePassDialog = false;
+        this.confirmationService.confirm({
+            message: `Are you sure you want to change password for <b>${this.user.email}</b>?`,
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+            accept: () => {
+                this.logger.printLogs('i', `Changing password for ${this.user.email}`, this.newPassword);
 
-        this.api.changePassword(this.user.userID, this.newPassword).subscribe({
-            next: () => {
-                this.showErrorAlert('Password changed', 'Password updated & email sent to user!', 'success', false);
-                this.toast.success("Password successfully changed!", "Password changed", 2000);
-
-                this.newPassword = '';
-            },
-            error: (err) => {
                 this.changePassDialog = false;
-                this.logger.printLogs('e', 'Failed to change password', err);
-                this.showErrorAlert('Change Password Failed', err, 'error', true);
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: 'Failed to change password',
-                    life: 3000
+
+                this.api.changePassword(this.user.userID, this.newPassword).subscribe({
+                    next: () => {
+                        this.showErrorAlert('Password changed', 'Password updated & email sent to user!', false, 'success');
+                        this.newPassword = '';
+                    },
+                    error: (err) => {
+                        this.changePassDialog = false;
+                        this.logger.printLogs('e', 'Failed to change password', err);
+                        this.showErrorAlert('Change Password Failed', err, true, 'error');
+                    },
+                    complete: () => {
+                        this.submitted = false;
+                    }
                 });
-            },
-            complete: () => {
-                this.submitted = false;
             }
         });
+
     }
 
 
-    private showErrorAlert(title: string, message: any, type: 'success' | 'error' | 'warning' | 'info' | 'question', dialogOpen: boolean) {
+    private showErrorAlert(title: string, message: any, dialogOpen: boolean, severity: 'success' | 'error' | 'warning' | 'info' | 'question' | undefined = 'info') {
 
-        this.logger.printLogs(type, title, message);
+        this.logger.printLogs(severity, title, message);
+
+        this.messageService.add({
+            severity: severity,
+            summary: title,
+            detail: message,
+            life: 3000
+        });
 
         Swal.fire({
             title: title,
             text: message,
-            icon: type,
+            icon: severity,
             showCancelButton: false,
             confirmButtonText: 'OK',
         }).then((result) => {

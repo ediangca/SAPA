@@ -129,7 +129,6 @@ export class Hospital implements OnInit {
         private api: ApiService,
         private logger: LogsService,
         private vf: ValidateForm,
-        private toast: NgToastService
 
     ) {
 
@@ -399,8 +398,12 @@ export class Hospital implements OnInit {
         this.submitted = true;
 
         if (!this.form.valid) {
-            // Swal.fire('Warning!', 'Please complete all required fields before proceeding!', 'warning');
-            this.toast.warning("Please complete all required fields before proceeding!", "Complete Fields!", 2000);
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Incomplete Fields',
+                detail: 'Please complete all required fields before proceeding!',
+                life: 3000
+            });
             this.vf.validateFormFields(this.form);
             return;
         }
@@ -530,15 +533,19 @@ export class Hospital implements OnInit {
     }
 
 
-    private showAlert(title: string, message: string, dialogOpen: boolean, icon: 'error' | 'warning' | 'success' = 'success') {
+    private showAlert(title: string, message: string, dialogOpen: boolean, severity: 'success' | 'error' | 'warning' | 'info' | 'question' | undefined = 'info') {
         this.logger.printLogs('e', 'Failed to create hospital', message);
-
-        // Swal.fire('Connectivity Error!', "Failed to establish connection!<br>Please contact the system administrator.", 'error');
+        this.messageService.add({
+            severity: severity,
+            summary: title,
+            detail: message,
+            life: 3000
+        });
 
         Swal.fire({
             title: title,
             html: message,
-            icon: icon,
+            icon: severity,
             showCancelButton: false,
             confirmButtonText: 'OK',
         }).then((result) => {
@@ -560,7 +567,12 @@ export class Hospital implements OnInit {
         const invalid = this.allocations.some(s => !s.allocation || s.allocation < 1);
 
         if (invalid) {
-            this.toast.danger("Allocation values must be at least 1!", "Validation Error", 3000);
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Validation Error',
+                detail: 'Allocation values must be at least 1!',
+                life: 3000
+            });
             return;
         }
 

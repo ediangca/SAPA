@@ -79,7 +79,6 @@ interface ExportColumn {
 })
 export class School implements OnInit {
 
-
     subcomponent: MenuItem[] = [];
     properties: MenuItem[] = [];
 
@@ -108,14 +107,12 @@ export class School implements OnInit {
 
 
     constructor(private fb: FormBuilder,
-        private productService: ProductService,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private store: StoreService,
         private api: ApiService,
         private logger: LogsService,
         private vf: ValidateForm,
-        private toast: NgToastService,
         private pdfService: PdfService
 
     ) {
@@ -141,34 +138,6 @@ export class School implements OnInit {
             }
         ];
 
-        /*
-        this.properties = [
-            {
-                label: 'Status',
-                icon: 'fas fa-layer-group',
-                items: [
-                    { label: 'Approve', icon: 'fas fa-check-circle', command: () => this.changeStatus(1) },
-                    { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
-                    { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-                    { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
-                ]
-            },
-            {
-                separator: true
-            },
-            {
-                label: 'Coordinator',
-                icon: 'fas fa-user-edit',
-                items: [
-                    {
-                        label: 'Re-assign Coordinator',
-                        icon: 'fas fa-user-pen',
-                        command: () => this.reAssignDialog()
-                    }
-                ]
-            }
-        ];
-        */
         this.properties = [
             {
                 label: 'Status',
@@ -189,31 +158,6 @@ export class School implements OnInit {
 
         this.loadData();
     }
-
-
-    getStatus(status: any, type: string): any {
-        switch (status) {
-            case 1:
-                return (type == 'value' ? 'Approved' : 'info')
-            case 2:
-                return (type == 'value' ? 'Inactive' : 'contrast')
-            case 3:
-                return (type == 'value' ? 'Suspend' : 'danger')
-
-            default:
-                return (type == 'value' ? 'Pending' : 'warn');
-        }
-    }
-
-    // getStatusSeverity(status: number): "success" | "info" | "warn" | "danger" | "secondary" | "contrast" {
-    //     switch (status) {
-    //         case 1: return 'info';
-    //         case 2: return 'contrast';
-    //         case 3: return 'danger';
-    //         default: return 'warn';
-    //     }
-    // }
-
 
     loadData() {
 
@@ -254,6 +198,32 @@ export class School implements OnInit {
                 this.logger.printLogs('i', 'Users loaded', this.coordinators)
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+        });
+    }
+
+    getStatus(status: any, type: string): any {
+        switch (status) {
+            case 1:
+                return (type == 'value' ? 'Approved' : 'info')
+            case 2:
+                return (type == 'value' ? 'Inactive' : 'contrast')
+            case 3:
+                return (type == 'value' ? 'Suspend' : 'danger')
+
+            default:
+                return (type == 'value' ? 'Pending' : 'warn');
+        }
+    }
+
+    copyCode(code: string) {
+        navigator.clipboard.writeText(code).then(() => {
+            this.logger.printLogs('i', 'Copy School code: ', code)
+            this.messageService.add({
+                severity: 'secondary',
+                summary: 'Copied',
+                detail: 'School code copied to clipboard'
+            });
+
         });
     }
 
@@ -320,9 +290,7 @@ export class School implements OnInit {
     }
 
     reAssignDialog() {
-        this.loadCoordinators();
         if (!this.selectSchools || this.selectSchools.length === 0) {
-            this.toast.warning("Please select at least one school first!", "No selelected School", 3000);
             this.messageService.add({
                 severity: 'warn',
                 summary: 'No Selected School',
@@ -332,6 +300,7 @@ export class School implements OnInit {
             return;
         }
 
+        this.loadCoordinators();
         this.assignDialog = true;
         this.coordinatorID = null;
     }
@@ -354,7 +323,6 @@ export class School implements OnInit {
         const schools = this.selectSchools?.map((school: any) => school.schoolName) ?? [];
 
         if (!schoolIDs.length) {
-            this.toast.warning("Please select at least one school first!", "No selelected School", 3000);
             this.messageService.add({
                 severity: 'warn',
                 summary: 'No Selected School',
@@ -385,7 +353,13 @@ export class School implements OnInit {
 
                         this.logger.printLogs('s', 'Status updated successfully', res);
                         this.refreshTable();
-                        this.toast.success(res.message, 'Status Updated Successfully', 3000);
+                        this.showErrorAlert('Successful', 'School status updated', false, 'success', );
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Successful',
+                            detail: 'School status updated',
+                            life: 3000
+                        });
                         this.selectSchools = [];
                     },
                     error: (err) => {
@@ -408,7 +382,12 @@ export class School implements OnInit {
         const schools = this.selectSchools?.map((school: any) => school.schoolName) ?? [];
 
         if (this.coordinatorID == null) {
-            this.toast.warning("Please select at coordinator first!", "No selelected Coordinator", 3000);
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected Coordinator',
+                detail: 'Please select at least one coordinator first!',
+                life: 3000
+            });
             return
         }
         // Find the selected coordinator object
@@ -456,8 +435,12 @@ export class School implements OnInit {
         this.submitted = true;
 
         if (!this.form.valid) {
-            // Swal.fire('Warning!', 'Please complete all required fields before proceeding!', 'warning');
-            this.toast.warning("Please complete all required fields before proceeding!", "Complete Fields!", 3000);
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Incomplete Fields',
+                detail: 'Please complete all required fields before proceeding!',
+                life: 3000
+            });
             this.vf.validateFormFields(this.form);
             return;
         }
@@ -473,14 +456,13 @@ export class School implements OnInit {
             this.logger.printLogs('i', 'School details', this.school);
             this.api.updateSchool(id, this.school).subscribe({
                 next: (res) => {
-                    this.logger.printLogs('i', 'School updated successfully', res);
+                    this.logger.printLogs('i', 'School updated successfully', res,);
                     this.refreshTable(); // reload list
                     this.hideDialog();
-                    this.toast.success('School updated successfully', 'Updated Successfully', 3000);
-                    // this.showErrorAlert('Updated Successfully', "School updated successfully", false);
+                    this.showErrorAlert('Successful', 'School updated successfully', false, 'success');
                 },
                 error: (err) => {
-                    this.showErrorAlert('Updating Failed', err, true);
+                    this.showErrorAlert('Updating Failed', err, true, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -494,11 +476,11 @@ export class School implements OnInit {
                     this.logger.printLogs('i', 'School created successfully', res);
                     this.refreshTable(); // reload list
                     this.hideDialog();
-                    this.toast.success('School created successfully', 'Created Successfully', 3000);
+                    this.showErrorAlert('Successful', 'School created successfully', false, 'success');
                     // this.showErrorAlert('Created Successfully', "School created successfully", false);
                 },
                 error: (err) => {
-                    this.showErrorAlert('Saving Failed', err, true);
+                    this.showErrorAlert('Saving Failed', err, true, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -525,21 +507,11 @@ export class School implements OnInit {
                     next: (res) => {
                         this.logger.printLogs('i', 'School deleted successfully', res);
                         this.refreshTable();
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Successful',
-                            detail: 'School Deleted',
-                            life: 3000
-                        });
+                        this.showErrorAlert('Successful', 'School deleted successfully', false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to delete school', err);
-                        this.messageService.add({
-                            severity: 'error',
-                            summary: 'Error',
-                            detail: 'Failed to delete school',
-                            life: 3000
-                        });
+                        this.showErrorAlert('Deleting Failed', err, false, 'error');
                     }
                 });
             }
@@ -650,12 +622,18 @@ export class School implements OnInit {
     }
 
 
-    private showErrorAlert(title: string, message: string, dialogOpen: boolean) {
+    private showErrorAlert(title: string, message: string, dialogOpen: boolean, severity: 'error' | 'warning' | 'success' = 'success') {
         this.logger.printLogs('e', 'Failed to create school', message);
+        this.messageService.add({
+            severity: severity,
+            summary: title,
+            detail: message,
+            life: 3000
+        });
         Swal.fire({
             title: 'Saving Failed',
             text: message,
-            icon: 'warning',
+            icon: severity,
             showCancelButton: false,
             confirmButtonText: 'OK',
         }).then((result) => {

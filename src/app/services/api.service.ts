@@ -255,7 +255,7 @@ export class ApiService {
   approve(email: string) {
     return this.handleStringRequest('post', 'Users/approve', email, 'Account Approval');
   }
-  
+
   changePassword(id: string, newPassword: any) {
     return this.handleStringRequest('put', `Users/${id}/change-password`, newPassword, 'Change Password');
   }
@@ -265,6 +265,10 @@ export class ApiService {
   /*----------------------- SCHOOLS -----------------------*/
   getSchools() {
     return this.handleRequest<any[]>('get', 'Schools', { logAction: 'Fetching Schools' });
+  }
+
+  checkSchoolCode(code: string){
+    return this.handleStringRequest('post', 'Schools/schoolCode', code, 'Checking School Code');
   }
 
   createSchool(section: any) {

@@ -102,7 +102,6 @@ export class Section implements OnInit {
         private api: ApiService,
         private logger: LogsService,
         private vf: ValidateForm,
-        private toast: NgToastService
 
     ) {
 
@@ -243,8 +242,12 @@ export class Section implements OnInit {
         this.submitted = true;
 
         if (!this.form.valid) {
-            // Swal.fire('Warning!', 'Please complete all required fields before proceeding!', 'warning');
-            this.toast.warning("Please complete all required fields before proceeding!", "Complete Fields!", 3000);
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Incomplete Fields',
+                detail: 'Please complete all required fields before proceeding!',
+                life: 3000
+            });
             this.vf.validateFormFields(this.form);
             return;
         }
@@ -261,6 +264,7 @@ export class Section implements OnInit {
                     this.logger.printLogs('i', 'Section updated successfully', res);
                     this.refreshTable(); // reload list
                     this.closeDialog();
+                    this.showErrorAlert('Successful', 'Section updated successfully', false, 'success');
                 },
                 error: (err) => {
                     this.showErrorAlert('Updating Failed', err, true);
@@ -277,6 +281,7 @@ export class Section implements OnInit {
                     this.logger.printLogs('i', 'Section created successfully', res);
                     this.refreshTable(); // reload list
                     this.closeDialog();
+                    this.showErrorAlert('Successful', 'Section created successfully', false);
                 },
                 error: (err) => {
                     this.showErrorAlert('Saving Failed', err, true);
@@ -327,12 +332,18 @@ export class Section implements OnInit {
     }
 
 
-    private showErrorAlert(title: string, message: string, dialogOpen: boolean) {
+    private showErrorAlert(title: string, message: string, dialogOpen: boolean, severity: 'success' | 'error' | 'warning' | 'info' | 'question' | undefined = 'info') {
         this.logger.printLogs('e', 'Failed to create section', message);
+        this.messageService.add({
+            severity: severity,
+            summary: title,
+            detail: message,
+            life: 3000
+        });
         Swal.fire({
             title: 'Saving Failed',
             text: message,
-            icon: 'warning',
+            icon: severity,
             showCancelButton: false,
             confirmButtonText: 'OK',
         }).then((result) => {

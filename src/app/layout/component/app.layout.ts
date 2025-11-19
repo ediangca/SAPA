@@ -12,7 +12,7 @@ import { AuthService } from '@/services/auth.service';
 @Component({
     selector: 'app-layout',
     standalone: true,
-    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter, ProgressSpinnerModule,],
+    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter, ProgressSpinnerModule],
     template: `
     <div class="layout-wrapper" [ngClass]="containerClass">
         <app-topbar></app-topbar>
@@ -26,7 +26,7 @@ import { AuthService } from '@/services/auth.service';
         <div class="layout-mask animate-fadein"></div>
     </div> 
     `,
-    styleUrl: './css/layout.component.css'
+    styleUrl: './css/layout.component.css',
 })
 
 export class AppLayout {
@@ -41,7 +41,7 @@ export class AppLayout {
     constructor(
         public layoutService: LayoutService, private authService: AuthService,
         public renderer: Renderer2,
-        public router: Router
+        public router: Router, 
     ) {
         this.overlayMenuOpenSubscription = this.layoutService.overlayOpen$.subscribe(() => {
             if (!this.menuOutsideClickListener) {
@@ -60,7 +60,7 @@ export class AppLayout {
         this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
             this.hideMenu();
         });
-        
+
     }
 
     isOutsideClicked(event: MouseEvent) {

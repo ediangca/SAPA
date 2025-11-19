@@ -17,4 +17,10 @@ export default class ValidateForm {
     })
   }
 
+  // Custom validator for email format
+  validateEmailFormat(email: string): boolean { 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
 }

@@ -1,3 +1,4 @@
+<p-toast></p-toast>
 <div class="flex flex-col md:flex-row gap-8">
     <!-- SECTION TABLE -->
     <div class="md:w-5/6">
@@ -66,9 +67,8 @@
                         <td style="min-width: 10rem">{{ user.email }}</td>
                         <td style="min-width: 10rem">{{ user.rolename }}</td>
                         <td style="min-width: 10rem">
-                            <!-- [severity]="getStatus(user.status,'severirty')" -->
                             <p-tag [value]="getStatus(user.status,'value')"
-                                 styleClass="dark:bg-surface-900!" />
+                                [severity]="getStatus(user.status,'severirty')" styleClass="dark:bg-surface-900!" />
                             @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
                             <button class="ml-2" (click)="resendVerification(user)" pTooltip=" Resend Verification?"
                                 tooltipPosition="top"> <i

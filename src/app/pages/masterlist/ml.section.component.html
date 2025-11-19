@@ -1,3 +1,4 @@
+<p-toast></p-toast>
 <div class="flex flex-col md:flex-row gap-8">
     <!-- SECTION TABLE -->
     <div class="md:w-5/6">
@@ -24,8 +25,8 @@
                         <div class="flex row">
                             <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2"
                                 (onClick)="openNew()" />
-                            <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
-                                (onClick)="deleteSelected()" [disabled]="!selectSections || !selectSections.length" />
+                            <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
+                                (onClick)="deleteSelected()" [disabled]="!selectSections || !selectSections.length" /> -->
                         </div>
                         <p-iconfield>
                             <p-inputicon styleClass="pi pi-search" />

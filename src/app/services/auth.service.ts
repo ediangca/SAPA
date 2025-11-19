@@ -56,14 +56,14 @@ export class AuthService {
     );
   }
 
-  registerCoordinator(userAccount: any): Observable<any> {
+  register(userAccount: any): Observable<any> {
     this.loading.setLoadingVisible(true);
     this.logger.printLogs('i', 'Processing Registration...', userAccount);
 
     return of(userAccount).pipe(
       delay(3000), // ⏳ Simulate a 3-second delay
       switchMap(account =>
-        this.http.post<any>(`${this.apiUrl}Auth/registerAsCoordinator/`, account).pipe(
+        this.http.post<any>(`${this.apiUrl}Auth/register/`, account).pipe(
           catchError(this.handleError),
           finalize(() => {
             this.loading.setLoadingVisible(false);
@@ -73,14 +73,6 @@ export class AuthService {
       )
     );
   }
-
-  // registerCoordinator(userAccount: any): Observable<any> {
-  //   this.logger.printLogs('i', 'Logging', `:  ${userAccount}`);
-  //   return this.http.post<any>(`${this.apiUrl}Auth/registerAsCoordinator/`, userAccount)
-  //     .pipe(
-  //       catchError(this.handleError)
-  //     );
-  // }
 
 
   /*----------------------- ERROR HANDLING -----------------------*/

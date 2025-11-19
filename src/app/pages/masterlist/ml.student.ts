@@ -120,7 +120,6 @@ export class Student implements OnInit {
         private api: ApiService,
         private logger: LogsService,
         private vf: ValidateForm,
-        private toast: NgToastService,
         private pdfService: PdfService
     ) {
 
@@ -293,11 +292,11 @@ export class Student implements OnInit {
                     next: (res) => {
                         this.logger.printLogs('i', 'Verification sent', res);
                         this.refreshTable();
-                        this.showErrorAlert('Vefification Sent', 'Verification Successfully sent!', 'success', false);
+                        this.showErrorAlert('Vefification Sent', 'Verification Successfully sent!', false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to resend verification', err);
-                        this.showErrorAlert('Failed to resend verification', err, 'error', false);
+                        this.showErrorAlert('Failed to resend verification', err, false, 'error');
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Error',
@@ -322,11 +321,11 @@ export class Student implements OnInit {
                     next: (res: any) => {
                         this.logger.printLogs('i', 'Approved Account', res);
                         this.refreshTable();
-                        this.showErrorAlert('Account Approved', res.message, 'success', false);
+                        this.showErrorAlert('Account Approved', res.message, false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to approve account', err);
-                        this.showErrorAlert('Failed to approve account', err, 'error', false);
+                        this.showErrorAlert('Failed to approve account', err, false, 'error');
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Error',
@@ -391,7 +390,6 @@ export class Student implements OnInit {
 
     reAssignDialog() {
         if (!this.selectUsers || this.selectUsers.length === 0) {
-            this.toast.warning("Please select at least one school first!", "No selelected School", 3000);
             this.messageService.add({
                 severity: 'warn',
                 summary: 'No Selected School',
@@ -416,7 +414,6 @@ export class Student implements OnInit {
         const schoolIDs = this.selectUsers?.map((school: any) => school.schoolID) ?? [];
 
         if (!schoolIDs.length) {
-            this.toast.warning("Please select at least one school first!", "No selelected School", 3000);
             this.messageService.add({
                 severity: 'warn',
                 summary: 'No Selected School',
@@ -467,8 +464,12 @@ export class Student implements OnInit {
         this.submitted = true;
 
         if (!this.form.valid) {
-            // Swal.fire('Warning!', 'Please complete all required fields before proceeding!', 'warning');
-            this.toast.warning("Please complete all required fields before proceeding!", "Complete Fields!", 2000);
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Incomplete Fields',
+                detail: 'Please complete all required fields before proceeding!',
+                life: 3000
+            });
             this.vf.validateFormFields(this.form);
             return;
         }
@@ -478,7 +479,12 @@ export class Student implements OnInit {
          * Validate valid email format
          */
         if (this.isEmailInvalid()) {
-            this.toast.warning("Please enter a valid email address!", "Invalid Email!", 2000);
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Invalid Email',
+                detail: 'Please enter a valid email address!',
+                life: 3000
+            });
             return;
         }
 
@@ -493,10 +499,10 @@ export class Student implements OnInit {
                 next: (res) => {
                     this.logger.printLogs('i', 'User updated successfully', res);
                     this.refreshTable(); // reload list
-                    this.showErrorAlert('User Updated', 'User has been Successfully updated!', 'success', false);
+                    this.showErrorAlert('User Updated', 'User has been Successfully updated!', false, 'success');
                 },
                 error: (err) => {
-                    this.showErrorAlert('Updating Failed', err, 'error', true);
+                    this.showErrorAlert('Updating Failed', err, true, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -512,7 +518,7 @@ export class Student implements OnInit {
                     this.closeDialog();
                 },
                 error: (err) => {
-                    this.showErrorAlert('Saving Failed', err, 'error', true);
+                    this.showErrorAlert('Saving Failed', err, true, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -539,11 +545,11 @@ export class Student implements OnInit {
                     next: (res) => {
                         this.logger.printLogs('i', 'User deleted', res);
                         this.refreshTable();
-                        this.showErrorAlert('User Deleted', 'User has been Successfully deleted!', 'success', false);
+                        this.showErrorAlert('User Deleted', 'User has been Successfully deleted!', false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to delete user', err);
-                        this.showErrorAlert('Deleting Failed', err, 'error', true);
+                        this.showErrorAlert('Deleting Failed', err, true, 'error');
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Error',
@@ -562,14 +568,21 @@ export class Student implements OnInit {
 
 
 
-    private showErrorAlert(title: string, message: any, type: 'success' | 'error' | 'warning' | 'info' | 'question', dialogOpen: boolean) {
+    private showErrorAlert(title: string, message: any, dialogOpen: boolean, severity: 'success' | 'error' | 'warning' | 'info' | 'question' | undefined = 'info') {
 
-        this.logger.printLogs(type, title, message);
+        this.logger.printLogs(severity, title, message);
+
+        this.messageService.add({
+            severity: severity,
+            summary: title,
+            detail: message,
+            life: 3000
+        });
 
         Swal.fire({
             title: title,
             text: message,
-            icon: type,
+            icon: severity,
             showCancelButton: false,
             confirmButtonText: 'OK',
         }).then((result) => {

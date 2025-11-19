@@ -1,3 +1,4 @@
+<p-toast></p-toast>
 <div class="flex flex-col md:flex-row gap-8">
 
     <div class="md:w-5/6">
@@ -62,6 +63,10 @@
                             Status
                             <p-sortIcon field="status" />
                         </th>
+                        <th pSortableColumn="status" style="min-width:10rem">
+                            Code
+                            <p-sortIcon field="status" />
+                        </th>
                         <th pSortableColumn="date_created" style="min-width:10rem">
                             Date Created
                             <p-sortIcon field="date_created" />
@@ -82,6 +87,10 @@
                             <p-tag [value]="getStatus(school.status,'value')"
                                 [severity]="getStatus(school.status,'severirty')" styleClass="dark:bg-surface-900!" />
                         </td>
+                        <td style="min-width: 3rem">{{ school.code }}
+                            <p-button icon="pi pi-copy cursor-pointer text-gray-600 hover:text-black" [rounded]="true"
+                                [outlined]="false" severity="secondary" (click)="copyCode(school.code)" />
+                        </td>
                         <td style="min-width: 3rem">{{ school.date_Created }}</td>
                         <td>
                             <div class="flex flex-row gap-2">
@@ -89,8 +98,6 @@
                                     (click)="edit(school)" />
                                 <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
                                     (click)="delete(school)" />
-                                <p-button icon="pi pi-qrcode" severity="info" [rounded]="true" [outlined]="true"
-                                    (click)="showQR(school)" />
                             </div>
                         </td>
                     </tr>
@@ -202,8 +209,8 @@
 
         <!-- SCHOOL NAME -->
         <h4 class="text-sm font-semibold text-center mt-0 leading-tight">
-    {{ school?.schoolName }}
-</h4>
+            {{ school?.schoolName }}
+        </h4>
 
         <!-- SCHOOL ID (optional) -->
         <p class="text-sm text-gray-500">
