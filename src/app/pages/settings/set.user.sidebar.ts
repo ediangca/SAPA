@@ -77,7 +77,7 @@ export class UsersProperties implements OnInit {
             return;
         }
 
-        this.pdfService.generateUserReport(this.users);
+        this.pdfService.generateUserReport(this.users, 'LIST OF USERS');
     }
 
 }

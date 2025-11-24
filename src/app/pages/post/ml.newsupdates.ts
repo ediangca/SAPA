@@ -1,568 +1,647 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { ConfirmationService, MessageService } from 'primeng/api';
-import { InputTextModule } from 'primeng/inputtext';
-import { MultiSelectModule } from 'primeng/multiselect';
-import { SelectModule } from 'primeng/select';
-import { SliderModule } from 'primeng/slider';
+import { Component, OnInit, signal, ViewChild } from '@angular/core';
+import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
-import { ProgressBarModule } from 'primeng/progressbar';
-import { ToggleButtonModule } from 'primeng/togglebutton';
-import { ToastModule } from 'primeng/toast';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { RatingModule } from 'primeng/rating';
 import { RippleModule } from 'primeng/ripple';
+import { ToolbarModule } from 'primeng/toolbar';
+import { RatingModule } from 'primeng/rating';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { DialogModule } from 'primeng/dialog';
+import { TagModule } from 'primeng/tag';
 import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
-import { TagModule } from 'primeng/tag';
-import { Customer, CustomerService, Representative } from '../service/customer.service';
-import { Product, ProductService } from '../service/product.service';
-import {ObjectUtils} from "primeng/utils";
+import { PanelMenuModule } from 'primeng/panelmenu';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ProductService } from '../service/product.service';
+import { ApiService } from '@/services/api.service';
+import { LogsService } from '@/services/logs.service';
+import ValidateForm from '@/helper/validator/validateForm';
+import Swal from 'sweetalert2';
+import { StoreService } from '@/services/store.service';
+import { ToastModule } from 'primeng/toast';
+import { NgToastService } from 'ng-angular-popup';
+import { RouterModule } from '@angular/router';
+import { AppMenuitem } from '@/layout/component/app.menuitem';
+import { MenuModule } from 'primeng/menu';
+import { TieredMenuModule } from 'primeng/tieredmenu';
+import { PdfService } from '@/services/pdf.service';
 
-interface expandedRows {
-    [key: string]: boolean;
+interface Column {
+    field: string;
+    header: string;
+    customExportHeader?: string;
+}
+
+interface ExportColumn {
+    title: string;
+    dataKey: string;
 }
 
 @Component({
-    selector: 'ml-news-updates',
+    selector: 'post-news-updates',
     standalone: true,
     imports: [
-        TableModule,
-        MultiSelectModule,
-        SelectModule,
-        InputIconModule,
-        TagModule,
-        InputTextModule,
-        SliderModule,
-        ProgressBarModule,
-        ToggleButtonModule,
-        ToastModule,
         CommonModule,
+        MenuModule,
+        TieredMenuModule,
+        TableModule,
         FormsModule,
         ButtonModule,
-        RatingModule,
+        AppMenuitem,
         RippleModule,
-        IconFieldModule
+        ToastModule,
+        ToolbarModule,
+        RatingModule,
+        InputTextModule,
+        TextareaModule,
+        SelectModule,
+        RadioButtonModule,
+        InputNumberModule,
+        DialogModule,
+        TagModule,
+        InputIconModule,
+        IconFieldModule,
+        ConfirmDialogModule,
+        PanelMenuModule,
+        ReactiveFormsModule,
+        FormsModule,
+        RouterModule,
     ],
-    template: ` <div class="card">
-            <div class="font-semibold text-xl mb-4">List of News & Updates</div>
-            <p-table
-                #dt1
-                [value]="customers1"
-                dataKey="id"
-                [rows]="10"
-                [loading]="loading"
-                [rowHover]="true"
-                [showGridlines]="true"
-                [paginator]="true"
-                [globalFilterFields]="['name', 'country.name', 'representative.name', 'status']"
-                responsiveLayout="scroll"
-            >
-                <ng-template #caption>
-                    <div class="flex justify-between items-center flex-column sm:flex-row">
-                        <button pButton label="Clear" class="p-button-outlined mb-2" icon="pi pi-filter-slash" (click)="clear(dt1)"></button>
-                        <p-iconfield iconPosition="left" class="ml-auto">
-                            <p-inputicon>
-                                <i class="pi pi-search"></i>
-                            </p-inputicon>
-                            <input pInputText type="text" (input)="onGlobalFilter(dt1, $event)" placeholder="Search keyword" />
-                        </p-iconfield>
-                    </div>
-                </ng-template>
-                <ng-template #header>
-                    <tr>
-                        <th style="min-width: 12rem">
-                            <div class="flex justify-between items-center">
-                                Name
-                                <p-columnFilter type="text" field="name" display="menu" placeholder="Search by name"></p-columnFilter>
-                            </div>
-                        </th>
-                        <th style="min-width: 12rem">
-                            <div class="flex justify-between items-center">
-                                Country
-                                <p-columnFilter type="text" field="country.name" display="menu" placeholder="Search by country"></p-columnFilter>
-                            </div>
-                        </th>
-                        <th style="min-width: 14rem">
-                            <div class="flex justify-between items-center">
-                                Agent
-                                <p-columnFilter field="representative" matchMode="in" display="menu" [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
-                                    <ng-template #header>
-                                        <div class="px-3 pt-3 pb-0">
-                                            <span class="font-bold">Agent Picker</span>
-                                        </div>
-                                    </ng-template>
-                                    <ng-template #filter let-value let-filter="filterCallback">
-                                        <p-multiselect [ngModel]="value" [options]="representatives" placeholder="Any" (onChange)="filter($event.value)" optionLabel="name" styleClass="w-full">
-                                            <ng-template let-option #item>
-                                                <div class="flex items-center gap-2 w-44">
-                                                    <img [alt]="option.label" src="https://primefaces.org/cdn/primeng/images/demo/avatar/{{ option.image }}" width="32" />
-                                                    <span>{{ option.name }}</span>
-                                                </div>
-                                            </ng-template>
-                                        </p-multiselect>
-                                    </ng-template>
-                                </p-columnFilter>
-                            </div>
-                        </th>
-                        <th style="min-width: 10rem">
-                            <div class="flex justify-between items-center">
-                                Date
-                                <p-columnFilter type="date" field="date" display="menu" placeholder="mm/dd/yyyy"></p-columnFilter>
-                            </div>
-                        </th>
-                        <th style="min-width: 10rem">
-                            <div class="flex justify-between items-center">
-                                Balance
-                                <p-columnFilter type="numeric" field="balance" display="menu" currency="USD"></p-columnFilter>
-                            </div>
-                        </th>
-                        <th style="min-width: 12rem">
-                            <div class="flex justify-between items-center">
-                                Status
-                                <p-columnFilter field="status" matchMode="equals" display="menu">
-                                    <ng-template #filter let-value let-filter="filterCallback">
-                                        <p-select [ngModel]="value" [options]="statuses" (onChange)="filter($event.value)" placeholder="Any" [style]="{ 'min-width': '12rem' }">
-                                            <ng-template let-option #item>
-                                                <span [class]="'customer-badge status-' + option.value">{{ option.label }}</span>
-                                            </ng-template>
-                                        </p-select>
-                                    </ng-template>
-                                </p-columnFilter>
-                            </div>
-                        </th>
-                        <th style="min-width: 12rem">
-                            <div class="flex justify-between items-center">
-                                Activity
-                                <p-columnFilter field="activity" matchMode="between" display="menu" [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
-                                    <ng-template #filter let-filter="filterCallback">
-                                        <p-slider [ngModel]="activityValues" [range]="true" (onSlideEnd)="filter($event.values)" styleClass="m-3" [style]="{ 'min-width': '12rem' }"></p-slider>
-                                        <div class="flex items-center justify-between px-2">
-                                            <span>{{ activityValues[0] }}</span>
-                                            <span>{{ activityValues[1] }}</span>
-                                        </div>
-                                    </ng-template>
-                                </p-columnFilter>
-                            </div>
-                        </th>
-                        <th style="min-width: 8rem">
-                            <div class="flex justify-between items-center">
-                                Verified
-                                <p-columnFilter type="boolean" field="verified" display="menu"></p-columnFilter>
-                            </div>
-                        </th>
-                    </tr>
-                </ng-template>
-                <ng-template #body let-customer>
-                    <tr>
-                        <td>
-                            {{ customer.name }}
-                        </td>
-                        <td>
-                            <div class="flex items-center gap-2">
-                                <img src="https://primefaces.org/cdn/primeng/images/demo/flag/flag_placeholder.png" [class]="'flag flag-' + customer.country.code" width="30" />
-                                <span>{{ customer.country.name }}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="flex items-center gap-2">
-                                <img [alt]="customer.representative.name" src="https://primefaces.org/cdn/primeng/images/demo/avatar/{{ customer.representative.image }}" width="32" style="vertical-align: middle" />
-                                <span class="image-text">{{ customer.representative.name }}</span>
-                            </div>
-                        </td>
-                        <td>
-                            {{ customer.date | date: 'MM/dd/yyyy' }}
-                        </td>
-                        <td>
-                            {{ customer.balance | currency: 'USD' : 'symbol' }}
-                        </td>
-                        <td>
-                            <p-tag [value]="customer.status.toLowerCase()" [severity]="getSeverity(customer.status.toLowerCase())" styleClass="dark:bg-surface-900!" />
-                        </td>
-                        <td>
-                            <p-progressbar [value]="customer.activity" [showValue]="false" [style]="{ height: '0.5rem' }" />
-                        </td>
-                        <td class="text-center">
-                            <p-tag [value]="customer.status.toLowerCase()" [severity]="getSeverity(customer.status.toLowerCase())" styleClass="dark:bg-surface-900!" />
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template #emptymessage>
-                    <tr>
-                        <td colspan="8">No customers found.</td>
-                    </tr>
-                </ng-template>
-                <ng-template #loadingbody>
-                    <tr>
-                        <td colspan="8">Loading customers data. Please wait.</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>
-
-        <div class="card">
-            <div class="font-semibold text-xl mb-4">Frozen Columns</div>
-            <p-togglebutton [(ngModel)]="balanceFrozen" [onIcon]="'pi pi-lock'" offIcon="pi pi-lock-open" [onLabel]="'Balance'" offLabel="Balance" />
-
-            <p-table [value]="customers2" [scrollable]="true" scrollHeight="400px" styleClass="mt-4">
-                <ng-template #header>
-                    <tr>
-                        <th style="min-width:200px" pFrozenColumn class="font-bold">Name</th>
-                        <th style="min-width:100px">Id</th>
-                        <th style="min-width:200px">Country</th>
-                        <th style="min-width:200px">Date</th>
-                        <th style="min-width:200px">Company</th>
-                        <th style="min-width:200px">Status</th>
-                        <th style="min-width:200px">Activity</th>
-                        <th style="min-width:200px">Representative</th>
-                        <th style="min-width:200px" alignFrozen="right" pFrozenColumn [frozen]="balanceFrozen" [ngClass]="{ 'font-bold': balanceFrozen }">Balance</th>
-                    </tr>
-                </ng-template>
-                <ng-template #body let-customer>
-                    <tr>
-                        <td pFrozenColumn class="font-bold">{{ customer.name }}</td>
-                        <td style="min-width:100px">{{ customer.id }}</td>
-                        <td>{{ customer.country.name }}</td>
-                        <td>{{ customer.date }}</td>
-                        <td>{{ customer.company }}</td>
-                        <td>{{ customer.status }}</td>
-                        <td>{{ customer.activity }}</td>
-                        <td>{{ customer.representative.name }}</td>
-                        <td alignFrozen="right" pFrozenColumn [frozen]="balanceFrozen" [ngClass]="{ 'font-bold': balanceFrozen }">
-                            {{ formatCurrency(customer.balance) }}
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>
-
-        <div class="card">
-            <div class="font-semibold text-xl mb-4">Row Expansion</div>
-            <p-table [value]="products" dataKey="id" [tableStyle]="{ 'min-width': '60rem' }" [expandedRowKeys]="expandedRows">
-                <ng-template #caption>
-                    <button pButton icon="pi pi-fw {{ isExpanded ? 'pi-minus' : 'pi-plus' }}" label="{{ isExpanded ? 'Collapse All' : 'Expand All' }}" (click)="expandAll()"></button>
-                    <div class="flex table-header"></div>
-                </ng-template>
-                <ng-template #header>
-                    <tr>
-                        <th style="width: 5rem"></th>
-                        <th pSortableColumn="name">Name <p-sortIcon field="name" /></th>
-                        <th>Image</th>
-                        <th pSortableColumn="price">Price <p-sortIcon field="price" /></th>
-                        <th pSortableColumn="category">Category <p-sortIcon field="category" /></th>
-                        <th pSortableColumn="rating">Reviews <p-sortIcon field="rating" /></th>
-                        <th pSortableColumn="inventoryStatus">Status <p-sortIcon field="inventoryStatus" /></th>
-                    </tr>
-                </ng-template>
-                <ng-template #body let-product let-expanded="expanded">
-                    <tr>
-                        <td>
-                            <p-button type="button" pRipple [pRowToggler]="product" [text]="true" [rounded]="true" [plain]="true" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
-                        </td>
-                        <td>{{ product.name }}</td>
-                        <td>
-                            <img [src]="'https://primefaces.org/cdn/primeng/images/demo/product/' + product.image" [alt]="product.name" width="50" class="shadow-lg" />
-                        </td>
-                        <td>{{ product.price | currency: 'USD' }}</td>
-                        <td>{{ product.category }}</td>
-                        <td>
-                            <p-rating [ngModel]="product.rating" [readonly]="true" />
-                        </td>
-                        <td>
-                            <p-tag [value]="product.inventoryStatus" [severity]="getSeverity(product.inventoryStatus)" />
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template #expandedrow let-product>
-                    <tr>
-                        <td colspan="7">
-                            <div class="p-4">
-                                <h5>Orders for {{ product.name }}</h5>
-                                <p-table [value]="product.orders" dataKey="id">
-                                    <ng-template #header>
-                                        <tr>
-                                            <th pSortableColumn="id">Id <p-sortIcon field="price" /></th>
-                                            <th pSortableColumn="customer">
-                                                Customer
-                                                <p-sortIcon field="customer" />
-                                            </th>
-                                            <th pSortableColumn="date">Date <p-sortIcon field="date" /></th>
-                                            <th pSortableColumn="amount">
-                                                Amount
-                                                <p-sortIcon field="amount" />
-                                            </th>
-                                            <th pSortableColumn="status">
-                                                Status
-                                                <p-sortIcon field="status" />
-                                            </th>
-                                            <th style="width: 4rem"></th>
-                                        </tr>
-                                    </ng-template>
-                                    <ng-template #body let-order>
-                                        <tr>
-                                            <td>{{ order.id }}</td>
-                                            <td>{{ order.customer }}</td>
-                                            <td>{{ order.date }}</td>
-                                            <td>
-                                                {{ order.amount | currency: 'USD' }}
-                                            </td>
-                                            <td>
-                                                <p-tag [value]="order.status" [severity]="getSeverity(order.status)" />
-                                            </td>
-                                            <td>
-                                                <p-button type="button" icon="pi pi-search" />
-                                            </td>
-                                        </tr>
-                                    </ng-template>
-                                    <ng-template #emptymessage>
-                                        <tr>
-                                            <td colspan="6">There are no order for this product yet.</td>
-                                        </tr>
-                                    </ng-template>
-                                </p-table>
-                            </div>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>
-
-        <div class="card">
-            <div class="font-semibold text-xl mb-4">Grouping</div>
-            <p-table [value]="customers3" sortField="representative.name" sortMode="single" [scrollable]="true" scrollHeight="400px" rowGroupMode="subheader" groupRowsBy="representative.name" [tableStyle]="{ 'min-width': '60rem' }">
-                <ng-template #header>
-                    <tr>
-                        <th>Name</th>
-                        <th>Country</th>
-                        <th>Company</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                    </tr>
-                </ng-template>
-                <ng-template #groupheader let-customer>
-                    <tr pRowGroupHeader>
-                        <td colspan="5">
-                            <div class="flex items-center gap-2">
-                                <img [alt]="customer.representative.name" src="https://primefaces.org/cdn/primeng/images/demo/avatar/{{ customer.representative.image }}" width="32" style="vertical-align: middle" />
-                                <span class="font-bold">{{ customer.representative.name }}</span>
-                            </div>
-                        </td>
-                    </tr>
-                </ng-template>
-                <ng-template #groupfooter let-customer>
-                    <tr>
-                        <td colspan="5" class="text-right font-bold pr-12">Total Customers: {{ calculateCustomerTotal(customer.representative.name) }}</td>
-                    </tr>
-                </ng-template>
-                <ng-template #body let-customer let-rowIndex="rowIndex">
-                    <tr>
-                        <td>
-                            {{ customer.name }}
-                        </td>
-                        <td>
-                            <div class="flex items-center gap-2">
-                                <img src="https://primefaces.org/cdn/primeng/images/demo/flag/flag_placeholder.png" [class]="'flag flag-' + customer.country.code" style="width: 20px" />
-                                <span>{{ customer.country.name }}</span>
-                            </div>
-                        </td>
-                        <td>
-                            {{ customer.company }}
-                        </td>
-                        <td>
-                            <p-tag [value]="customer.status" [severity]="getSeverity(customer.status)" />
-                        </td>
-                        <td>
-                            {{ customer.date }}
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>`,
-    styles: `
-        .p-datatable-frozen-tbody {
-            font-weight: bold;
-        }
-
-        .p-datatable-scrollable .p-frozen-column {
-            font-weight: bold;
-        }
-    `,
-    providers: [ConfirmationService, MessageService, CustomerService, ProductService]
+    templateUrl: './post.newsupdates.component.html',
+    styleUrl: './css/post.css',
+    providers: [MessageService, ProductService, ConfirmationService]
 })
 export class NewsUpdates implements OnInit {
-    customers1: Customer[] = [];
 
-    customers2: Customer[] = [];
+    subcomponent: MenuItem[] = [];
+    properties: MenuItem[] = [];
 
-    customers3: Customer[] = [];
+    itemDialog: boolean = false;
 
-    selectedCustomers1: Customer[] = [];
+    schools = signal<any[]>([]);
+    school!: any;
+    selectSchools!: any[] | [];
 
-    selectedCustomer: Customer = {};
+    form!: FormGroup;
 
-    representatives: Representative[] = [];
+    submitted: boolean = false;
 
-    statuses: any[] = [];
+    @ViewChild('dt') dt!: Table;
 
-    products: Product[] = [];
+    exportColumns!: ExportColumn[];
 
-    rowGroupMetadata: any;
+    cols!: Column[];
+    filter: string = '';
+    coordinators: any[] = [];
 
-    expandedRows: expandedRows = {};
+    tokenPayload: any | null;
 
-    activityValues: number[] = [0, 100];
+    assignDialog: boolean = false;
+    qrDialog: boolean = false;
+    coordinatorID: any | null;
 
-    isExpanded: boolean = false;
 
-    balanceFrozen: boolean = false;
+    constructor(private fb: FormBuilder,
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService,
+        private store: StoreService,
+        private api: ApiService,
+        private logger: LogsService,
+        private vf: ValidateForm,
+        private pdfService: PdfService
 
-    loading: boolean = true;
+    ) {
 
-    @ViewChild('filter') filter!: ElementRef;
+        this.form = this.fb.group({
+            schoolID: [null],
+            schoolName: ['', Validators.required],
+            address: ['', Validators.required],
+            userID: ['', Validators.required]
+        });
 
-    constructor(
-        private customerService: CustomerService,
-        private productService: ProductService
-    ) {}
+    }
+
 
     ngOnInit() {
-        this.customerService.getCustomersLarge().then((customers) => {
-            this.customers1 = customers;
-            this.loading = false;
+        this.subcomponent = [
+            {
+                items: [
+                    // { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
 
-            // @ts-ignore
-            this.customers1.forEach((customer) => (customer.date = new Date(customer.date)));
-        });
-        this.customerService.getCustomersMedium().then((customers) => (this.customers2 = customers));
-        this.customerService.getCustomersLarge().then((customers) => (this.customers3 = customers));
-        this.productService.getProductsWithOrdersSmall().then((data) => (this.products = data));
-
-        this.representatives = [
-            { name: 'Amy Elsner', image: 'amyelsner.png' },
-            { name: 'Anna Fali', image: 'annafali.png' },
-            { name: 'Asiya Javayant', image: 'asiyajavayant.png' },
-            { name: 'Bernardo Dominic', image: 'bernardodominic.png' },
-            { name: 'Elwin Sharvill', image: 'elwinsharvill.png' },
-            { name: 'Ioni Bowcher', image: 'ionibowcher.png' },
-            { name: 'Ivan Magalhaes', image: 'ivanmagalhaes.png' },
-            { name: 'Onyama Limba', image: 'onyamalimba.png' },
-            { name: 'Stephen Shaw', image: 'stephenshaw.png' },
-            { name: 'XuXue Feng', image: 'xuxuefeng.png' }
-        ];
-
-        this.statuses = [
-            { label: 'Unqualified', value: 'unqualified' },
-            { label: 'Qualified', value: 'qualified' },
-            { label: 'New', value: 'new' },
-            { label: 'Negotiation', value: 'negotiation' },
-            { label: 'Renewal', value: 'renewal' },
-            { label: 'Proposal', value: 'proposal' }
-        ];
-    }
-
-    onSort() {
-        this.updateRowGroupMetaData();
-    }
-
-    updateRowGroupMetaData() {
-        this.rowGroupMetadata = {};
-
-        if (this.customers3) {
-            for (let i = 0; i < this.customers3.length; i++) {
-                const rowData = this.customers3[i];
-                const representativeName = rowData?.representative?.name || '';
-
-                if (i === 0) {
-                    this.rowGroupMetadata[representativeName] = { index: 0, size: 1 };
-                } else {
-                    const previousRowData = this.customers3[i - 1];
-                    const previousRowGroup = previousRowData?.representative?.name;
-                    if (representativeName === previousRowGroup) {
-                        this.rowGroupMetadata[representativeName].size++;
-                    } else {
-                        this.rowGroupMetadata[representativeName] = { index: i, size: 1 };
-                    }
-                }
+                ]
             }
-        }
+        ];
+
+        this.properties = [
+            {
+                label: 'Status',
+                icon: 'fas fa-layer-group',
+                items: [
+                    { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
+                    { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
+                    { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+                    { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
+                ]
+            },
+            {
+                label: 'Re-assign Coordinator',
+                icon: 'pi pi-user-edit',
+                command: () => this.reAssignDialog()
+            }
+        ];
+
+        this.loadData();
     }
 
-    expandAll() {
-        if(ObjectUtils.isEmpty(this.expandedRows)) {
-            this.expandedRows = this.products.reduce(
-                (acc, p) => {
-                    if (p.id) {
-                        acc[p.id] = true;
-                    }
-                    return acc;
-                },
-                {} as { [key: string]: boolean }
-            );
-            this.isExpanded = true;
-        } else {
-            this.collapseAll()
-        }
+    loadData() {
 
+        this.store.getUserPayload()
+            .subscribe(res => {
+                this.tokenPayload = res;
+                this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
+            });
+        this.loadSchools();
+
+        this.cols = [
+            { field: 'SchoolID', header: 'ID', customExportHeader: 'School ID' },
+            { field: 'schoolName', header: 'Name' },
+            { field: 'address', header: 'Address' },
+            { field: 'coordinator', header: 'Coordinator' },
+            { field: 'date_created', header: 'Date Created' },
+        ];
+
+        this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
     }
 
-    collapseAll() {
-        this.expandedRows = {};
-        this.isExpanded = false;
+
+    exportCSV() {
+        this.dt.exportCSV();
     }
 
-    formatCurrency(value: number) {
-        return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    loadSchools() {
+        this.api.getSchools().subscribe({
+            next: (schools) => this.schools.set(schools),
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
+        });
     }
 
-    onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    loadCoordinators() {
+        this.api.getUsers().subscribe({
+            next: (users) => {
+                this.coordinators = users.filter((user: any) => user.roleId === 'UGR0003' && user.status === 'A') || []; //Role ID - Coordinators
+                this.logger.printLogs('i', 'Users loaded', this.coordinators)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+        });
     }
 
-    clear(table: Table) {
-        table.clear();
-        this.filter.nativeElement.value = '';
-    }
-
-    getSeverity(status: string) {
+    getStatus(status: any, type: string): any {
         switch (status) {
-            case 'qualified':
-            case 'instock':
-            case 'INSTOCK':
-            case 'DELIVERED':
-            case 'delivered':
-                return 'success';
-
-            case 'negotiation':
-            case 'lowstock':
-            case 'LOWSTOCK':
-            case 'PENDING':
-            case 'pending':
-                return 'warn';
-
-            case 'unqualified':
-            case 'outofstock':
-            case 'OUTOFSTOCK':
-            case 'CANCELLED':
-            case 'cancelled':
-                return 'danger';
+            case 1:
+                return (type == 'value' ? 'Approved' : 'info')
+            case 2:
+                return (type == 'value' ? 'Inactive' : 'contrast')
+            case 3:
+                return (type == 'value' ? 'Suspend' : 'danger')
 
             default:
-                return 'info';
+                return (type == 'value' ? 'Pending' : 'warn');
         }
     }
 
-    calculateCustomerTotal(name: string) {
-        let total = 0;
+    copyCode(code: string) {
+        navigator.clipboard.writeText(code).then(() => {
+            this.logger.printLogs('i', 'Copy School code: ', code)
+            this.messageService.add({
+                severity: 'secondary',
+                summary: 'Copied',
+                detail: 'School code copied to clipboard'
+            });
 
-        if (this.customers2) {
-            for (let customer of this.customers2) {
-                if (customer.representative?.name === name) {
-                    total++;
-                }
+        });
+    }
+
+
+    onSchoolSelectionChange(selected: any[]) {
+        this.logger.printLogs('i', "Select schools : ", selected)
+        this.selectSchools = selected; // optional, if you want to keep it synced manually
+    }
+
+    onGlobalFilter(table: Table) {
+        table.filterGlobal(this.filter, 'contains');
+    }
+
+    clear(table: Table,) {
+        this.filter = ''
+        table.clear();
+    }
+
+    openNew() {
+        this.form.reset({
+            schoolName: '',
+            userID: this.tokenPayload.nameid
+        });
+        this.school = {};
+        this.submitted = false;
+        this.itemDialog = true;
+    }
+
+    openNewDialog() {
+        this.form.reset();
+        this.itemDialog = true;
+    }
+
+
+    edit(school: any) {
+        this.school = school;
+        this.logger.printLogs('e', 'Edit schools', school)
+        this.form.patchValue(school);
+        this.itemDialog = true;
+    }
+
+    deleteSelected() {
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to delete the selected school?',
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+
+            accept: () => {
+
+                this.selectSchools = [];
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Successful',
+                    detail: 'Products Deleted',
+                    life: 3000
+                });
             }
+        });
+    }
+
+    reAssignDialog() {
+        if (!this.selectSchools || this.selectSchools.length === 0) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected School',
+                detail: 'Please select at least one school first!',
+                life: 3000
+            });
+            return;
         }
 
-        return total;
+        this.loadCoordinators();
+        this.assignDialog = true;
+        this.coordinatorID = null;
+    }
+
+
+    hideDialog() {
+        this.form.reset({
+            schoolName: '',
+            userID: this.tokenPayload.nameid
+        });
+        this.school = {};
+        this.itemDialog = false;
+        this.assignDialog = false;
+        this.qrDialog = false;
+        this.submitted = false;
+    }
+
+    changeStatus(status: number) {
+        const schoolIDs = this.selectSchools?.map((school: any) => school.schoolID) ?? [];
+        const schools = this.selectSchools?.map((school: any) => school.schoolName) ?? [];
+
+        if (!schoolIDs.length) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected School',
+                detail: 'Please select at least one school first!',
+                life: 3000
+            });
+            return;
+        }
+
+        this.confirmationService.confirm({
+            message: `Are you sure you want to change the status of selected schools <br><br>${schools.join('<br>')}<br><br>to<b>${this.getStatus(status, 'value')}</b>?`,
+            header: 'Confirm Status Update',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: "Yes! I'm Sure",
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined  p-button-secondary',
+
+            accept: () => {
+                this.api.updateSchoolStatus(status, schoolIDs).subscribe({
+                    next: (res: any) => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: res.message,
+                            life: 3000
+                        });
+
+                        this.logger.printLogs('s', 'Status updated successfully', res);
+                        this.loadSchools();
+                        this.showErrorAlert('Successful', 'School status updated', false, 'success', );
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Successful',
+                            detail: 'School status updated',
+                            life: 3000
+                        });
+                        this.selectSchools = [];
+                    },
+                    error: (err) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: err,
+                            detail: 'Failed to update school status.',
+                            life: 3000
+                        });
+                        this.logger.printLogs('e', 'Failed to update status', err);
+                    }
+                });
+            }
+        });
+    }
+
+
+    saveAssignCoor() {
+        const schoolIDs = this.selectSchools?.map((school: any) => school.schoolID) ?? [];
+        const schools = this.selectSchools?.map((school: any) => school.schoolName) ?? [];
+
+        if (this.coordinatorID == null) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected Coordinator',
+                detail: 'Please select at least one coordinator first!',
+                life: 3000
+            });
+            return
+        }
+        // Find the selected coordinator object
+        const coordinator = this.coordinators?.find(
+            (c: any) => c.userID === this.coordinatorID
+        );
+
+        const coordinatorName = coordinator?.fullname || coordinator?.name || 'Unknown';
+
+        this.logger.printLogs('s', `Assign selected schoolIDs [${schoolIDs}] to coordinator : `, coordinatorName);
+
+        this.confirmationService.confirm({
+            message: `Are you sure you want to assign the selected school(s):<br><br>${schools.join('<br>')}<br><br>to <b>${coordinatorName}</b>?`,
+            header: 'Assign Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+
+            accept: () => {
+                this.selectSchools = [];
+
+                this.api.assignCoordinator(this.coordinatorID, schoolIDs).subscribe({
+                    next: (res) => {
+                        this.logger.printLogs('s', 'Coordinator assigned successfully', res);
+                        this.loadSchools();
+                    },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed to assign coordinator', err);
+                    }
+                });
+                this.assignDialog = false;
+            }
+        });
+    }
+
+
+
+
+
+    save() {
+        this.submitted = true;
+
+        if (!this.form.valid) {
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Incomplete Fields',
+                detail: 'Please complete all required fields before proceeding!',
+                life: 3000
+            });
+            this.vf.validateFormFields(this.form);
+            return;
+        }
+
+        this.itemDialog = false;
+
+        if (this.school?.schoolID) {
+            // ✅ UPDATE school
+            let id = this.school.schoolID
+            this.school.schoolName = this.form.get('schoolName')?.value;
+            this.school.address = this.form.get('address')?.value;
+
+            this.logger.printLogs('i', 'School details', this.school);
+            this.api.updateSchool(id, this.school).subscribe({
+                next: (res) => {
+                    this.logger.printLogs('i', 'School updated successfully', res,);
+                    this.loadSchools(); // reload list
+                    this.hideDialog();
+                    this.showErrorAlert('Successful', 'School updated successfully', false, 'success');
+                },
+                error: (err) => {
+                    this.showErrorAlert('Updating Failed', err, true, 'error');
+                },
+                complete: () => {
+                    this.submitted = false;
+                }
+            });
+        } else {
+            this.school = this.form.value;
+            // ✅ CREATE school
+            this.api.createSchool(this.school).subscribe({
+                next: (res) => {
+                    this.logger.printLogs('i', 'School created successfully', res);
+                    this.loadSchools(); // reload list
+                    this.hideDialog();
+                    this.showErrorAlert('Successful', 'School created successfully', false, 'success');
+                    // this.showErrorAlert('Created Successfully', "School created successfully", false);
+                },
+                error: (err) => {
+                    this.showErrorAlert('Saving Failed', err, true, 'error');
+                },
+                complete: () => {
+                    this.submitted = false;
+                }
+            });
+        }
+    }
+    delete(school: any) {
+        this.confirmationService.confirm({
+            message: `Are you sure you want to delete ${school.schoolName}?`,
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+
+            accept: () => {
+                this.logger.printLogs('i', `Deleting School ${school.schoolName}`, school);
+
+                this.api.deleteSchool(school.schoolID).subscribe({
+                    next: (res) => {
+                        this.logger.printLogs('i', 'School deleted successfully', res);
+                        this.loadSchools();
+                        this.showErrorAlert('Successful', 'School deleted successfully', false, 'success');
+                    },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed to delete school', err);
+                        this.showErrorAlert('Deleting Failed', err, false, 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    printAll() {
+        this.pdfService.generateSchoolsReport(this.schools());
+    }
+
+    showQR(school: any) {
+        this.school = school;
+        this.qrDialog = true;
+    }
+
+    saveAsImage() {
+        if (!this.school?.qrCode) return;
+
+        const qrImage = new Image();
+        qrImage.src = 'data:image/png;base64,' + this.school.qrCode;
+
+        qrImage.onload = () => {
+            const qrSize = 200;
+            const padding = 20;
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d')!;
+
+            const nameFont = "bold 20px Arial";
+            const poweredFont = "14px Arial";
+            const poweredBlueFont = "italic 14px Arial";
+
+            ctx.font = nameFont;
+
+            // Wrap function
+            const wrapText = (text: string, maxWidth: number): string[] => {
+                const words = text.split(" ");
+                const lines: string[] = [];
+                let line = "";
+
+                words.forEach(word => {
+                    const testLine = line + word + " ";
+                    if (ctx.measureText(testLine).width > maxWidth) {
+                        lines.push(line.trim());
+                        line = word + " ";
+                    } else {
+                        line = testLine;
+                    }
+                });
+
+                lines.push(line.trim());
+                return lines;
+            };
+
+            const maxWidth = qrSize + padding * 2;
+            const nameLines = wrapText(this.school.schoolName, maxWidth - 20);
+            const lineHeight = 26;
+
+            const nameSectionHeight = nameLines.length * lineHeight;
+
+            // ⬇ Add extra bottom margin here (+40px)
+            const poweredHeight = 30;
+            const extraBottomMargin = 70;
+
+            canvas.width = maxWidth;
+            canvas.height =
+                qrSize +
+                padding +
+                nameSectionHeight +
+                poweredHeight +
+                extraBottomMargin;
+
+            // Background
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw QR
+            ctx.drawImage(qrImage, (canvas.width - qrSize) / 2, padding, qrSize, qrSize);
+
+            // Draw school name
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#2c3e50";
+            ctx.font = nameFont;
+
+            let textY = qrSize + padding + 40;
+
+            nameLines.forEach(line => {
+                ctx.fillText(line, canvas.width / 2, textY);
+                textY += lineHeight;
+            });
+
+            // Draw “powered by”
+            ctx.font = poweredFont;
+            ctx.fillStyle = "#7f8c8d";
+            ctx.fillText("powered by", canvas.width / 2, textY + 10);
+
+            // Draw SAP Application (blue)
+            ctx.font = poweredBlueFont;
+            ctx.fillStyle = "#007bff";
+            ctx.fillText("SAP Application", canvas.width / 2, textY + 28);
+
+            // Download
+            const link = document.createElement("a");
+            link.href = canvas.toDataURL("image/png");
+            link.download = `${this.school.schoolID}_qrcode.png`;
+            link.click();
+        };
+    }
+
+
+    private showErrorAlert(title: string, message: string, dialogOpen: boolean, severity: 'error' | 'warning' | 'success' = 'success') {
+        this.logger.printLogs('e', 'Failed to create school', message);
+        this.messageService.add({
+            severity: severity,
+            summary: title,
+            detail: message,
+            life: 3000
+        });
+        Swal.fire({
+            title: 'Saving Failed',
+            text: message,
+            icon: severity,
+            showCancelButton: false,
+            confirmButtonText: 'OK',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.itemDialog = dialogOpen;
+            }
+        });
     }
 }

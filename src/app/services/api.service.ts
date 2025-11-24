@@ -163,11 +163,11 @@ export class ApiService {
     return this.handleRequest('post', 'Hospitals', { body: hospital, logAction: 'Creating Hospital' });
   }
 
-  updateHospital(id: number, hospital: any) {
+  updateHospital(id: any, hospital: any) {
     return this.handleRequest('put', 'Hospitals', { id, body: hospital, logAction: 'Updating Hospital' });
   }
 
-  deleteHospital(id: number) {
+  deleteHospital(id: any) {
     return this.handleRequest('delete', 'Hospitals', { id, logAction: 'Deleting Hospital' });
   }
 
@@ -181,11 +181,11 @@ export class ApiService {
     return this.handleRequest('post', 'Sections', { body: section, logAction: 'Creating Section' });
   }
 
-  updateSection(id: number, section: any) {
+  updateSection(id: any, section: any) {
     return this.handleRequest('put', 'Sections', { id, body: section, logAction: 'Updating Section' });
   }
 
-  deleteSection(id: number) {
+  deleteSection(id: any) {
     return this.handleRequest('delete', 'Sections', { id, logAction: 'Deleting Section' });
   }
 
@@ -219,6 +219,34 @@ export class ApiService {
     return this.handleRequest('delete', 'Allocations', { id, logAction: 'Deleting Allocation' });
   }
 
+  
+  /*----------------------- SHIFTS -----------------------*/
+  getShifts() {
+    return this.handleRequest<any[]>('get', 'Shifts', { logAction: 'Fetching Shifts' });
+  }
+
+  createShift(shift: any) {
+    return this.handleRequest('post', 'Shifts', { body: shift, logAction: 'Creating Shift' });
+  }
+
+  updateShift(id: any, shift: any) {
+    return this.handleRequest('put', 'Shifts', { id, body: shift, logAction: 'Updating Shift' });
+  }
+
+  deleteShift(id: any) {
+    return this.handleRequest('delete', 'Shifts', { id, logAction: 'Deleting Shift' });
+  }
+
+
+  /*----------------------- SLOTS -----------------------*/
+
+  getSlots() {
+    return this.handleRequest<any[]>('get', 'Slots', { logAction: 'Fetching Slots' });
+  }
+
+  createBulkSlots(slots: any) {
+    return this.handleRequest('post', 'Slots/bulk', { body: slots, logAction: 'Creating Bulk Slots' });
+  }
 
 
   /*----------------------- ROLES -----------------------*/
@@ -226,8 +254,8 @@ export class ApiService {
     return this.handleRequest<any[]>('get', 'Roles', { logAction: 'Fetching Roles' });
   }
 
-  createRole(section: any) {
-    return this.handleRequest('post', 'Roles', { body: section, logAction: 'Creating Role' });
+  createRole(role: any) {
+    return this.handleRequest('post', 'Roles', { body: role, logAction: 'Creating Role' });
   }
 
 
@@ -260,6 +288,20 @@ export class ApiService {
     return this.handleStringRequest('put', `Users/${id}/change-password`, newPassword, 'Change Password');
   }
 
+  resendVerification(email: string) {
+    this.loading.setLoadingVisible(true); // show before the request starts
+
+    return this.http.post<any>(
+      `${this.apiUrl}Users/resend-verification/`,
+      `"${email}"`,
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    ).pipe(
+      catchError(this.handleError.bind(this)),
+      finalize(() => this.loading.setLoadingVisible(false)) // always hide after completion (success/error)
+    );
+  }
 
 
   /*----------------------- SCHOOLS -----------------------*/
@@ -267,7 +309,7 @@ export class ApiService {
     return this.handleRequest<any[]>('get', 'Schools', { logAction: 'Fetching Schools' });
   }
 
-  checkSchoolCode(code: string){
+  checkSchoolCode(code: string) {
     return this.handleStringRequest('post', 'Schools/schoolCode', code, 'Checking School Code');
   }
 
@@ -293,26 +335,11 @@ export class ApiService {
     });
   }
 
-
   deleteSchool(id: number) {
     return this.handleRequest('delete', 'Schools', { id, logAction: 'Deleting Schools' });
   }
 
 
-  resendVerification(email: string) {
-    this.loading.setLoadingVisible(true); // show before the request starts
-
-    return this.http.post<any>(
-      `${this.apiUrl}Users/resend-verification/`,
-      `"${email}"`,
-      {
-        headers: { 'Content-Type': 'application/json' }
-      }
-    ).pipe(
-      catchError(this.handleError.bind(this)),
-      finalize(() => this.loading.setLoadingVisible(false)) // always hide after completion (success/error)
-    );
-  }
 
 
 

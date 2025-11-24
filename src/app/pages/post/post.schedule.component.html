@@ -1,0 +1,257 @@
+<p-toast></p-toast>
+<div class="flex flex-col md:flex-row gap-8">
+
+    <div class="md:w-5/6">
+        <div class="card">
+
+            <div class="flex row justify-end mb-2">
+                <p-selectButton class="float-right" [options]="viewOptions" optionLabel="label" optionValue="value"
+                    [(ngModel)]="tableOption" (onChange)="onChangeView($event)"
+                    styleClass="w-full justify-center role-toggle">
+                    <ng-template let-option pTemplate="item">
+                        <div class="flex items-center gap-2">
+                            <i [class]="option.icon"></i>
+                            <span>{{ option.label }}</span>
+                        </div>
+                    </ng-template>
+                </p-selectButton>
+            </div>
+            @if (tableOption) {
+            <p-table #dt [value]="slots()" [rows]="10" [columns]="cols" [paginator]="true"
+                [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionname', 'status', 'date_created']"
+                [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
+                [rowHover]="true" dataKey="slotID"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
+                (selectionChange)="onSchoolSelectionChange($event)">
+
+                <ng-template pTemplate="caption">
+
+                    <div class="flex row justify-center">
+
+                        <h5 class="m-0">Manage Schedules</h5>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex row">
+                            <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
+                                (onClick)="openNew()" />
+                            <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
+                            (onClick)="deleteSelected()" [disabled]="!selectSchools || !selectSchools.length" /> -->
+                        </div>
+                        <p-iconfield>
+                            <p-inputicon styleClass="pi pi-search" />
+                            <input pInputText type="text" [(ngModel)]="filter" (input)="onGlobalFilter(dt)"
+                                placeholder="Search..." />
+                            @if (filter && filter.length > 0) {
+                            <p-inputicon styleClass="pi pi-times cursor-pointer" style="margin-left: -1.5rem;"
+                                (click)="clear(dt)" />
+                            }
+                            <p-button label="Export" class="mx-2" icon="pi pi-upload" severity="info" rounded="true"
+                                pTooltip="Export" (onClick)="exportCSV()" />
+                            <p-button icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
+                                (click)="loadSlots()" />
+                        </p-iconfield>
+
+                    </div>
+                </ng-template>
+                <ng-template #header>
+                    <tr>
+                        <th style="width: 3rem">
+                            <p-tableHeaderCheckbox />
+                        </th>
+                        <!-- <th pSortableColumn="slotID" style="max-width: 1rem">Slot ID
+                            <p-sortIcon field="slotID" />
+                        </th> -->
+                        <th pSortableColumn="dateSlot" style="min-width:3rem">
+                            Date Slot
+                            <p-sortIcon field="dateSlot" />
+                        </th>
+                        <th pSortableColumn="shiftName" style="min-width:10rem">
+                            Shift
+                            <p-sortIcon field="shiftName" />
+                        </th>
+                        <th pSortableColumn="hospitalName" style="min-width:10rem">
+                            Hospital
+                            <p-sortIcon field="hospitalName" />
+                        </th>
+                        <th pSortableColumn="sectionName" style="min-width:10rem">
+                            Section
+                            <p-sortIcon field="sectionName" />
+                        </th>
+                        <th pSortableColumn="status" style="min-width:10rem">
+                            Status
+                            <p-sortIcon field="status" />
+                        </th>
+                        <th pSortableColumn="date_created" style="min-width:10rem">
+                            Date Created
+                            <p-sortIcon field="date_created" />
+                        </th>
+                        <th style="min-width: 5rem">Action</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-slot>
+                    <tr>
+                        <td style="width: 3rem">
+                            <p-tableCheckbox [value]="slot" />
+                        </td>
+                        <!-- <td style="max-width: 1rem">{{ slot.slotID }}</td> -->
+                        <td style="min-width: 3rem">{{ slot.dateSlot }}</td>
+                        <td style="min-width: 10rem">{{ slot.shiftName}}
+                            <small class="block text-gray-500">({{ formatTime(slot.startTime)}} - {{
+                                formatTime(slot.endTime) }})</small>
+                        </td>
+                        <td style="min-width: 3rem">{{ slot.hospitalName }}</td>
+                        <td style="min-width: 3rem">{{ slot.sectionName }}</td>
+                        <td style="min-width: 3rem">
+                            <p-tag [value]="getStatus(slot.status,'value')"
+                                [severity]="getStatus(slot.status,'severirty')" styleClass="dark:bg-surface-900!" />
+                        </td>
+                        <td style="min-width: 3rem">{{ slot.date_Created }}</td>
+                        <td>
+                            <div class="flex flex-row gap-2">
+                                <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (click)="edit(slot)" />
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                                    (click)="delete(slot)" />
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            }@else{
+
+            <full-calendar [options]='calendarOptions()'>
+                <ng-template #eventContent let-arg>
+                    <b>{{ arg.timeText }}</b>
+                    <i>{{ arg.event.title }}</i>
+                </ng-template>
+            </full-calendar>
+            }
+
+        </div>
+    </div>
+
+
+    <!-- SUBMENU -->
+    <div class="md:w-1/6">
+        <div class="card h-200 px-0">
+            <div class="h-1/2">
+                <h5 class="m-0">Sub Component</h5>
+
+                <ul class="layout-menu">
+                    <ng-container *ngFor="let item of subcomponent; let i = index">
+                        <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
+                        <li *ngIf="item.separator" class="menu-separator"></li>
+                    </ng-container>
+                </ul>
+            </div>
+
+            <div class="h-1/2">
+                <div class="font-semibold text-xl mb-4">Properties</div>
+                <p-panelmenu [model]="properties" />
+            </div>
+            <!-- <div class="h-1/2">
+                <h5 class="m-0">Properties</h5>
+                <p-tieredMenu [model]="properties" class="w-full"></p-tieredMenu>
+            </div> -->
+
+        </div>
+    </div>
+
+</div>
+
+<p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="Post Schedule" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-6">
+            <form [formGroup]="form" ng-reflect-form="[object Object]">
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label for="Date" class="block font-bold">Date</label>
+                        <p-datepicker styleClass="w-full" id="Date" formControlName="date" [showIcon]="true"
+                            [showButtonBar]="true" appendTo="body" placeholder="Select Date" [minDate]="minDate" />
+
+                        @if (form.get('date')?.invalid && (form.get('date')?.touched || submitted)) {
+                        <small class="text-red-500">Date is required.</small>
+                        }
+                    </div>
+                    <div>
+                        <label for="shifts" class="block font-bold mb-3">Shifts</label>
+                        <p-multiSelect styleClass="w-full" formControlName="shiftID" [options]="shiftOption"
+                            optionLabel="shiftName" optionValue="shiftID" placeholder="Select Shift(s)" display="chip"
+                            [filter]="true" appendTo="body" fluid>
+
+                            <ng-template pTemplate="selectedItems" let-selected>
+                                <div class="flex flex-wrap gap-2">
+                                    <div *ngFor="let shift of selected"
+                                        class="inline-flex items-center py-1 px-2 bg-primary text-white rounded-lg">
+                                        {{ shift.shiftName }} ({{ formatTime(shift.startTime)}} - {{
+                                        formatTime(shift.endTime) }})
+                                    </div>
+                                </div>
+                            </ng-template>
+
+                            <ng-template pTemplate="item" let-shift>
+                                <div class="flex items-center gap-2">
+                                    <span>{{ shift.shiftName }}</span>
+                                    <small class="text-gray-500">({{ formatTime(shift.startTime)}} - {{
+                                        formatTime(shift.endTime) }})</small>
+                                </div>
+                            </ng-template>
+
+                        </p-multiSelect>
+                    </div>
+                    <div>
+
+                        <label for="hospitals" class="block font-bold mb-3">Hospitals</label>
+                        <p-select styleClass="w-full" id="hospitals" [options]="hospitals" optionLabel="hospitalName"
+                            optionValue="hospitalID" appendTo="body" formControlName="hospitalID"
+                            (onChange)="getAllocationsByHospitalID($event.value)" placeholder="Select Hospital" />
+                    </div>
+                    @if(allocations.length > 0)
+                    {
+                    <div *ngIf="allocations.length > 0">
+                        <label for="shifts" class="block font-bold mb-3">Sections</label>
+                        <p-multiSelect styleClass="w-full" formControlName="allocationID" [options]="allocations"
+                            optionLabel="sectionName" optionValue="allocationID" placeholder="Select Section"
+                            display="chip" [filter]="true" appendTo="body" fluid placeholder="Select Section(s)">
+
+                            <ng-template pTemplate="selectedItems" let-selected>
+                                <div class="flex flex-wrap gap-2">
+                                    <div *ngFor="let allocation of selected"
+                                        class="inline-flex items-center py-1 px-2 bg-primary text-white rounded-lg">
+                                        {{ allocation.sectionName }}
+                                    </div>
+                                </div>
+                            </ng-template>
+
+                            <ng-template pTemplate="item" let-allocation>
+                                <div class="flex items-center gap-2">
+                                    <span>{{ allocation.sectionName }}</span>
+                                    <small class="text-gray-500">({{ allocation.allocation }})</small>
+                                </div>
+                            </ng-template>
+
+                        </p-multiSelect>
+                    </div>
+                    }
+
+                    <div>
+                        <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
+                    </div>
+                </div>
+
+
+
+            </form>
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="save()" />
+    </ng-template>
+</p-dialog>
+
+
+
+<p-confirmdialog [style]="{ width: '450px' }">

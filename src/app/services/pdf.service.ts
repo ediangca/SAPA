@@ -120,13 +120,13 @@ export class PdfService {
     pdfMakeLib.createPdf(docDefinition).open();
   }
 
-  async generateUserReport(users: any[]) {
+  async generateUserReport(users: any[], title: string) {
     // Ensure logos are loaded before generating
     if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
 
     const docDefinition: any = {
       content: [
-        this.getHeader('LIST OF USERS'),
+        this.getHeader(title),
         { text: '\n' },
         {
           table: {

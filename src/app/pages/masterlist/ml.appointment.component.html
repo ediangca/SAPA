@@ -1,152 +1,234 @@
-<p-toolbar styleClass="mb-6">
-    <ng-template #start>
-        <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2" (onClick)="openNew()" />
-        <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined (onClick)="deleteSelectedProducts()"
-            [disabled]="!selectedProducts || !selectedProducts.length" />
-    </ng-template>
+<p-toast></p-toast>
+<div class="flex flex-col md:flex-row gap-8">
 
-    <ng-template #end>
-        <p-button label="Export" icon="pi pi-upload" severity="secondary" (onClick)="exportCSV()" />
-    </ng-template>
-</p-toolbar>
+    <div class="md:w-5/6">
+        <div class="card">
+            <p-table #dt [value]="schools()" [rows]="10" [columns]="cols" [paginator]="true"
+                [globalFilterFields]="['schoolID', 'schoolName', 'address', 'coordinator', 'status', 'date_created']"
+                [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSchools"
+                [rowHover]="true" dataKey="schoolID"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
+                (selectionChange)="onSchoolSelectionChange($event)">
 
-<p-table #dt [value]="products()" [rows]="10" [columns]="cols" [paginator]="true"
-    [globalFilterFields]="['name', 'country.name', 'representative.name', 'status']"
-    [tableStyle]="{ 'min-width': '75rem' }" [(selection)]="selectedProducts" [rowHover]="true" dataKey="id"
-    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products" [showCurrentPageReport]="true"
-    [rowsPerPageOptions]="[10, 20, 30]">
-    <ng-template #caption>
-        <div class="flex items-center justify-between">
-            <h5 class="m-0">Manage Appointments</h5>
-            <p-iconfield>
-                <p-inputicon styleClass="pi pi-search" />
-                <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Search..." />
-            </p-iconfield>
+                <ng-template pTemplate="caption">
+
+                    <p-button class="float-left " icon="pi pi-arrow-left" severity="secondary"
+                        routerLink="/dashboard/masterlist/hospitals" text raised rounded />
+
+                    <div class="flex row justify-center">
+
+                        <h5 class="m-0">Manage Appoinments</h5>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex row">
+                            <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
+                                (onClick)="openNew()" />
+                            <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
+                            (onClick)="deleteSelected()" [disabled]="!selectSchools || !selectSchools.length" /> -->
+                        </div>
+                        <p-iconfield>
+                            <p-inputicon styleClass="pi pi-search" />
+                            <input pInputText type="text" [(ngModel)]="filter" (input)="onGlobalFilter(dt)"
+                                placeholder="Search..." />
+                            @if (filter && filter.length > 0) {
+                            <p-inputicon styleClass="pi pi-times cursor-pointer" style="margin-left: -1.5rem;"
+                                (click)="clear(dt)" />
+                            }
+                            <p-button label="Export" class="mx-2" icon="pi pi-upload" severity="info" rounded="true"
+                                pTooltip="Export" (onClick)="exportCSV()" />
+                            <p-button icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
+                                (click)="loadSchools()" />
+                        </p-iconfield>
+
+                    </div>
+                </ng-template>
+                <ng-template #header>
+                    <tr>
+                        <th style="width: 3rem">
+                            <p-tableHeaderCheckbox />
+                        </th>
+                        <th pSortableColumn="schoolID" style="max-width: 1rem">School ID
+                            <p-sortIcon field="schoolID" />
+                        </th>
+                        <th pSortableColumn="schoolName" style="min-width:3rem">
+                            School
+                            <p-sortIcon field="schoolName" />
+                        </th>
+                        <th pSortableColumn="address" style="min-width:10rem">
+                            Address
+                            <p-sortIcon field="address" />
+                        </th>
+                        <th pSortableColumn="coordinator" style="min-width:3rem">
+                            Coordinator
+                            <p-sortIcon field="coordinator" />
+                        </th>
+                        <th pSortableColumn="status" style="min-width:10rem">
+                            Status
+                            <p-sortIcon field="status" />
+                        </th>
+                        <th pSortableColumn="status" style="min-width:10rem">
+                            Code
+                            <p-sortIcon field="status" />
+                        </th>
+                        <th pSortableColumn="date_created" style="min-width:10rem">
+                            Date Created
+                            <p-sortIcon field="date_created" />
+                        </th>
+                        <th style="min-width: 5rem">Action</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-school>
+                    <tr>
+                        <td style="width: 3rem">
+                            <p-tableCheckbox [value]="school" />
+                        </td>
+                        <td style="max-width: 1rem">{{ school.schoolID }}</td>
+                        <td style="min-width: 3rem">{{ school.schoolName }}</td>
+                        <td style="min-width: 10rem">{{ school.address }}</td>
+                        <td style="min-width: 3rem">{{ school.createdBy }}</td>
+                        <td style="min-width: 3rem">
+                            <p-tag [value]="getStatus(school.status,'value')"
+                                [severity]="getStatus(school.status,'severirty')" styleClass="dark:bg-surface-900!" />
+                        </td>
+                        <td style="min-width: 3rem">{{ school.code }}
+                            <p-button icon="pi pi-copy cursor-pointer text-gray-600 hover:text-black" [rounded]="true"
+                                [outlined]="false" severity="secondary" (click)="copyCode(school.code)" />
+                        </td>
+                        <td style="min-width: 3rem">{{ school.date_Created }}</td>
+                        <td>
+                            <div class="flex flex-row gap-2">
+                                <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true"
+                                    (click)="edit(school)" />
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                                    (click)="delete(school)" />
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
         </div>
-    </ng-template>
-    <ng-template #header>
-        <tr>
-            <th style="width: 3rem">
-                <p-tableHeaderCheckbox />
-            </th>
-            <th style="min-width: 16rem">Code</th>
-            <th pSortableColumn="name" style="min-width:16rem">
-                Name
-                <p-sortIcon field="name" />
-            </th>
-            <th>Image</th>
-            <th pSortableColumn="price" style="min-width: 8rem">
-                Price
-                <p-sortIcon field="price" />
-            </th>
-            <th pSortableColumn="category" style="min-width:10rem">
-                Category
-                <p-sortIcon field="category" />
-            </th>
-            <th pSortableColumn="rating" style="min-width: 12rem">
-                Reviews
-                <p-sortIcon field="rating" />
-            </th>
-            <th pSortableColumn="inventoryStatus" style="min-width: 12rem">
-                Status
-                <p-sortIcon field="inventoryStatus" />
-            </th>
-            <th style="min-width: 12rem"></th>
-        </tr>
-    </ng-template>
-    <ng-template #body let-product>
-        <tr>
-            <td style="width: 3rem">
-                <p-tableCheckbox [value]="product" />
-            </td>
-            <td style="min-width: 12rem">{{ product.code }}</td>
-            <td style="min-width: 16rem">{{ product.name }}</td>
-            <td>
-                <img [src]="'https://primefaces.org/cdn/primeng/images/demo/product/' + product.image"
-                    [alt]="product.name" style="width: 64px" class="rounded" />
-            </td>
-            <td>{{ product.price | currency: 'USD' }}</td>
-            <td>{{ product.category }}</td>
-            <td>
-                <p-rating [(ngModel)]="product.rating" [readonly]="true" />
-            </td>
-            <td>
-                <p-tag [value]="product.inventoryStatus" [severity]="getSeverity(product.inventoryStatus)" />
-            </td>
-            <td>
-                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                    (click)="editProduct(product)" />
-                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                    (click)="deleteProduct(product)" />
-            </td>
-        </tr>
-    </ng-template>
-</p-table>
+    </div>
 
-<p-dialog [(visible)]="productDialog" [style]="{ width: '450px' }" header="Product Details" [modal]="true">
+
+    <!-- SUBMENU -->
+    <div class="md:w-1/6">
+        <div class="card h-200 px-0">
+            <div class="h-1/2">
+                <h5 class="m-0">Sub Component</h5>
+
+                <ul class="layout-menu">
+                    <ng-container *ngFor="let item of subcomponent; let i = index">
+                        <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
+                        <li *ngIf="item.separator" class="menu-separator"></li>
+                    </ng-container>
+                </ul>
+            </div>
+
+            <div class="h-1/2">
+                <div class="font-semibold text-xl mb-4">Properties</div>
+                <p-panelmenu [model]="properties" />
+            </div>
+            <!-- <div class="h-1/2">
+                <h5 class="m-0">Properties</h5>
+                <p-tieredMenu [model]="properties" class="w-full"></p-tieredMenu>
+            </div> -->
+
+        </div>
+    </div>
+
+</div>
+
+<p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="School Details" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
-            <img [src]="'https://primefaces.org/cdn/primeng/images/demo/product/' + product.image" [alt]="product.image"
-                class="block m-auto pb-4" *ngIf="product.image" />
-            <div>
-                <label for="name" class="block font-bold mb-3">Name</label>
-                <input type="text" pInputText id="name" [(ngModel)]="product.name" required autofocus fluid />
-                <small class="text-red-500" *ngIf="submitted && !product.name">Name is required.</small>
-            </div>
-            <div>
-                <label for="description" class="block font-bold mb-3">Description</label>
-                <textarea id="description" pTextarea [(ngModel)]="product.description" required rows="3" cols="20"
-                    fluid></textarea>
-            </div>
-
-            <div>
-                <label for="inventoryStatus" class="block font-bold mb-3">Inventory Status</label>
-                <p-select [(ngModel)]="product.inventoryStatus" inputId="inventoryStatus" [options]="statuses"
-                    optionLabel="label" optionValue="label" placeholder="Select a Status" fluid />
-            </div>
-
-            <div>
-                <span class="block font-bold mb-4">Category</span>
-                <div class="grid grid-cols-12 gap-4">
-                    <div class="flex items-center gap-2 col-span-6">
-                        <p-radiobutton id="category1" name="category" value="Accessories"
-                            [(ngModel)]="product.category" />
-                        <label for="category1">Accessories</label>
-                    </div>
-                    <div class="flex items-center gap-2 col-span-6">
-                        <p-radiobutton id="category2" name="category" value="Clothing" [(ngModel)]="product.category" />
-                        <label for="category2">Clothing</label>
-                    </div>
-                    <div class="flex items-center gap-2 col-span-6">
-                        <p-radiobutton id="category3" name="category" value="Electronics"
-                            [(ngModel)]="product.category" />
-                        <label for="category3">Electronics</label>
-                    </div>
-                    <div class="flex items-center gap-2 col-span-6">
-                        <p-radiobutton id="category4" name="category" value="Fitness" [(ngModel)]="product.category" />
-                        <label for="category4">Fitness</label>
-                    </div>
+            <form [formGroup]="form" ng-reflect-form="[object Object]">
+                <div>
+                    <label for="schoolName" class="block font-bold mb-3">School Name</label>
+                    <input type="text" pInputText id="schoolName" name="schoolName" formControlName="schoolName"
+                        required autofocus fluid />
+                    <label for="address" class="block font-bold mb-3">School Address</label>
+                    <textarea id="address" pTextarea name="address" formControlName="address" required rows="3"
+                        cols="20" fluid></textarea>
+                    <small class="text-red-500" *ngIf="submitted && !form.value['schoolName']"> Name is
+                        required.</small>
                 </div>
-            </div>
+                <div>
+                    <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
+                </div>
 
-            <div class="grid grid-cols-12 gap-4">
-                <div class="col-span-6">
-                    <label for="price" class="block font-bold mb-3">Price</label>
-                    <p-inputnumber id="price" [(ngModel)]="product.price" mode="currency" currency="USD" locale="en-US"
-                        fluid />
-                </div>
-                <div class="col-span-6">
-                    <label for="quantity" class="block font-bold mb-3">Quantity</label>
-                    <p-inputnumber id="quantity" [(ngModel)]="product.quantity" fluid />
-                </div>
-            </div>
+            </form>
         </div>
     </ng-template>
 
     <ng-template #footer>
-        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
-        <p-button label="Save" icon="pi pi-check" (click)="saveProduct()" />
+        <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="save()" />
     </ng-template>
 </p-dialog>
 
-<p-confirmdialog [style]="{ width: '450px' }" />
+<p-dialog [(visible)]="assignDialog" header="Assign Coordinator" [modal]="true" [style]="{width: '25vw',}"
+    [closable]="true" [draggable]="true" [contentStyle]="{'height':'calc(100% - 60px)', 'overflow':'auto'}">
+
+    <ng-template #content>
+        <div class="flex flex-row gap-4">
+
+            <div class="flex flex-wrap gap-2" *ngIf="selectSchools.length > -1; else noSelection">
+                <ng-container id="schools" name="schools" *ngFor="let school of selectSchools">
+                    <!-- School name -->
+                    <p-tag [value]="school.schoolName" class="mr-2 mb-2 px-3 py-2 rounded-2xl shadow-lg bg-slate-100"
+                        severity="success">
+                    </p-tag>
+                </ng-container>
+
+                <p-select [options]="coordinators" filter="true" optionLabel="fullname" optionValue="userID"
+                    placeholder="Select Coordinator" [(ngModel)]="coordinatorID" appendTo="body"
+                    class="w-full"></p-select>
+            </div>
+
+            <ng-template #noSelection>
+                <p class="text-center text-gray-500 italic">No schools selected.</p>
+            </ng-template>
+        </div>
+    </ng-template>
+
+
+    <!-- Footer -->
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-3 w-full">
+            <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Assign" icon="pi pi-check" (click)="saveAssignCoor()" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+
+
+<p-dialog [(visible)]="qrDialog" header="School QR Code" [modal]="true" [style]="{width: '20vw'}" [closable]="true">
+
+    <div class="flex flex-col items-center my-3 mx-3">
+        <!-- QR IMAGE -->
+        <img *ngIf="school?.qrCode" [src]="'data:image/png;base64,' + school.qrCode" alt="QR Code"
+            style="width: 200px; height: 200px;" />
+
+        <!-- SCHOOL NAME -->
+        <h4 class="text-sm font-semibold text-center mt-0 leading-tight">
+            {{ school?.schoolName }}
+        </h4>
+
+        <!-- SCHOOL ID (optional) -->
+        <p class="text-sm text-gray-500">
+            powered by <em class="font-bold text-blue-500">SAP Application</em>
+        </p>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-3 w-full">
+            <p-button label="Close" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Download" icon="pi pi-download" (click)="saveAsImage()" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+
+<p-confirmdialog [style]="{ width: '450px' }">

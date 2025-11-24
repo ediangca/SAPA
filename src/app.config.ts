@@ -25,7 +25,6 @@ export const appConfig: ApplicationConfig = {
 };
 
 
-// Test inside a function
 setTimeout(() => {
   const toastr = inject(ToastrService);
   // toastr.success('Testing toastr!', 'Success');

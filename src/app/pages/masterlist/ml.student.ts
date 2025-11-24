@@ -103,6 +103,7 @@ export class Student implements OnInit {
     schools: any[] = [];
 
     model: MenuItem[] = [];
+    filter: string = '';
     tokenPayload: any | null;
 
     roles: any | [];
@@ -156,21 +157,21 @@ export class Student implements OnInit {
             }
         ];
         this.properties = [
-            {
-                label: 'Status',
-                icon: 'fas fa-layer-group',
-                items: [
-                    { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
-                    { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
-                    { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-                    { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
-                ]
-            },
-            {
-                label: 'Re-assign Coordinator',
-                icon: 'pi pi-user-edit',
-                command: () => this.reAssignDialog()
-            }
+            // {
+            //     label: 'Status',
+            //     icon: 'fas fa-layer-group',
+            //     items: [
+            //         { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
+            //         { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
+            //         { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+            //         { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
+            //     ]
+            // },
+            // {
+            //     label: 'Re-assign Coordinator',
+            //     icon: 'pi pi-user-edit',
+            //     command: () => this.reAssignDialog()
+            // }
         ];
 
     }
@@ -181,7 +182,7 @@ export class Student implements OnInit {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
             });
-        this.refreshTable();
+        this.loadStudents();
 
         this.api.getRoles().subscribe({
             next: (roles) => this.roles = roles,
@@ -206,8 +207,8 @@ export class Student implements OnInit {
             return;
         }
         const csv = [
-            ['User ID', 'FullName', 'Email', 'User Role', 'Status'],
-            ...users.map(u => [u.userID, u.fullname, u.email, u.rolename, this.getStatus(u.status, 'value')])
+            ['Student ID', 'FullName', 'Email', 'Status'],
+            ...users.map(u => [u.userID, u.fullname, u.email, this.getStatus(u.status, 'value')])
         ]
             .map(row => row.map(v => `"${v}"`).join(','))
             .join('\n');
@@ -215,15 +216,19 @@ export class Student implements OnInit {
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', `users_export_${new Date().getTime()}.csv`);
+        link.setAttribute('download', `students_export_${new Date().getTime()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
 
-
-    onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    onGlobalFilter(table: Table) {
+        table.filterGlobal(this.filter, 'contains');
+    }
+    
+    clear(table: Table,) {
+        this.filter = ''
+        table.clear();
     }
 
     getStatus(status: any, type: string): any {
@@ -291,7 +296,7 @@ export class Student implements OnInit {
                 this.api.resendVerification(user.email).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'Verification sent', res);
-                        this.refreshTable();
+                        this.loadStudents();
                         this.showErrorAlert('Vefification Sent', 'Verification Successfully sent!', false, 'success');
                     },
                     error: (err) => {
@@ -320,7 +325,7 @@ export class Student implements OnInit {
                 this.api.approve(user.email).subscribe({
                     next: (res: any) => {
                         this.logger.printLogs('i', 'Approved Account', res);
-                        this.refreshTable();
+                        this.loadStudents();
                         this.showErrorAlert('Account Approved', res.message, false, 'success');
                     },
                     error: (err) => {
@@ -374,7 +379,7 @@ export class Student implements OnInit {
         this.submitted = false;
     }
 
-    refreshTable() {
+    loadStudents() {
         this.api.getUsers().subscribe({
             next: (users) => this.users.set(users.filter((user: any) => user.roleId === 'UGR0004')), //Role ID - Student
             error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
@@ -443,7 +448,7 @@ export class Student implements OnInit {
                         });
 
                         this.logger.printLogs('s', 'Status updated successfully', res);
-                        this.refreshTable();
+                        this.loadStudents();
                         this.selectUsers = [];
                     },
                     error: (err) => {
@@ -498,7 +503,7 @@ export class Student implements OnInit {
             this.api.updateUser(id, this.user).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'User updated successfully', res);
-                    this.refreshTable(); // reload list
+                    this.loadStudents(); // reload list
                     this.showErrorAlert('User Updated', 'User has been Successfully updated!', false, 'success');
                 },
                 error: (err) => {
@@ -514,7 +519,7 @@ export class Student implements OnInit {
             this.api.createUser(this.user).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'User created successfully', res);
-                    this.refreshTable(); // reload list
+                    this.loadStudents(); // reload list
                     this.closeDialog();
                 },
                 error: (err) => {
@@ -544,7 +549,7 @@ export class Student implements OnInit {
                 this.api.deleteUser(user.userID).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'User deleted', res);
-                        this.refreshTable();
+                        this.loadStudents();
                         this.showErrorAlert('User Deleted', 'User has been Successfully deleted!', false, 'success');
                     },
                     error: (err) => {
@@ -563,7 +568,7 @@ export class Student implements OnInit {
     }
 
     printAll() {
-        this.pdfService.generateUserReport(this.users());
+        this.pdfService.generateUserReport(this.users(), 'LIST OF STUDENTS');
     }
 
 

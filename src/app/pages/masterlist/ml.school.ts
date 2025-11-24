@@ -97,6 +97,7 @@ export class School implements OnInit {
     exportColumns!: ExportColumn[];
 
     cols!: Column[];
+    filter: string = '';
     coordinators: any[] = [];
 
     tokenPayload: any | null;
@@ -166,7 +167,7 @@ export class School implements OnInit {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
             });
-        this.refreshTable();
+        this.loadSchools();
 
         this.cols = [
             { field: 'SchoolID', header: 'ID', customExportHeader: 'School ID' },
@@ -184,7 +185,7 @@ export class School implements OnInit {
         this.dt.exportCSV();
     }
 
-    refreshTable() {
+    loadSchools() {
         this.api.getSchools().subscribe({
             next: (schools) => this.schools.set(schools),
             error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
@@ -233,12 +234,13 @@ export class School implements OnInit {
         this.selectSchools = selected; // optional, if you want to keep it synced manually
     }
 
-    clear(table: Table,) {
-        table.clear();
+    onGlobalFilter(table: Table) {
+        table.filterGlobal(this.filter, 'contains');
     }
 
-    onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    clear(table: Table,) {
+        this.filter = ''
+        table.clear();
     }
 
     openNew() {
@@ -282,7 +284,7 @@ export class School implements OnInit {
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Successful',
-                    detail: 'Products Deleted',
+                    detail: 'School Deleted',
                     life: 3000
                 });
             }
@@ -352,7 +354,7 @@ export class School implements OnInit {
                         });
 
                         this.logger.printLogs('s', 'Status updated successfully', res);
-                        this.refreshTable();
+                        this.loadSchools();
                         this.showErrorAlert('Successful', 'School status updated', false, 'success', );
                         this.messageService.add({
                             severity: 'success',
@@ -416,7 +418,7 @@ export class School implements OnInit {
                 this.api.assignCoordinator(this.coordinatorID, schoolIDs).subscribe({
                     next: (res) => {
                         this.logger.printLogs('s', 'Coordinator assigned successfully', res);
-                        this.refreshTable();
+                        this.loadSchools();
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to assign coordinator', err);
@@ -457,7 +459,7 @@ export class School implements OnInit {
             this.api.updateSchool(id, this.school).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'School updated successfully', res,);
-                    this.refreshTable(); // reload list
+                    this.loadSchools(); // reload list
                     this.hideDialog();
                     this.showErrorAlert('Successful', 'School updated successfully', false, 'success');
                 },
@@ -474,7 +476,7 @@ export class School implements OnInit {
             this.api.createSchool(this.school).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'School created successfully', res);
-                    this.refreshTable(); // reload list
+                    this.loadSchools(); // reload list
                     this.hideDialog();
                     this.showErrorAlert('Successful', 'School created successfully', false, 'success');
                     // this.showErrorAlert('Created Successfully', "School created successfully", false);
@@ -506,7 +508,7 @@ export class School implements OnInit {
                 this.api.deleteSchool(school.schoolID).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'School deleted successfully', res);
-                        this.refreshTable();
+                        this.loadSchools();
                         this.showErrorAlert('Successful', 'School deleted successfully', false, 'success');
                     },
                     error: (err) => {

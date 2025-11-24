@@ -1,3 +1,4 @@
+
 <app-floating-configurator />
 <div
     class="bg-[url('https://shs-components.infopark.io/siemens-healthcare/countries/us/services/cs-workforce-honeycomb/assets/workforce-people-illustration.png')] 
@@ -158,24 +159,23 @@
                                     class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
                                     [class.error]="form.controls['email'].dirty && form.hasError('required', 'email')">
                                     Email
-                                    @if (form.controls['email'].invalid &&
-                                    form.hasError('required', 'email') &&
-                                    form.get('email')?.touched ||
-                                    (form.controls['email'].dirty &&
-                                    form.hasError('required', 'email')))
-                                    {
+
+                                    @if (form.get('email')?.errors?.['required'] && (form.get('email')?.dirty ||
+                                    form.get('email')?.touched)) {
                                     <small class="text-red-600">* is required</small>
                                     }
                                 </label>
 
 
-                                <input
+                                <input #emailInput
                                     [class.error]="form.controls['email'].dirty && form.hasError('required', 'email')"
                                     pInputText id="email" type="text" placeholder="Email address"
                                     formControlName="email" name="email" class="w-full md:w-120" />
 
-                                @if (isvalidEmailFormat == true) {
-                                <div class="text-red-600">
+                                @if ((form.get('email')?.errors?.['email'] || form.get('email')?.errors?.['pattern'])
+                                && (form.get('email')?.dirty || form.get('email')?.touched)) {
+
+                                <div class="text-red-600 mt-1">
                                     Invalid email format
                                 </div>
                                 }
@@ -286,19 +286,3 @@
         </div>
     </div>
 </div>
-
-
-<!-- @if (isLoading) {
-<div class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm">
-    <p-progressSpinner strokeWidth="4" style="width: 3rem; height: 3rem;"></p-progressSpinner>
-
-    <span class="mt-4 text-white text-3xl font-semibold flex items-center">
-        Processing
-        <span class="ml-1 flex space-x-1">
-            <span class="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:0s]"></span>
-            <span class="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:0.2s]"></span>
-            <span class="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:0.4s]"></span>
-        </span>
-    </span>
-</div>
-} -->

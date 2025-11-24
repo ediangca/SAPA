@@ -116,6 +116,7 @@ export class Hospital implements OnInit {
     exportColumns!: ExportColumn[];
 
     cols!: Column[];
+    filter: string = '';
 
     model: MenuItem[] = [];
     tokenPayload: any | null;
@@ -238,15 +239,16 @@ export class Hospital implements OnInit {
 
     }
 
-    onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
-    }
-
     getSectionsAsString(hospital: any): string {
         return hospital.sections?.map((s: any) => s.sectionName).join(', ') || '';
     }
 
+    onGlobalFilter(table: Table) {
+        table.filterGlobal(this.filter, 'contains');
+    }
+
     clear(table: Table,) {
+        this.filter = ''
         table.clear();
     }
 

@@ -22,11 +22,16 @@
                         </div>
                         <p-iconfield>
                             <p-inputicon styleClass="pi pi-search" />
-                            <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" class="mr-2"
+                            <input pInputText type="text" [(ngModel)]="filter" (input)="onGlobalFilter(dt)"
                                 placeholder="Search..." />
-                            <button pButton label="Clear" class="p-button-outlined mr-2" icon="pi pi-filter-slash"
-                                (click)="clear(dt)"></button>
-                            <p-button label="Export" icon="pi pi-upload" severity="info" (onClick)="exportCSV()" />
+                            @if (filter && filter.length > 0) {
+                            <p-inputicon styleClass="pi pi-times cursor-pointer" style="margin-left: -1.5rem;"
+                                (click)="clear(dt)" />
+                            }
+                            <p-button label="Export" class="mx-2" icon="pi pi-upload" severity="info" rounded="true"
+                                pTooltip="Export" (onClick)="exportCSV()" />
+                            <p-button icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
+                                (click)="loadHospitals()" />
                         </p-iconfield>
 
                     </div>

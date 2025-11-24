@@ -55,6 +55,8 @@ export class Register {
     isStudent: boolean = false;
 
     @ViewChild('loadingModal') loadingModal!: ElementRef;
+
+    @ViewChild('emailInput') emailInput!: ElementRef;
     @ViewChild('usernameInput') usernameInput!: ElementRef;
 
     @ViewChild('schoolCodeInput') schoolCodeInput!: ElementRef;
@@ -82,8 +84,13 @@ export class Register {
             lastname: ['', Validators.required],
             firstname: ['', Validators.required],
             middlename: ['', Validators.required],
-            email: ['', Validators.required, Validators.email,
-                Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/), { validateEmailFormat: true, }
+            email: [
+                '',
+                [
+                    Validators.required,
+                    Validators.email,
+                    Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
+                ]
             ],
             username: ['', Validators.required],
             password: ['', [Validators.required, Validators.minLength(6)]],
@@ -101,9 +108,8 @@ export class Register {
     }
 
     onRoleToggle() {
-        const isStudent = this.form.get('isStudent')?.value;
-
-        if (isStudent) {
+        this.isStudent = this.form.get('isStudent')?.value || false;
+        if (this.isStudent) {
             this.form.get('schoolCode')?.setValidators([Validators.required]);
         } else {
             this.form.get('schoolCode')?.clearValidators();
@@ -239,21 +245,19 @@ export class Register {
 
     onSubmit() {
 
-
         if (this.form.invalid) {
             this.form.markAllAsTouched();
-            this.form.updateValueAndValidity();
             return;
         }
         if (this.vf.validateEmailFormat(this.form.value['email']) === false) {
             this.toast.danger('Invalid email format. Please check and try again.', 'Error', 5000);
-            this.form.get('email')?.setValue('');
-            this.form.get('email')?.markAsUntouched();
-            this.form.get('email')?.markAsPristine();
 
-            this.usernameInput.nativeElement.focus();
+            this.form.get('email')?.markAsTouched();
+            this.emailInput.nativeElement.focus();
+
             return;
         }
+
         if (this.form.valid) {
             this.isLoading = true;
             this.logger.printLogs('i', 'Fetching Login Form', this.form.value);
@@ -269,7 +273,7 @@ export class Register {
                 "username": this.form.value['username'],
                 "password": this.form.value['password'],
                 "roleId": roleId,
-                "schoolId": this.isStudent ? this.form.value['schoolCode'] : undefined
+                "schoolId": this.isStudent ? this.form.value['schoolCode'] : null
             }
 
             setTimeout(() => {

@@ -48,8 +48,8 @@ export class AppMenu {
             {
                 label: 'Post',
                 items: [
-                    { label: 'Orientation', icon: 'fas fa-bullhorn', routerLink: ['/dashboard/post/orientations'] },
                     { label: 'Schedule', icon: 'fas fa-calendar-days', routerLink: ['/dashboard/post/schedules'] },
+                    { label: 'Orientation', icon: 'fas fa-bullhorn', routerLink: ['/dashboard/post/orientations'] },
                     { label: 'News & Updates', icon: 'fas fa-newspaper', routerLink: ['/dashboard/post/newsupdates'] },
                 ]
             },

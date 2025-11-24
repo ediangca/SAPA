@@ -92,7 +92,8 @@ export class Users implements OnInit {
     exportColumns!: ExportColumn[];
 
     cols!: Column[];
-
+    filter: string = '';
+    
     model: MenuItem[] = [];
     tokenPayload: any | null;
 
@@ -145,7 +146,7 @@ export class Users implements OnInit {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
             });
-        this.refreshTable();
+        this.loadUsers();
 
         this.api.getRoles().subscribe({
             next: (roles) => this.roles = roles,
@@ -185,9 +186,13 @@ export class Users implements OnInit {
         document.body.removeChild(link);
     }
 
-
-    onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    onGlobalFilter(table: Table) {
+        table.filterGlobal(this.filter, 'contains');
+    }
+    
+    clear(table: Table,) {
+        this.filter = ''
+        table.clear();
     }
 
     getStatus(status: any, type: string): any {
@@ -293,7 +298,7 @@ export class Users implements OnInit {
 
     resendVerification(user: any) {
         this.confirmationService.confirm({
-            message: `Are you sur you really want to resend email verification to ${user.email}?`,
+            message: `Are you sur you really want to resend email verification to <b>${user.email}</b>?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             rejectLabel: 'Cancel',
@@ -306,7 +311,7 @@ export class Users implements OnInit {
                 this.api.resendVerification(user.email).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'Verification sent', res);
-                        this.refreshTable();
+                        this.loadUsers();
                         this.showErrorAlert('Vefification Sent', 'Verification Successfully sent!', false, 'success');
                     },
                     error: (err) => {
@@ -341,7 +346,7 @@ export class Users implements OnInit {
                 this.api.approve(user.email).subscribe({
                     next: (res: any) => {
                         this.logger.printLogs('i', 'Approved Account', res);
-                        this.refreshTable();
+                        this.loadUsers();
                         this.showErrorAlert('Account Approved', res.message, false, 'success');
                     },
                     error: (err) => {
@@ -402,7 +407,7 @@ export class Users implements OnInit {
         this.changePassDialog = false;
     }
 
-    refreshTable() {
+    loadUsers() {
         this.api.getUsers().subscribe({
             next: (users) => this.users.set(users),
             error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
@@ -452,7 +457,7 @@ export class Users implements OnInit {
             this.api.updateUser(id, this.user).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'User updated successfully', res);
-                    this.refreshTable(); // reload list
+                    this.loadUsers(); // reload list
                     this.showErrorAlert('User Updated', 'User has been Successfully updated!', false, 'success');
                 },
                 error: (err) => {
@@ -468,7 +473,7 @@ export class Users implements OnInit {
             this.api.createUser(this.user).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'User created successfully', res);
-                    this.refreshTable(); // reload list
+                    this.loadUsers(); // reload list
                     this.closeDialog();
                 },
                 error: (err) => {
@@ -498,7 +503,7 @@ export class Users implements OnInit {
                 this.api.deleteUser(user.userID).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'User deleted', res);
-                        this.refreshTable();
+                        this.loadUsers();
                         this.showErrorAlert('User Deleted', 'User has been Successfully deleted!', false, 'success');
                     },
                     error: (err) => {

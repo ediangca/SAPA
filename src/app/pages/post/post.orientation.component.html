@@ -7,7 +7,7 @@
                 [globalFilterFields]="['schoolID', 'schoolName', 'address', 'coordinator', 'status', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSchools"
                 [rowHover]="true" dataKey="schoolID"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} schools"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
                 (selectionChange)="onSchoolSelectionChange($event)">
 
@@ -18,7 +18,7 @@
 
                     <div class="flex row justify-center">
 
-                        <h5 class="m-0">Manage Schools</h5>
+                        <h5 class="m-0">Manage Orientations</h5>
                     </div>
                     <div class="flex items-center justify-between">
                         <div class="flex row">
@@ -204,16 +204,19 @@
 
 
 
-<!-- <p-dialog [(visible)]="qrDialog" header="School QR Code" [modal]="true" [style]="{width: '20vw'}" [closable]="true">
+<p-dialog [(visible)]="qrDialog" header="School QR Code" [modal]="true" [style]="{width: '20vw'}" [closable]="true">
 
     <div class="flex flex-col items-center my-3 mx-3">
+        <!-- QR IMAGE -->
         <img *ngIf="school?.qrCode" [src]="'data:image/png;base64,' + school.qrCode" alt="QR Code"
             style="width: 200px; height: 200px;" />
 
+        <!-- SCHOOL NAME -->
         <h4 class="text-sm font-semibold text-center mt-0 leading-tight">
             {{ school?.schoolName }}
         </h4>
 
+        <!-- SCHOOL ID (optional) -->
         <p class="text-sm text-gray-500">
             powered by <em class="font-bold text-blue-500">SAP Application</em>
         </p>
@@ -228,4 +231,4 @@
 </p-dialog>
 
 
-<p-confirmdialog [style]="{ width: '450px' }"> -->
+<p-confirmdialog [style]="{ width: '450px' }">

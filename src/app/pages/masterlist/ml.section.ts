@@ -7,6 +7,8 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { ToolbarModule } from 'primeng/toolbar';
 import { RatingModule } from 'primeng/rating';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectModule } from 'primeng/select';
@@ -18,8 +20,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { IconFieldModule } from 'primeng/iconfield';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { Product, ProductService } from '../service/product.service';
-import { AppMenuitem } from '@/layout/component/app.menuitem';
+import { ProductService } from '../service/product.service';
 import { ApiService } from '@/services/api.service';
 import { LogsService } from '@/services/logs.service';
 import ValidateForm from '@/helper/validator/validateForm';
@@ -27,7 +28,6 @@ import Swal from 'sweetalert2';
 import { StoreService } from '@/services/store.service';
 import { ToastModule } from 'primeng/toast';
 import { HospitalProperties } from "./ml.hospital.sidebar";
-import { NgToastService } from 'ng-angular-popup';
 import { RouterModule } from '@angular/router';
 
 interface Column {
@@ -53,6 +53,8 @@ interface ExportColumn {
         ToastModule,
         ToolbarModule,
         RatingModule,
+        InputGroupModule,
+        InputGroupAddonModule,
         InputTextModule,
         TextareaModule,
         SelectModule,
@@ -89,7 +91,7 @@ export class Section implements OnInit {
     exportColumns!: ExportColumn[];
 
     cols!: Column[];
-
+    filter: string = '';
 
     model: MenuItem[] = [];
     tokenPayload: any | null;
@@ -157,7 +159,7 @@ export class Section implements OnInit {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
             });
-        this.refreshTable();
+        this.loadSections();
 
         this.cols = [
             { field: 'SectionID', header: 'ID', customExportHeader: 'Section ID' },
@@ -167,13 +169,16 @@ export class Section implements OnInit {
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
     }
 
+    onGlobalFilter(table: Table) {
+        table.filterGlobal(this.filter, 'contains');
+        // table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    }
+    
     clear(table: Table,) {
+        this.filter = ''
         table.clear();
     }
 
-    onGlobalFilter(table: Table, event: Event) {
-        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
-    }
 
     openNew() {
         this.form.reset({
@@ -226,7 +231,7 @@ export class Section implements OnInit {
         this.submitted = false;
     }
 
-    refreshTable() {
+    loadSections() {
         this.api.getSections().subscribe({
             next: (sections) => this.sections.set(sections),
             error: (err) => this.logger.printLogs('e', 'Failed to fetch sections', err)
@@ -262,7 +267,7 @@ export class Section implements OnInit {
             this.api.updateSection(id, this.section).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'Section updated successfully', res);
-                    this.refreshTable(); // reload list
+                    this.loadSections(); // reload list
                     this.closeDialog();
                     this.showErrorAlert('Successful', 'Section updated successfully', false, 'success');
                 },
@@ -279,7 +284,7 @@ export class Section implements OnInit {
             this.api.createSection(this.section).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'Section created successfully', res);
-                    this.refreshTable(); // reload list
+                    this.loadSections(); // reload list
                     this.closeDialog();
                     this.showErrorAlert('Successful', 'Section created successfully', false);
                 },
@@ -309,7 +314,7 @@ export class Section implements OnInit {
                 this.api.deleteSection(section.sectionID).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'Section deleted successfully', res);
-                        this.refreshTable();
+                        this.loadSections();
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Successful',
