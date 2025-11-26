@@ -37,9 +37,12 @@ import interactionPlugin from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
-import { CalendarOptions } from '@fullcalendar/core/index.js';
+import { Calendar, CalendarOptions, DateSelectArg } from '@fullcalendar/core/index.js';
 import { DatePickerModule } from 'primeng/datepicker';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { mapSlotsToEvents, formatTimeString, computeEnd } from './post.schedule.utils';
+import { Tooltip } from "primeng/tooltip";
+import { ChipModule } from 'primeng/chip';
 
 
 interface Column {
@@ -86,6 +89,8 @@ interface ExportColumn {
         FullCalendarModule,
         DatePickerModule,
         MultiSelectModule,
+        ChipModule,
+        Tooltip
     ],
     templateUrl: './post.schedule.component.html',
     styleUrl: './css/post.css',
@@ -97,6 +102,8 @@ export class Schedule implements OnInit {
     properties: MenuItem[] = [];
 
     itemDialog: boolean = false;
+    displayEventDialog: boolean = false;
+    printDialogVisible: boolean = false;
 
     schools = signal<any[]>([]);
     // school!: any;
@@ -141,27 +148,47 @@ export class Schedule implements OnInit {
     allocations: any[] = [];
     hospitals: any[] = [];
 
+    INITIAL_EVENTS: any[] = [];
+
     calendarOptions = signal<CalendarOptions>({
+        // validRange: {
+        //     start: this.initDate()   // Disable today and past days
+        // },
         plugins: [
             interactionPlugin,
             dayGridPlugin,
             timeGridPlugin,
-            //   listPlugin,
+            listPlugin,
         ],
         headerToolbar: {
-            left: 'prev,next today',
+            //today
+            left: 'prev,next,myCustomButton',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay,'
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
             //   listWeek
+        },
+        customButtons: {
+            myCustomButton: {
+                text: 'New Schedule',
+                click: () => {
+                    // This function runs when the button is clicked
+                    console.log('Custom button clicked!');
+                    // You can open a modal, add an event, etc.
+                    this.openNew(null);
+                }
+            }
         },
         initialView: 'dayGridMonth',
         // initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
+        // initialEvents: this.INITIAL_EVENTS,
+        events: [],
         weekends: true,
         editable: true,
         selectable: true,
         selectMirror: true,
         dayMaxEvents: true,
-        // select: this.handleDateSelect.bind(this),
+        eventClick: (clickInfo: any) => this.onEventClick(clickInfo),
+        select: this.openNew.bind(this),
         // eventClick: this.handleEventClick.bind(this),
         // eventsSet: this.handleEvents.bind(this)
         /* you can update a remote database when these fire:
@@ -171,6 +198,11 @@ export class Schedule implements OnInit {
         */
     });
 
+    selectedEvent: any = null;
+    dateRange: any;
+    selectedDateFrom: string | null = null;
+    selectedDateTo: string | null = null;
+    dialogDateRange: Date[] = [];
 
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
@@ -183,6 +215,17 @@ export class Schedule implements OnInit {
 
     ) {
 
+        this.initForm()
+    }
+
+    ngOnInit() {
+        this.initDate();
+        this.initSubComponent()
+        this.initData();
+        this.initCols();
+    }
+
+    initForm() {
         this.form = this.fb.group({
             slotID: [null],
             date: [new Date(), Validators.required],
@@ -191,51 +234,54 @@ export class Schedule implements OnInit {
             allocationID: [[], Validators.required],
             userID: ['', Validators.required]
         });
+    }
 
+    initDate() {
+        const today = new Date();
+        this.minDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+        return this.minDate;
 
     }
 
-    ngOnInit() {
+    initSubComponent() {
 
-        const today = new Date();
-        this.minDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
         this.subcomponent = [
             {
                 items: [
                     // { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.openPrintDialog() },
 
                 ]
             }
         ];
 
         this.properties = [
-            // {
-            //     label: 'Status',
-            //     icon: 'fas fa-layer-group',
-            //     items: [
-            //         { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
-            //         { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
-            //         { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-            //         { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
-            //     ]
-            // },
-            // {
-            //     label: 'Re-assign Coordinator',
-            //     icon: 'pi pi-user-edit',
-            //     command: () => this.reAssignDialog()
-            // }
+            {
+                label: 'Status',
+                icon: 'fas fa-layer-group',
+                items: [
+                    { label: 'UNPOST', icon: 'pi pi-refresh', command: () => this.changeStatus(0) },
+                    { label: 'POST', icon: 'pi pi-thumbtack', command: () => this.changeStatus(1) },
+                    { label: 'CLOSED', icon: 'pi pi-lock', command: () => this.changeStatus(2) }
+                ]
+            }
         ];
+        // this.properties = [
+        //     {
+        //         label: 'Status',
+        //         icon: 'fas fa-layer-group',
+        //         items: [
+        //             { label: 'UNPOST', icon: 'pi pi-refresh', customClass: 'menu-contrast', command: () => this.changeStatus(0) },
+        //             { label: 'POST', icon: 'pi pi-thumbtack', customClass: 'menu-info', command: () => this.changeStatus(1) },
+        //             { label: 'CLOSED', icon: 'pi pi-lock', customClass: 'menu-danger', command: () => this.changeStatus(2) }
+        //         ]
+        //     }
+        // ];
 
-        this.loadData();
+
     }
 
-    formatDate(date: Date): string {
-        return date.toISOString().substring(0, 10);
-    }
-
-
-    loadData() {
+    initData() {
 
         this.store.getUserPayload()
             .subscribe(res => {
@@ -246,7 +292,9 @@ export class Schedule implements OnInit {
         this.loadSlots();
         this.loadHospitals();
         this.loadShifts();
+    }
 
+    initCols() {
         this.cols = [
             // { field: 'SlotID', header: 'ID', customExportHeader: 'Slot ID' },
             { field: 'slotDate', header: 'Date Slot' },
@@ -258,6 +306,39 @@ export class Schedule implements OnInit {
         ];
 
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
+
+    }
+
+    formatDate(date: Date): string {
+        return date.toISOString().substring(0, 10);
+    }
+
+    toLocalDateString(date: Date): string {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    dateFormat(date: Date | string | null): string | null {
+        if (!date) return null;
+
+        // If the date is a string, convert it to a Date object
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+
+        // Ensure it's a valid Date object
+        if (date instanceof Date && !isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        } else {
+            // Handle invalid date
+            this.logger.printLogs('w', 'Invalid Date Format', [date]);
+            return null;
+        }
     }
 
     onChangeView(event: any) {
@@ -265,6 +346,18 @@ export class Schedule implements OnInit {
         this.logger.printLogs('i', 'Calendar View : ', this.tableOption);
     }
 
+    onDateSelect(event: any) {
+        // event will contain the selected date
+        // this.selectedDate should also be updated by ngModelChange
+        console.log('Selected date from onSelect:', event);
+        // If you need the ngModel value immediately, and onSelect fires before ngModel updates,
+        // you might need to use a timeout or check the ngModelChange event.
+    }
+
+    onModelChange(newDate: Date) {
+        console.log('Selected date from ngModelChange:', newDate);
+        // This event fires when the ngModel value actually changes.
+    }
 
     exportCSV() {
         this.dt.exportCSV();
@@ -321,45 +414,68 @@ export class Schedule implements OnInit {
         }).format(date);
     }
 
+
     loadSlots() {
         this.api.getSlots().subscribe({
-            next: (slots) => this.slots.set(slots),
+            next: (slots) => {
+                this.slots.set(slots)
+                this.logger.printLogs('i', 'Slots loaded', this.slots())
+
+                const mappedEvents = mapSlotsToEvents(slots);
+
+                // 🔥 Update calendar options (required when using signals)
+                this.calendarOptions.update(opts => ({
+                    ...opts,
+                    events: mappedEvents  // <<-- Use `events`, not `initialEvents`
+                }));
+
+                this.logger.printLogs('i', 'Events mapped', mappedEvents);
+            },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch slots', err)
         });
     }
 
-    loadCoordinators() {
-        this.api.getUsers().subscribe({
-            next: (users) => {
-                this.coordinators = users.filter((user: any) => user.roleId === 'UGR0003' && user.status === 'A') || []; //Role ID - Coordinators
-                this.logger.printLogs('i', 'Users loaded', this.coordinators)
-            },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
-        });
+    toggleWeekends() {
+        this.calendarOptions().weekends = !this.calendarOptions().weekends // toggle the boolean!
+    }
+
+    filterByHospital(hospitalId: string) {
+        const filtered = this.slots().filter(s => s.hospitalID === hospitalId);
+        const mapped = mapSlotsToEvents(filtered);
+
+        this.calendarOptions.update(opts => ({
+            ...opts,
+            events: mapped
+        }));
     }
 
     getStatus(status: any, type: string): any {
+        // this.logger.printLogs('i', 'Status: ', status)
         switch (status) {
+            case 0:
+                return (type == 'value' ? 'Unposted' : 'contrast')
             case 1:
                 return (type == 'value' ? 'Posted' : 'info')
 
             default:
-                return (type == 'value' ? 'Unposted' : 'contrast');
+                return (type == 'value' ? 'Closed' : 'danger');
         }
     }
 
-    copyCode(code: string) {
-        navigator.clipboard.writeText(code).then(() => {
-            this.logger.printLogs('i', 'Copy School code: ', code)
-            this.messageService.add({
-                severity: 'secondary',
-                summary: 'Copied',
-                detail: 'School code copied to clipboard'
-            });
+    getShiftSeverity(shift: any): any {
 
-        });
+        switch (shift.toLowerCase()) {
+            case 'morning':
+                return 'success'
+            case 'afternoon':
+                return 'warn'
+            case 'evening':
+                return 'danger'
+
+            default:
+                return 'contrast';
+        }
     }
-
 
     onShiftsChange() {
         const selectedShifts = this.form.value.schifts;
@@ -384,9 +500,77 @@ export class Schedule implements OnInit {
         table.clear();
     }
 
-    openNew() {
+    // onEventClick(clickInfo: any) {
+    //     const props = clickInfo.event.extendedProps;
+    //     this.confirmationService.confirm({
+    //         header: 'Event Details',
+    //         message: `
+    //     <b>Shift:</b> ${props.shiftName} <br/>
+    //     <b>Start Time:</b> ${props.startTime} <br/>
+    //     <b>End Time:</b> ${props.endTime} <br/>
+    //     <b>Allocation:</b> ${props.allocation}
+    //   `,
+    //         acceptVisible: false, // hide accept button if just viewing
+    //         rejectVisible: true,
+    //         icon: 'pi pi-info-circle',
+    //         acceptLabel: 'Close',
+    //         rejectLabel: 'Cancel',
+    //         accept: () => { },
+    //         reject: () => { }
+    //     });
+    // }
+
+    onEventClick(slot: any) {
+        this.logger.printLogs('i', 'Selected Slot', slot.event || slot);
+        if (slot.event) {
+            this.selectedEvent = slot.event;
+        } else {
+            this.selectedEvent =
+                ({
+                    id: slot.slotID,
+                    title: `${slot.hospitalName}(${slot.sectionName}) - ${slot.shiftName}`,
+                    shift: slot.shiftName,
+                    // `${slot.shiftName} - ${slot.sectionName}`,
+                    // describedAs: slot.shiftName,
+                    // status: slot.allocationStatus,
+                    start: `${slot.dateSlot}T${slot.startTime}`,
+                    end: computeEnd(slot.dateSlot!, slot.endTime!),
+                    extendedProps: {
+                        slotStatus: slot.slotStatus,
+                        shiftID: slot.shiftID,
+                        shiftName: slot.shiftName,
+                        startTime: `${formatTimeString(slot.dateSlot + 'T' + slot.startTime)}`,
+                        endTime: `${formatTimeString(computeEnd(slot.dateSlot!, slot.endTime!))}`,
+                        hospitalID: slot.hospitalID,
+                        hospitalName: slot.hospitalName,
+                        sectionID: slot.sectionID,
+                        sectionName: slot.sectionName,
+                        allocation: slot.allocation,
+                        allocationStatus: slot.allocationStatus,
+                        userID: slot.userID,
+                    }
+                })
+        }
+
+        this.displayEventDialog = true;
+    }
+
+
+    openNew(selectInfo: DateSelectArg | null) {
+        const selectedDate = selectInfo?.startStr
+            ? new Date(selectInfo.startStr)  // Convert string to Date
+            : null;
+
+        const minAllowedDate = this.initDate(); // tomorrow
+
+        if (selectedDate && selectedDate < minAllowedDate) {
+            // Trap: Prevent opening dialog
+            this.showErrorAlert('Invalid Date', 'You can only create a schedule starting tomorrow.', false, 'warning');
+            return;
+        }
+
         this.form.reset({
-            schoolName: '',
+            date: selectedDate,
             userID: this.tokenPayload.nameid
         });
         this.slot = {};
@@ -432,23 +616,6 @@ export class Schedule implements OnInit {
         });
     }
 
-    reAssignDialog() {
-        if (!this.selectSlots || this.selectSlots.length === 0) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'No Selected Slot',
-                detail: 'Please select at least one slot first!',
-                life: 3000
-            });
-            return;
-        }
-
-        this.loadCoordinators();
-        this.assignDialog = true;
-        this.coordinatorID = null;
-    }
-
-
     hideDialog() {
         this.form.reset({
             schoolName: '',
@@ -462,10 +629,14 @@ export class Schedule implements OnInit {
     }
 
     changeStatus(status: number) {
-        const schoolIDs = this.selectSlots?.map((school: any) => school.schoolID) ?? [];
-        const schools = this.selectSlots?.map((school: any) => school.schoolName) ?? [];
+        const slotIDs = this.selectSlots?.map((slot: any) => slot.slotID) ?? [];
+        const slots = this.selectSlots?.map(
+            (slot: any) =>
+                `${slot.hospitalName} (${this.dateFormat(slot.dateSlot)} ${this.formatTime(slot.startTime)} - ${this.formatTime(slot.endTime)})`
+        ) ?? [];
+        this.logger.printLogs('i', 'Selected status', slotIDs);
 
-        if (!schoolIDs.length) {
+        if (!slotIDs.length) {
             this.messageService.add({
                 severity: 'warn',
                 summary: 'No Selected Slot',
@@ -474,9 +645,18 @@ export class Schedule implements OnInit {
             });
             return;
         }
+        if (slotIDs.length > 10) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected Slot',
+                detail: 'Please select not more than 10!',
+                life: 3000
+            });
+            return;
+        }
 
         this.confirmationService.confirm({
-            message: `Are you sure you want to change the status of selected schools <br><br>${schools.join('<br>')}<br><br>to<b>${this.getStatus(status, 'value')}</b>?`,
+            message: `Are you sure you want to change the status of selected slot <br><br>${slots.join('<br>')} <br><br>to <b> ${this.getStatus(status, 'value')} </b>?`,
             header: 'Confirm Status Update',
             icon: 'pi pi-exclamation-triangle',
             acceptLabel: "Yes! I'm Sure",
@@ -485,7 +665,7 @@ export class Schedule implements OnInit {
             rejectButtonStyleClass: 'p-button-outlined  p-button-secondary',
 
             accept: () => {
-                this.api.updateSchoolStatus(status, schoolIDs).subscribe({
+                this.api.updateSlotStatus(status, slotIDs).subscribe({
                     next: (res: any) => {
                         this.messageService.add({
                             severity: 'success',
@@ -494,7 +674,7 @@ export class Schedule implements OnInit {
                             life: 3000
                         });
 
-                        this.logger.printLogs('s', 'Status updated successfully', res);
+                        this.logger.printLogs('i', 'Status updated successfully', res);
                         this.loadSlots();
                         this.showErrorAlert('Successful', 'Slot status updated', false, 'success',);
                         this.messageService.add({
@@ -534,14 +714,17 @@ export class Schedule implements OnInit {
         }
 
         const request = {
-            dateSlot: this.form.value.date, // Date object
+            dateSlot: this.toLocalDateString(this.form.value.date),
             shiftIDs: this.form.value.shiftID ?? [],
             hospitalID: this.form.value.hospitalID,
             allocationIDs: this.form.value.allocationID ?? [],
             userID: this.form.value.userID
         };
 
+        this.logger.printLogs('i', 'Create Slot Request : ', request);
+
         this.itemDialog = false;
+
 
         if (this.slot?.slotID) {
         } else {
@@ -563,7 +746,7 @@ export class Schedule implements OnInit {
             error: (err) => {
                 this.messageService.add({
                     severity: 'error',
-                    summary: 'Error: '+ err,
+                    summary: 'Error: ' + err,
                     detail: 'Failed to save slots.'
                 });
                 this.logger.printLogs('e', 'Failed to create slots', err);
@@ -614,7 +797,7 @@ export class Schedule implements OnInit {
             life: 3000
         });
         Swal.fire({
-            title: 'Saving Failed',
+            title: title,
             text: message,
             icon: severity,
             showCancelButton: false,
@@ -624,5 +807,38 @@ export class Schedule implements OnInit {
                 this.itemDialog = dialogOpen;
             }
         });
+    }
+
+    openPrintDialog() {
+        this.printDialogVisible = true;
+    }
+
+    closePrintDialog() {
+        this.printDialogVisible = false;
+    }
+
+    confirmPrintSchedule() {
+        const start = this.dialogDateRange[0];
+        const end = this.dialogDateRange[1];
+
+        const dateFrom = start.toISOString().split('T')[0];
+        const dateTo = end.toISOString().split('T')[0];
+
+
+        const filteredSlots: any = this.slots().filter((s: any) => {
+            return s.dateSlot >= dateFrom && s.dateSlot <= dateTo;
+        });
+
+        this.logger.printLogs('i', `Slot from ${dateFrom} to ${dateTo}`, filteredSlots)
+
+        this.pdfService.generateScheduleReport(
+            `LIST OF SCHEDULE
+            (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
+            filteredSlots,
+            start.toString(),
+            end.toString()
+        );
+
+        this.printDialogVisible = false;
     }
 }

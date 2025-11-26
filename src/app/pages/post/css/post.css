@@ -1,0 +1,42 @@
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s forwards;
+}
+
+/* Custom delays for staggered effect */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+::ng-deep .p-panelmenu-item-link .pi-lock {
+  /* background-color: #fee2e2 !important; */
+  color: #b91c1c !important;
+  font-weight: 600 !important;
+  border-radius: 6px;
+}
+
+::ng-deep.p-panelmenu-item-link .pi-thumbtack {
+  /* background-color: #dbeafe !important; */
+  color: #1e40af !important;
+  font-weight: 600 !important;
+  border-radius: 6px;
+}
+
+::ng-deep .p-panelmenu-item-link .pi-refresh {
+  /* background-color: #e5e7eb !important; */
+  color: #111827 !important;
+  font-weight: 600 !important;
+  border-radius: 6px;
+}

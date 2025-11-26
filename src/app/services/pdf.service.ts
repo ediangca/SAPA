@@ -19,13 +19,35 @@ export class PdfService {
     this.loadLogos();
   }
 
-  /** ✅ Preload both logos once */
+  /** Preload both logos once */
   private async loadLogos() {
     this.leftLogo = await this.getBase64ImageFromURL('assets/images/ddn.png');
     this.rightLogo = await this.getBase64ImageFromURL('assets/images/peedo.png');
   }
 
-  /** ✅ Global header generator */
+  /** Global header generator */
+  dateFormat(date: Date | string | null): string | null {
+    if (!date) return null;
+
+    // If the date is a string, convert it to a Date object
+    if (typeof date === 'string') {
+      date = new Date(date);
+    }
+
+    // Ensure it's a valid Date object
+    if (date instanceof Date && !isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    } else {
+      // Handle invalid date
+      this.logger.printLogs('w', 'Invalid Date Format', [date]);
+      return null;
+    }
+  }
+
+  /** Global header generator */
   private getHeader(title: string) {
     return {
       columns: [
@@ -286,4 +308,118 @@ export class PdfService {
       img.src = url;
     });
   }
+
+  async generateScheduleReport(
+    title: string,
+    schedules: any[],
+    dateFrom: string,
+    dateTo: string
+  ) {
+    // Ensure logos are loaded
+    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+
+    // Group schedules by date → shift → entries
+    const grouped: any = {};
+
+    schedules.forEach(slot => {
+      if (!grouped[slot.dateSlot]) grouped[slot.dateSlot] = {};
+      if (!grouped[slot.dateSlot][slot.shiftName]) {
+        grouped[slot.dateSlot][slot.shiftName] = [];
+      }
+      grouped[slot.dateSlot][slot.shiftName].push(slot);
+    });
+
+    const content: any[] = [
+      this.getHeader(title),
+      { text: '\n' }
+    ];
+
+    // Build PDF content
+    Object.keys(grouped)
+      .sort()
+      .forEach(date => {
+        content.push({
+          text: `DATE: ${date}`,
+          style: 'dateTitle',
+          margin: [0, 10, 0, 5]
+        });
+
+        const shifts = grouped[date];
+
+        Object.keys(shifts).forEach(shiftName => {
+          const shiftEntries = shifts[shiftName];
+
+          content.push({
+            text: `Shift: ${shiftName} (${shiftEntries[0].startTime} - ${shiftEntries[0].endTime})`,
+            style: 'shiftTitle',
+            margin: [0, 5, 0, 3]
+          });
+
+          // Table per shift
+          content.push({
+            table: {
+              headerRows: 1,
+              widths: [25, '25%', '25%', '25%', '10%'],
+              body: [
+                [
+                  { text: '#', bold: true, alignment: 'center', fontSize: 9 },
+                  { text: 'Hospital', bold: true, fontSize: 9 },
+                  { text: 'Section', bold: true, fontSize: 9 },
+                  { text: 'Allocation', bold: true, fontSize: 9 },
+                  { text: 'Status', bold: true, fontSize: 9, alignment: 'center' }
+                ],
+
+                ...shiftEntries.map((item: any, idx: number) => [
+                  { text: idx + 1, alignment: 'center', fontSize: 9 },
+                  { text: item.hospitalName, fontSize: 9, noWrap: false },
+                  { text: item.sectionName, fontSize: 9 },
+                  { text: item.allocation?.toString() ?? '0', fontSize: 9 },
+                  {
+                    text:
+                      item.slotStatus === 0 ? 'ONGOING' : item.slotStatus === 1 ? 'OPEN' : 'CLOSED',
+                    alignment: 'center',
+                    fontSize: 9
+                  }
+                ])
+              ]
+            },
+            layout: {
+              fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
+              hLineWidth: () => 0.5,
+              vLineWidth: () => 0.5,
+              hLineColor: () => '#aaa',
+              vLineColor: () => '#aaa',
+              paddingLeft: () => 4,
+              paddingRight: () => 4,
+              paddingTop: () => 2,
+              paddingBottom: () => 2,
+            },
+            margin: [0, 0, 0, 10]
+          });
+        });
+      });
+
+    const docDefinition: any = {
+      content,
+      footer: this.getFooter(),
+      styles: {
+        dateTitle: {
+          fontSize: 12,
+          bold: true,
+          margin: [0, 10, 0, 5]
+        },
+        shiftTitle: {
+          fontSize: 11,
+          italics: true,
+          bold: true,
+          margin: [0, 5, 0, 5]
+        },
+        tableCell: { fontSize: 9, noWrap: false }
+      }
+    };
+
+    pdfMakeLib.createPdf(docDefinition).open();
+
+  }
+
 }

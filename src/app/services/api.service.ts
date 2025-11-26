@@ -248,6 +248,12 @@ export class ApiService {
     return this.handleRequest('post', 'Slots/bulk', { body: slots, logAction: 'Creating Bulk Slots' });
   }
 
+  updateSlotStatus(status: number, slotIDs: string[]) {
+    return this.handleRequest('put', `Slots/status/${status}`, {
+      body: slotIDs,
+      logAction: 'Update Slot Status'
+    });
+  }
 
   /*----------------------- ROLES -----------------------*/
   getRoles() {
@@ -320,6 +326,7 @@ export class ApiService {
   updateSchool(id: number, section: any) {
     return this.handleRequest('put', 'Schools', { id, body: section, logAction: 'Updating Schools' });
   }
+
   updateSchoolStatus(status: number, schoolIDs: string[]) {
     return this.handleRequest('put', `Schools/status/${status}`, {
       body: schoolIDs,

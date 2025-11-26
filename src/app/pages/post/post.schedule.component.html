@@ -16,14 +16,16 @@
                     </ng-template>
                 </p-selectButton>
             </div>
+
             @if (tableOption) {
-            <p-table #dt [value]="slots()" [rows]="10" [columns]="cols" [paginator]="true"
+            <p-table #dt [value]="slots()" [rows]="10" [columns]="cols" [paginator]="true" [scrollable]="true"
+                scrollHeight="400px" [rowHover]="true"
                 [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionname', 'status', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
-                [rowHover]="true" dataKey="slotID"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
+                dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
                 (selectionChange)="onSchoolSelectionChange($event)">
+
 
                 <ng-template pTemplate="caption">
 
@@ -35,9 +37,7 @@
                     <div class="flex items-center justify-between">
                         <div class="flex row">
                             <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
-                                (onClick)="openNew()" />
-                            <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
-                            (onClick)="deleteSelected()" [disabled]="!selectSchools || !selectSchools.length" /> -->
+                                (onClick)="openNew(null)" />
                         </div>
                         <p-iconfield>
                             <p-inputicon styleClass="pi pi-search" />
@@ -55,6 +55,8 @@
 
                     </div>
                 </ng-template>
+
+
                 <ng-template #header>
                     <tr>
                         <th style="width: 3rem">
@@ -104,15 +106,20 @@
                         <td style="min-width: 3rem">{{ slot.hospitalName }}</td>
                         <td style="min-width: 3rem">{{ slot.sectionName }}</td>
                         <td style="min-width: 3rem">
-                            <p-tag [value]="getStatus(slot.status,'value')"
-                                [severity]="getStatus(slot.status,'severirty')" styleClass="dark:bg-surface-900!" />
+                            <p-tag [value]="getStatus(slot.slotStatus,'value')"
+                                [severity]="getStatus(slot.slotStatus,'severirty')" styleClass="dark:bg-surface-900!" />
                         </td>
-                        <td style="min-width: 3rem">{{ slot.date_Created }}</td>
+                        <td style="min-width: 3rem">{{ dateFormat(slot.date_Created) }}</td>
                         <td>
                             <div class="flex flex-row gap-2">
-                                <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (click)="edit(slot)" />
+                                @if (slot.status == 0) {
+                                <!-- <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (click)="edit(slot)" /> -->
                                 <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
                                     (click)="delete(slot)" />
+                                }@else{
+                                <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
+                                    (click)="onEventClick(slot)" />
+                                }
                             </div>
                         </td>
                     </tr>
@@ -122,8 +129,16 @@
 
             <full-calendar [options]='calendarOptions()'>
                 <ng-template #eventContent let-arg>
-                    <b>{{ arg.timeText }}</b>
-                    <i>{{ arg.event.title }}</i>
+                    <p-tag [value]="arg.event.title" [severity]="getShiftSeverity(arg.event.extendedProps.shift)"
+                        class="p-1 text-xs" [pTooltip]="arg.event.title" tooltipPosition="top">
+
+                        <span class="px-2 py-0.5 text-xs rounded-full 
+                            {{arg.event.extendedProps.slotStatus === 0 ? 'pi pi-refresh' : 
+                            arg.event.extendedProps.slotStatus === 1 ? 'pi pi-thumbtack' : 'pi pi-lock'}}">
+                            <!-- [pTooltip]="arg.event.extendedProps.slotStatus === 0 ? 'Unposted' : 
+                            arg.event.extendedProps.slotStatus === 1 ? 'Open' : 'Closed'" tooltipPosition="top" -->
+                        </span>
+                    </p-tag>
                 </ng-template>
             </full-calendar>
             }
@@ -145,15 +160,12 @@
                     </ng-container>
                 </ul>
             </div>
-
             <div class="h-1/2">
                 <div class="font-semibold text-xl mb-4">Properties</div>
-                <p-panelmenu [model]="properties" />
+                <p-panelmenu [model]="properties"></p-panelmenu>
+
             </div>
-            <!-- <div class="h-1/2">
-                <h5 class="m-0">Properties</h5>
-                <p-tieredMenu [model]="properties" class="w-full"></p-tieredMenu>
-            </div> -->
+
 
         </div>
     </div>
@@ -163,12 +175,14 @@
 <p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="Post Schedule" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
+
             <form [formGroup]="form" ng-reflect-form="[object Object]">
                 <div class="flex flex-col gap-4">
-                    <div>
-                        <label for="Date" class="block font-bold">Date</label>
-                        <p-datepicker styleClass="w-full" id="Date" formControlName="date" [showIcon]="true"
-                            [showButtonBar]="true" appendTo="body" placeholder="Select Date" [minDate]="minDate" />
+                    <div class="flex flex-col gap-2">
+                        <label for="Date" class="font-bold">Date</label>
+                        <p-datepicker id="Date" formControlName="date" [showIcon]="true" [showTime]="false"
+                            [showButtonBar]="false" appendTo="body" placeholder="Select Date" [minDate]="minDate"
+                            (onSelect)="onDateSelect($event)" (ngModelChange)="onModelChange($event)" />
 
                         @if (form.get('date')?.invalid && (form.get('date')?.touched || submitted)) {
                         <small class="text-red-500">Date is required.</small>
@@ -252,6 +266,97 @@
     </ng-template>
 </p-dialog>
 
+<p-dialog header="Schedule Details" [(visible)]="displayEventDialog" [modal]="true" [closable]="true"
+    [style]="{ width: '500px' }" [resizable]="false" [breakpoints]="{'640px':'95vw'}">
+
+    <div *ngIf="selectedEvent" class="space-y-4">
+
+        <!-- Animated Card -->
+        <div class="bg-white rounded-lg shadow px-5 pb-10 space-y-3">
+
+            <!-- Title -->
+            <div class="flex items-center border-b pb-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
+                <i class="pi pi-calendar mr-2 text-blue-500"></i>
+                <span class="font-semibold text-gray-700 flex-1">Hospital & Section</span>
+                <span class="text-gray-800">{{ `${selectedEvent.extendedProps.hospitalName} - ${selectedEvent.extendedProps.sectionName}` }}</span>
+            </div>
+
+            <!-- Shift -->
+            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-200">
+                <i class="pi pi-clock mr-2 text-green-500"></i>
+                <span class="font-semibold text-gray-700 flex-1">Shift</span>
+                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                    {{ selectedEvent.extendedProps.shiftName }}
+                </span>
+            </div>
+
+            <!-- Start Time -->
+            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-300">
+                <i class="pi pi-play mr-2 text-indigo-500"></i>
+                <span class="font-semibold text-gray-700 flex-1">Start Time</span>
+                <span class="text-gray-800">{{ selectedEvent.extendedProps.startTime }}</span>
+            </div>
+
+            <!-- End Time -->
+            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-400">
+                <i class="pi pi-stop mr-2 text-red-500"></i>
+                <span class="font-semibold text-gray-700 flex-1">End Time</span>
+                <span class="text-gray-800">{{ selectedEvent.extendedProps.endTime }}</span>
+            </div>
+
+            <!-- Allocation -->
+            <div class="flex items-center pt-2 opacity-0 translate-y-4 animate-fadeIn delay-500">
+                <i class="pi pi-user mr-2 text-purple-500"></i>
+                <span class="font-semibold text-gray-700 flex-1">Allocation</span>
+                <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+                    {{ selectedEvent.extendedProps.allocation }}
+                </span>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Dialog footer -->
+    <ng-template pTemplate="footer">
+        <button pButton type="button" label="Close" class="p-button-secondary"
+            (click)="displayEventDialog=false"></button>
+    </ng-template>
+</p-dialog>
+
+
+<!-- PRINT CONFIRMATION DIALOG -->
+<p-dialog header="Print Schedule" [(visible)]="printDialogVisible" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: '480px' }" [breakpoints]="{ '960px': '90vw', '640px': '95vw' }">
+
+    <div class="p-3">
+
+        <p class="text-gray-700">
+            Select the date range you want to print.
+        </p>
+
+        <!-- DATE RANGE SELECTOR -->
+        <p-datepicker [(ngModel)]="dialogDateRange" class="w-full" [inline]="true" selectionMode="range"
+            dateFormat="yyyy-MM-dd" showIcon="true" placeholder="Select date range"></p-datepicker>
+
+        <div *ngIf="dialogDateRange?.length === 2" class="mt-3 p-3 border-round border-1 surface-border bg-gray-50">
+            <p><strong>Date From:</strong> {{ dialogDateRange[0] | date:'yyyy-MM-dd' }}</p>
+            <p><strong>Date To:</strong> {{ dialogDateRange[1] | date:'yyyy-MM-dd' }}</p>
+        </div>
+
+        <p class="mt-3 text-sm text-red-600">
+            *Choose a date range to filter and print the schedule.
+        </p>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" icon="pi pi-times" class="p-button-text" (onClick)="closePrintDialog()">
+        </p-button>
+
+        <p-button label="Print PDF" icon="pi pi-file-pdf" severity="danger" (onClick)="confirmPrintSchedule()">
+        </p-button>
+    </ng-template>
+
+</p-dialog>
 
 
 <p-confirmdialog [style]="{ width: '450px' }">
