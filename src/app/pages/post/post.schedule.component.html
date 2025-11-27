@@ -178,8 +178,8 @@
 
             <form [formGroup]="form" ng-reflect-form="[object Object]">
                 <div class="flex flex-col gap-4">
-                    <div class="flex flex-col gap-2">
-                        <label for="Date" class="font-bold">Date</label>
+                    <div class="flex flex-col gap-2 w-full">
+                        <label for="Date" class="font-bold w-full">Date</label>
                         <p-datepicker id="Date" formControlName="date" [showIcon]="true" [showTime]="false"
                             [showButtonBar]="false" appendTo="body" placeholder="Select Date" [minDate]="minDate"
                             (onSelect)="onDateSelect($event)" (ngModelChange)="onModelChange($event)" />
@@ -187,7 +187,7 @@
                         @if (form.get('date')?.invalid && (form.get('date')?.touched || submitted)) {
                         <small class="text-red-500">Date is required.</small>
                         }
-                    </div>
+                    </div> 
                     <div>
                         <label for="shifts" class="block font-bold mb-3">Shifts</label>
                         <p-multiSelect styleClass="w-full" formControlName="shiftID" [options]="shiftOption"

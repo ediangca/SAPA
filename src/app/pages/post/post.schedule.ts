@@ -37,7 +37,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
-import { Calendar, CalendarOptions, DateSelectArg } from '@fullcalendar/core/index.js';
+import { CalendarOptions, DateSelectArg } from '@fullcalendar/core/index.js';
 import { DatePickerModule } from 'primeng/datepicker';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { mapSlotsToEvents, formatTimeString, computeEnd } from './post.schedule.utils';

@@ -219,7 +219,7 @@ export class ApiService {
     return this.handleRequest('delete', 'Allocations', { id, logAction: 'Deleting Allocation' });
   }
 
-  
+
   /*----------------------- SHIFTS -----------------------*/
   getShifts() {
     return this.handleRequest<any[]>('get', 'Shifts', { logAction: 'Fetching Shifts' });
@@ -242,6 +242,10 @@ export class ApiService {
 
   getSlots() {
     return this.handleRequest<any[]>('get', 'Slots', { logAction: 'Fetching Slots' });
+  }
+
+  getSlotsByAllocationIDs(payload: { AllocationID: string[] }) {
+    return this.handleRequest<any[]>('post', 'Slots/byAllocation', { body: payload, logAction: 'Fetching Slots By AllocationIDs' });
   }
 
   createBulkSlots(slots: any) {

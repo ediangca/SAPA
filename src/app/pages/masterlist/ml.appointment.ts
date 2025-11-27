@@ -31,6 +31,19 @@ import { AppMenuitem } from '@/layout/component/app.menuitem';
 import { MenuModule } from 'primeng/menu';
 import { TieredMenuModule } from 'primeng/tieredmenu';
 import { PdfService } from '@/services/pdf.service';
+import { StepperModule } from 'primeng/stepper';
+import { BadgeModule } from 'primeng/badge';
+import { DatePickerModule } from 'primeng/datepicker';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { ChipModule } from 'primeng/chip';
+
+import { FullCalendarModule } from '@fullcalendar/angular';
+import interactionPlugin from '@fullcalendar/interaction';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import listPlugin from '@fullcalendar/list';
+import { CalendarOptions } from '@fullcalendar/core/index.js';
+
 
 interface Column {
     field: string;
@@ -47,6 +60,9 @@ interface ExportColumn {
     selector: 'ml-appointment',
     standalone: true,
     imports: [
+        ReactiveFormsModule,
+        FormsModule,
+        RouterModule,
         CommonModule,
         MenuModule,
         TieredMenuModule,
@@ -69,9 +85,12 @@ interface ExportColumn {
         IconFieldModule,
         ConfirmDialogModule,
         PanelMenuModule,
-        ReactiveFormsModule,
-        FormsModule,
-        RouterModule,
+        StepperModule,
+        BadgeModule,
+        DatePickerModule,
+        MultiSelectModule,
+        ChipModule,
+        FullCalendarModule
     ],
     templateUrl: './ml.appointment.component.html',
     styleUrl: './css/masterlist.css',
@@ -88,6 +107,11 @@ export class Appointment implements OnInit {
     school!: any;
     selectSchools!: any[] | [];
 
+
+    appointments = signal<any[]>([]);
+    appointment!: any;
+    selectAppointment!: any[] | [];
+
     form!: FormGroup;
 
     submitted: boolean = false;
@@ -102,9 +126,37 @@ export class Appointment implements OnInit {
 
     tokenPayload: any | null;
 
-    assignDialog: boolean = false;
-    qrDialog: boolean = false;
-    coordinatorID: any | null;
+    currentStep = 1;
+
+    allocations: any[] = [];
+    hospitals: any[] = [];
+
+    calendarOptions: any;
+
+    selectedDate: any;
+    enabledDates: string[] = [];
+    allowedDates: Date[] = [];
+
+    slots: any[] = [];
+    slot: any;
+
+    calendarPlugins = [dayGridPlugin, interactionPlugin];
+    availableDates: any[] = [];  // API returned enabled dates
+    events: any[] = [];             // converted to eventss
+
+    selectedDateSlots: any[] = [];
+    distinctSections: any[] = [];        // Unique sections
+    // selectedSection: string | null = null;
+    filteredShifts: any[] = [];          // Shifts for selected section
+
+
+    // Example: only enable dates with active slots
+    validRange = {
+        start: new Date().toISOString().split('T')[0]
+    };
+
+    slotsModalVisible: boolean = false;
+
 
 
     constructor(private fb: FormBuilder,
@@ -118,17 +170,30 @@ export class Appointment implements OnInit {
 
     ) {
 
+        this.initForm()
+    }
+
+
+    ngOnInit() {
+        this.initSubComponent();
+        this.initCalendar();
+        this.initData();
+    }
+
+    initForm() {
         this.form = this.fb.group({
-            schoolID: [null],
-            schoolName: ['', Validators.required],
-            address: ['', Validators.required],
+            appointmentID: [null],
+            hospitalID: ['', Validators.required],
+            sectionID: ['', Validators.required],
+            allocationIDs: ['', Validators.required],
+            slotID: ['', Validators.required],
+            shiftID: ['', Validators.required],
             userID: ['', Validators.required]
         });
 
     }
 
-
-    ngOnInit() {
+    initSubComponent() {
         this.subcomponent = [
             {
                 items: [
@@ -150,17 +215,50 @@ export class Appointment implements OnInit {
                     { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
                 ]
             },
-            {
-                label: 'Re-assign Coordinator',
-                icon: 'pi pi-user-edit',
-                command: () => this.reAssignDialog()
-            }
+            // {
+            // label: 'Re-assign Coordinator',
+            // icon: 'pi pi-user-edit',
+            // command: () => this.reAssignDialog()
+            // }
         ];
-
-        this.loadData();
     }
 
-    loadData() {
+    initCalendar() {
+        this.calendarOptions = {
+            plugins: [interactionPlugin, dayGridPlugin, timeGridPlugin, listPlugin],
+            headerToolbar: {
+                left: 'prev,next',
+                center: 'title',
+                right: 'dayGridMonth'
+            },
+            initialView: 'dayGridMonth',
+            selectable: true,
+            editable: false,
+            dayMaxEvents: true,
+            events: this.events,
+            eventClick: this.onEventClick.bind(this),
+            select: this.onEventClick.bind(this),
+            selectAllow: (selectInfo: any) => {
+                const dateStr = selectInfo.startStr;
+                return this.availableDates.includes(dateStr);
+            },
+            dayCellDidMount: (info: any) => {
+                const dateStr = info.date.toISOString().split('T')[0];
+                if (!this.availableDates.includes(dateStr)) {
+                    info.el.style.backgroundColor = '#f5f5f5';
+                    info.el.style.pointerEvents = 'none';
+                    info.el.style.opacity = '0.5';
+                }
+            }
+        };
+    }
+    initData() {
+
+        this.loadAppointment();
+        this.loadHospitals();
+    }
+
+    loadAppointment() {
 
         this.store.getUserPayload()
             .subscribe(res => {
@@ -180,6 +278,180 @@ export class Appointment implements OnInit {
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
     }
 
+    loadHospitals() {
+        this.api.getHospitals().subscribe({
+            next: (hospitals) => {
+                this.hospitals = hospitals || [];
+                this.logger.printLogs('i', 'Hospitals loaded', this.hospitals)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch hospitals', err)
+        });
+    }
+
+    onDateClick(info: any) {
+        if (!this.enabledDates.includes(info.dateStr)) {
+            return; // block user
+        }
+
+        this.selectedDate = info.dateStr;
+    }
+
+    getAllocationsByHospitalID(hospitalID: any) {
+        this.allocations = []; // Clear previous allocations
+        this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);
+        this.api.getAllocationsByHospitalID(hospitalID).subscribe({
+            next: (res) => {
+                this.allocations = res || [];
+                this.logger.printLogs('i', 'Allocations loaded by Hospital ID', this.allocations)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch allocations by Hospital ID', err)
+        });
+    }
+
+    getSlotsByAllocationIDs(selectedIDs: string[]) {
+
+        this.distinctSections = []
+        // this.selectedSection = null;
+        this.filteredShifts = [];
+
+        if (!selectedIDs || selectedIDs.length === 0) {
+            this.availableDates = [];
+            this.events = [];
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Please select at least 1 section first.',
+                detail: 'No Selected Section',
+                life: 3000
+            });
+            return;
+        }
+
+        const payload = { AllocationID: selectedIDs };
+        this.logger.printLogs('i', 'Selected Allocation IDs', payload);
+
+        this.api.getSlotsByAllocationIDs(payload).subscribe({
+            next: (slots) => {
+                this.slots = slots;
+
+                this.logger.printLogs('i', 'Slots', slots);
+                // Filter slots with slotStatus === 1
+                const validSlots = slots.filter(s => s.slotStatus === 1);
+
+                // Group slots by date
+                const slotsByDate = validSlots.reduce((acc: any, slot: any) => {
+                    if (!acc[slot.dateSlot]) acc[slot.dateSlot] = [];
+                    acc[slot.dateSlot].push(slot);
+                    return acc;
+                }, {});
+
+
+                this.logger.printLogs('i', 'Slots by Date', slotsByDate);
+
+                // Available dates
+                this.availableDates = Object.keys(slotsByDate);
+
+                // Create normal events with slots attached
+                this.events = this.availableDates.map(date => ({
+                    title: 'Available',        // normal event for clicking
+                    start: date,
+                    allDay: true,
+                    backgroundColor: '#138d42ff',
+                    borderColor: '#023a1755',
+                    extendedProps: { slots: slotsByDate[date] }
+                }));
+
+                this.events = this.availableDates.map(date => ({
+                    title: 'Available',        // normal event title, required
+                    start: date,
+                    allDay: true,
+                    backgroundColor: '#138d42ff',
+                    borderColor: '#023a1755',
+                    extendedProps: { slots: slotsByDate[date] } // attach slots
+                }));
+
+
+                this.logger.printLogs('i', 'Events', this.events);
+
+                // Refresh calendar options to reapply events and date restrictions
+                this.initCalendar();
+            },
+            error: (err) => {
+                this.logger.printLogs('e', 'Error on getting Slots By Allocation IDs', err);
+                console.error(err);
+            }
+        });
+    }
+
+
+    onEventClick(selectInfo: any) {
+
+
+        const selectedDate = selectInfo?.startStr
+            ? new Date(selectInfo.startStr)  // Convert string to Date
+            : null;
+
+        if (!selectedDate) return;
+
+        const dateStr = selectedDate.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+
+        this.logger.printLogs('i', 'Selected Date', dateStr);
+
+        // Filter slots for this date
+        this.selectedDateSlots = this.slots.filter(slot => slot.dateSlot === dateStr);
+
+
+        // Populate DISTINCT section names
+        this.distinctSections = Object.values(
+            this.selectedDateSlots.reduce((acc: any, slot: any) => {
+                if (!acc[slot.sectionID]) {
+                    acc[slot.sectionID] = {
+                        label: slot.sectionName,
+                        value: slot.sectionID,
+                        sectionName: slot.sectionName
+                    };
+                }
+                return acc;
+            }, {})
+        );
+
+        this.logger.printLogs('i', 'Distinct Sections: ', this.distinctSections);
+
+        // Reset UI
+        // this.selectedSection = null;
+        this.filteredShifts = [];
+    }
+
+    onSectionChange(section: any) {
+        if (!section) {
+            this.filteredShifts = [];
+            return;
+        }
+
+        this.logger.printLogs('i', `Selected Section`, section.value);
+        // Filter shifts belonging only to this section
+        this.filteredShifts = this.selectedDateSlots
+            .filter(s => s.sectionID === section.value);
+
+
+        this.logger.printLogs('i', `All Shift under Section ${section.value}`, this.filteredShifts);
+
+    }
+
+    formatTime(timeString: string): string {
+        const date = new Date(`1970-01-01T${timeString}`);
+        return new Intl.DateTimeFormat('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        }).format(date);
+    }
+
+
+    onShiftSelect(slot: any) {
+        this.logger.printLogs('i', 'Selected slot:', slot);
+        // shift.slotID is available here
+        this.slot = slot;
+    }
 
     exportCSV() {
         this.dt.exportCSV();
@@ -291,22 +563,6 @@ export class Appointment implements OnInit {
         });
     }
 
-    reAssignDialog() {
-        if (!this.selectSchools || this.selectSchools.length === 0) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'No Selected School',
-                detail: 'Please select at least one school first!',
-                life: 3000
-            });
-            return;
-        }
-
-        this.loadCoordinators();
-        this.assignDialog = true;
-        this.coordinatorID = null;
-    }
-
 
     hideDialog() {
         this.form.reset({
@@ -315,9 +571,58 @@ export class Appointment implements OnInit {
         });
         this.school = {};
         this.itemDialog = false;
-        this.assignDialog = false;
-        this.qrDialog = false;
         this.submitted = false;
+    }
+
+    step1HasError(): boolean {
+
+        let hasError: boolean = false;
+
+        // const selectedIDs: any[] = this.form.value.allocationIDs;
+
+        // if (!this.form.value.allocationIDs || this.form.value.allocationIDs === 0) {
+
+        //     this.allowedDates = [];
+        //     this.messageService.add({
+        //         severity: 'warning',
+        //         summary: 'Please select select at least 1 section first.',
+        //         detail: 'No Selected Section',
+        //         life: 3000
+        //     });
+        //     hasError = true;
+        // }
+
+        // this.logger.printLogs('i', 'Selected IDs', selectedIDs)
+
+        //  if((this.form.controls['lastname'].invalid &&
+        //     this.form.hasError('required', 'lastname') &&
+        //     this.form.get('lastname')?.touched ||
+        //     (this.form.controls['lastname'].dirty &&
+        //         this.form.hasError('required', 'lastname'))) ||
+        //     (this.form.controls['firstname'].invalid &&
+        //         this.form.hasError('required', 'firstname') &&
+        //         this.form.get('firstname')?.touched ||
+        //         (this.form.controls['firstname'].dirty &&
+        //             this.form.hasError('required', 'firstname'))) ||
+        //     (this.form.controls['middlename'].invalid &&
+        //         this.form.hasError('required', 'middlename') &&
+        //         this.form.get('middlename')?.touched ||
+        //         (this.form.controls['middlename'].dirty &&
+        //             this.form.hasError('required', 'middlename')))
+        // ){
+        //     hasError = true;
+        // }
+
+
+        return hasError;
+    }
+
+    step2HasError() {
+        return false;
+    }
+
+    step3HasError() {
+        return false;
     }
 
     changeStatus(status: number) {
@@ -353,9 +658,9 @@ export class Appointment implements OnInit {
                             life: 3000
                         });
 
-                        this.logger.printLogs('s', 'Status updated successfully', res);
+                        this.logger.printLogs('i', 'Status updated successfully', res);
                         this.loadSchools();
-                        this.showErrorAlert('Successful', 'School status updated', false, 'success', );
+                        this.showErrorAlert('Successful', 'School status updated', false, 'success',);
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Successful',
@@ -377,61 +682,6 @@ export class Appointment implements OnInit {
             }
         });
     }
-
-
-    saveAssignCoor() {
-        const schoolIDs = this.selectSchools?.map((school: any) => school.schoolID) ?? [];
-        const schools = this.selectSchools?.map((school: any) => school.schoolName) ?? [];
-
-        if (this.coordinatorID == null) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'No Selected Coordinator',
-                detail: 'Please select at least one coordinator first!',
-                life: 3000
-            });
-            return
-        }
-        // Find the selected coordinator object
-        const coordinator = this.coordinators?.find(
-            (c: any) => c.userID === this.coordinatorID
-        );
-
-        const coordinatorName = coordinator?.fullname || coordinator?.name || 'Unknown';
-
-        this.logger.printLogs('s', `Assign selected schoolIDs [${schoolIDs}] to coordinator : `, coordinatorName);
-
-        this.confirmationService.confirm({
-            message: `Are you sure you want to assign the selected school(s):<br><br>${schools.join('<br>')}<br><br>to <b>${coordinatorName}</b>?`,
-            header: 'Assign Confirm',
-            icon: 'pi pi-exclamation-triangle',
-            rejectLabel: 'Cancel',
-            acceptLabel: "Yes! I'm Sure",
-            rejectIcon: 'pi pi-times',
-            acceptIcon: 'pi pi-check',
-            acceptButtonStyleClass: 'p-button-success',
-            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
-
-            accept: () => {
-                this.selectSchools = [];
-
-                this.api.assignCoordinator(this.coordinatorID, schoolIDs).subscribe({
-                    next: (res) => {
-                        this.logger.printLogs('s', 'Coordinator assigned successfully', res);
-                        this.loadSchools();
-                    },
-                    error: (err) => {
-                        this.logger.printLogs('e', 'Failed to assign coordinator', err);
-                    }
-                });
-                this.assignDialog = false;
-            }
-        });
-    }
-
-
-
-
 
     save() {
         this.submitted = true;
@@ -522,11 +772,6 @@ export class Appointment implements OnInit {
 
     printAll() {
         this.pdfService.generateSchoolsReport(this.schools());
-    }
-
-    showQR(school: any) {
-        this.school = school;
-        this.qrDialog = true;
     }
 
     saveAsImage() {
@@ -633,7 +878,7 @@ export class Appointment implements OnInit {
             life: 3000
         });
         Swal.fire({
-            title: 'Saving Failed',
+            title: title,
             text: message,
             icon: severity,
             showCancelButton: false,

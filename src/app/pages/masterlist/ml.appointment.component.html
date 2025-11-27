@@ -139,19 +139,174 @@
 
 </div>
 
-<p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="School Details" [modal]="true">
+<p-dialog [(visible)]="itemDialog" [style]="{ width: '720px' }" header="Appoinment Details" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
             <form [formGroup]="form" ng-reflect-form="[object Object]">
                 <div>
-                    <label for="schoolName" class="block font-bold mb-3">School Name</label>
-                    <input type="text" pInputText id="schoolName" name="schoolName" formControlName="schoolName"
-                        required autofocus fluid />
-                    <label for="address" class="block font-bold mb-3">School Address</label>
-                    <textarea id="address" pTextarea name="address" formControlName="address" required rows="3"
-                        cols="20" fluid></textarea>
-                    <small class="text-red-500" *ngIf="submitted && !form.value['schoolName']"> Name is
-                        required.</small>
+                    <!-- class="appointment-stepper" -->
+                    <p-stepper [(value)]="currentStep">
+                        <p-step-list>
+                            <p-step [value]="1" class="text-red-600">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fa-regular fa-hospital text-3xl"></i>
+                                    <span>Hospital & Section</span>
+                                    @if(step1HasError()){
+                                    <p-badge value="!" severity="danger" icon="pi pi-exclamation-triangle"
+                                        pTooltip="Some fields are missing or required" tooltipPosition="top">
+                                    </p-badge>
+                                    }
+                                </div>
+                            </p-step>
+                            <p-step [value]="2">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fa-regular fa-calendar-days text-3xl"></i>
+                                    <span>Date & Shift</span>
+                                    @if (step2HasError()) {
+                                    <p-badge value="!" severity="danger" icon="pi pi-exclamation-triangle"
+                                        pTooltip="Some fields are missing or required" tooltipPosition="top">
+                                    </p-badge>
+                                    }
+                                </div>
+                            </p-step>
+                            <p-step [value]="3">
+                                <div class="flex flex-col items-center gap-2">
+                                    <i class="fa-regular fa-calendar-check text-3xl"></i>
+                                    <span>Confirmation</span>
+                                    @if(step3HasError()){
+                                    <p-badge value="!" severity="danger" icon="pi pi-exclamation-triangle"
+                                        pTooltip="Some fields are missing or required" tooltipPosition="top">
+                                    </p-badge>
+                                    }
+                                </div>
+                            </p-step>
+                        </p-step-list>
+
+                        <p-step-panels>
+                            <p-step-panel [value]="1">
+                                <ng-template #content let-activateCallback="activateCallback">
+                                    <div class="flex flex-col">
+
+                                        <label for="hospitals" class="block font-bold mb-3">Hospitals</label>
+                                        <p-select styleClass="w-full" id="hospitals" [options]="hospitals"
+                                            optionLabel="hospitalName" optionValue="hospitalID" appendTo="body"
+                                            formControlName="hospitalID"
+                                            (onChange)="getAllocationsByHospitalID($event.value)"
+                                            placeholder="Select Hospital" />
+
+
+                                        @if (allocations.length > 0) {
+
+                                        <label for="shifts" class="block font-bold mb-3">Sections</label>
+                                        <!-- 
+                                        <p-multiSelect styleClass="w-full" formControlName="allocationIDs"
+                                            [options]="allocations" optionLabel="sectionName" optionValue="allocationID"
+                                            placeholder="Select Section" display="chip" [filter]="true" appendTo="body"
+                                            fluid placeholder="Select Section(s)"> 
+                                        -->
+                                        <p-multiSelect styleClass="w-full" formControlName="allocationIDs"
+                                            [options]="allocations" optionLabel="sectionName" optionValue="allocationID"
+                                            placeholder="Select Section(s)" display="chip" [filter]="true"
+                                            appendTo="body" (onChange)="getSlotsByAllocationIDs($event.value)" fluid>
+
+                                            <ng-template pTemplate="selectedItems" let-selected>
+                                                <div class="flex flex-wrap gap-2">
+                                                    <div *ngFor="let allocation of selected"
+                                                        class="inline-flex items-center py-1 px-2 bg-primary text-white rounded-lg">
+                                                        {{ allocation.sectionName }}
+                                                    </div>
+                                                </div>
+                                            </ng-template>
+
+                                            <ng-template pTemplate="item" let-allocation>
+                                                <div class="flex items-center gap-2">
+                                                    <span>{{ allocation.sectionName }}</span>
+                                                    <small class="text-gray-500">({{ allocation.allocation }})</small>
+                                                </div>
+                                            </ng-template>
+
+                                        </p-multiSelect>
+                                        }
+
+
+                                    </div>
+                                    <div class="flex pt-6 justify-end">
+                                        <p-button label="Next" icon="pi pi-arrow-right" iconPos="right"
+                                            (onClick)="activateCallback(2)" />
+                                    </div>
+                                </ng-template>
+                            </p-step-panel>
+
+                            <p-step-panel [value]="2">
+                                <ng-template #content let-activateCallback="activateCallback">
+                                    <div class="flex flex-row gap-4 w-full">
+
+                                        <div class="w-full">
+                                            <label class="block font-bold flex justify-center items-center">DATE</label>
+                                            <full-calendar #fc [options]="calendarOptions"></full-calendar>
+                                        </div>
+
+                                        <div class="w-full md:w-1/2 lg:w-1/2 mt-4" *ngIf="selectedDateSlots">
+                                            <label class="block font-bold flex justify-center items-center">SHIFT</label>
+
+                                            <div class="flex flex-wrap gap-2 mt-2">
+
+                                                <div class="w-full mt-4" *ngIf="selectedDateSlots.length > 0">
+                                                    <label class="block font-bold">Section</label>
+
+                                                    <p-select [options]="distinctSections" optionLabel="label"
+                                                        optionValue="value" appendTo="body" formControlName="sectionID"
+                                                        (onChange)="onSectionChange($event)"
+                                                        placeholder="Select Section" class="w-full"></p-select>
+                                                </div>
+                                                <div class="w-full mt-4"
+                                                    *ngIf="!filteredShifts || filteredShifts.length>0">
+                                                    <label class="block font-bold">Available Shifts</label>
+
+                                                    <div class="flex flex-wrap gap-2" formControlName="shiftID">
+                                                        <p-button *ngFor="let shift of filteredShifts"
+                                                            (onClick)="onShiftSelect(shift)"
+                                                            [styleClass]="'px-4 py-2 rounded-lg text-sm ' + 
+                                                            (form.value.shiftID === shift.slotId? 
+                                                            'bg-primary text-white': 'bg-slate-200 text-gray-700 hover:bg-slate-300')">
+                                                            <ng-template pTemplate="content">
+                                                                <div class="flex flex-col items-start leading-tight">
+                                                                    <span class="font-semibold">{{ shift.shiftName
+                                                                        }}</span>
+                                                                    <span class="text-xs opacity-70">
+                                                                        {{ formatTime(shift.startTime) }} - {{
+                                                                        formatTime(shift.endTime) }}
+                                                                    </span>
+                                                                </div>
+                                                            </ng-template>
+                                                        </p-button>
+                                                    </div>
+                                                </div>
+                                                <div *ngIf="filteredShifts.length === 0"
+                                                    class="text-gray-500 text-center flex justify-center items-center h-20">
+                                                    No yet selected Date and section to view shift(s).
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </p-step-panel>
+
+
+                            <p-step-panel [value]="3">
+                                <ng-template #content let-activateCallback="activateCallback">
+                                    <div class="flex flex-col h-48">
+
+                                        <label for="date" class="block font-bold mb-3">Confirnmation</label>
+                                    </div>
+                                </ng-template>
+                            </p-step-panel>
+
+                        </p-step-panels>
+                    </p-stepper>
+
                 </div>
                 <div>
                     <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
@@ -167,68 +322,28 @@
     </ng-template>
 </p-dialog>
 
-<p-dialog [(visible)]="assignDialog" header="Assign Coordinator" [modal]="true" [style]="{width: '25vw',}"
-    [closable]="true" [draggable]="true" [contentStyle]="{'height':'calc(100% - 60px)', 'overflow':'auto'}">
-
-    <ng-template #content>
-        <div class="flex flex-row gap-4">
-
-            <div class="flex flex-wrap gap-2" *ngIf="selectSchools.length > -1; else noSelection">
-                <ng-container id="schools" name="schools" *ngFor="let school of selectSchools">
-                    <!-- School name -->
-                    <p-tag [value]="school.schoolName" class="mr-2 mb-2 px-3 py-2 rounded-2xl shadow-lg bg-slate-100"
-                        severity="success">
-                    </p-tag>
-                </ng-container>
-
-                <p-select [options]="coordinators" filter="true" optionLabel="fullname" optionValue="userID"
-                    placeholder="Select Coordinator" [(ngModel)]="coordinatorID" appendTo="body"
-                    class="w-full"></p-select>
-            </div>
-
-            <ng-template #noSelection>
-                <p class="text-center text-gray-500 italic">No schools selected.</p>
-            </ng-template>
-        </div>
+<!-- 
+<p-dialog header="Slots for Selected Date" [(visible)]="slotsModalVisible" [modal]="true" [style]="{width: '600px'}">
+    <ng-template pTemplate="content">
+        <table class="w-full">
+            <thead>
+                <tr>
+                    <th>Shift</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Section</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let slot of selectedDateSlots">
+                    <td>{{ slot.shiftName }}</td>
+                    <td>{{ slot.startTime }}</td>
+                    <td>{{ slot.endTime }}</td>
+                    <td>{{ slot.sectionName }}</td>
+                </tr>
+            </tbody>
+        </table>
     </ng-template>
-
-
-    <!-- Footer -->
-    <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-3 w-full">
-            <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
-            <p-button label="Assign" icon="pi pi-check" (click)="saveAssignCoor()" />
-        </div>
-    </ng-template>
-</p-dialog>
-
-
-
-<p-dialog [(visible)]="qrDialog" header="School QR Code" [modal]="true" [style]="{width: '20vw'}" [closable]="true">
-
-    <div class="flex flex-col items-center my-3 mx-3">
-        <!-- QR IMAGE -->
-        <img *ngIf="school?.qrCode" [src]="'data:image/png;base64,' + school.qrCode" alt="QR Code"
-            style="width: 200px; height: 200px;" />
-
-        <!-- SCHOOL NAME -->
-        <h4 class="text-sm font-semibold text-center mt-0 leading-tight">
-            {{ school?.schoolName }}
-        </h4>
-
-        <!-- SCHOOL ID (optional) -->
-        <p class="text-sm text-gray-500">
-            powered by <em class="font-bold text-blue-500">SAP Application</em>
-        </p>
-    </div>
-
-    <ng-template pTemplate="footer">
-        <div class="flex justify-end gap-3 w-full">
-            <p-button label="Close" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
-            <p-button label="Download" icon="pi pi-download" (click)="saveAsImage()" />
-        </div>
-    </ng-template>
-</p-dialog>
-
+</p-dialog> -->
 
 <p-confirmdialog [style]="{ width: '450px' }">

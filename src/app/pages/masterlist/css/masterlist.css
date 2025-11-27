@@ -31,3 +31,20 @@
 .custom-reject:hover {
   background-color: #c82333 !important;
 }
+
+
+/* Appointments */
+::ng-deep .appointment-stepper {
+    pointer-events: none !important;
+}
+
+.fc-daygrid-day.disabled-date {
+  pointer-events: none;
+  background-color: #f3f4f6;
+  color: #9ca3af !important;
+}
+
+.fc-daygrid-day.active-date {
+  background-color: #bbf7d0 !important;
+  cursor: pointer;
+}
