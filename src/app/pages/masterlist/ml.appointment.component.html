@@ -247,7 +247,8 @@
                                         </div>
 
                                         <div class="w-full md:w-1/2 lg:w-1/2 mt-4" *ngIf="selectedDateSlots">
-                                            <label class="block font-bold flex justify-center items-center">SHIFT</label>
+                                            <label
+                                                class="block font-bold flex justify-center items-center">SHIFT</label>
 
                                             <div class="flex flex-wrap gap-2 mt-2">
 
@@ -259,29 +260,63 @@
                                                         (onChange)="onSectionChange($event)"
                                                         placeholder="Select Section" class="w-full"></p-select>
                                                 </div>
-                                                <div class="w-full mt-4"
-                                                    *ngIf="!filteredShifts || filteredShifts.length>0">
-                                                    <label class="block font-bold">Available Shifts</label>
 
-                                                    <div class="flex flex-wrap gap-2" formControlName="shiftID">
+                                                @if(!filteredShifts || filteredShifts.length>0){
+                                                <div class="w-full mt-4">
+                                                    <label class="block font-bold mb-2">Available Shifts</label>
+
+                                                    <!-- <div class="flex flex-col w-full gap-4 px-2 py-2">
                                                         <p-button *ngFor="let shift of filteredShifts"
-                                                            (onClick)="onShiftSelect(shift)"
-                                                            [styleClass]="'px-4 py-2 rounded-lg text-sm ' + 
-                                                            (form.value.shiftID === shift.slotId? 
-                                                            'bg-primary text-white': 'bg-slate-200 text-gray-700 hover:bg-slate-300')">
-                                                            <ng-template pTemplate="content">
-                                                                <div class="flex flex-col items-start leading-tight">
-                                                                    <span class="font-semibold">{{ shift.shiftName
-                                                                        }}</span>
-                                                                    <span class="text-xs opacity-70">
-                                                                        {{ formatTime(shift.startTime) }} - {{
-                                                                        formatTime(shift.endTime) }}
-                                                                    </span>
-                                                                </div>
-                                                            </ng-template>
+                                                            [id]="shift.slotID" (onClick)="onShiftSelect(shift)"
+                                                            [styleClass]="'relative w-full rounded-lg text-sm px-4 py-2 ' + 
+                                                            (form.value.shiftID === shift.shiftID ? 
+                                                            'bg-primary text-white' : 
+                                                            'bg-teal-700 text-gray-700 hover:bg-slate-300')">
+
+                                                            <div class="flex flex-row items-start leading-tight">
+                                                                <span class="font-semibold">
+                                                                    {{ shift.shiftName }}
+                                                                    <small class="text-m font-semibold opacity-70">
+                                                                        ({{ formatTime(shift.startTime) }} - {{
+                                                                        formatTime(shift.endTime) }})
+                                                                    </small>
+                                                                </span>
+                                                            </div>
+
                                                         </p-button>
+                                                    </div> -->
+
+                                                    <div class="flex flex-col w-full gap-3 mt-3">
+
+                                                        <div *ngFor="let shift of filteredShifts" class="w-full">
+                                                            <div class="flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all duration-200"
+                                                                [ngClass]="{'bg-white border-gray-300 text-gray-800 hover:bg-gray-100': form.value.shiftID !== shift.shiftID, 
+                                                            'bg-green-700 border-green-700 text-white': form.value.shiftID === shift.shiftID}">
+
+                                                                <!-- PrimeNG Radio -->
+                                                                <p-radioButton name="shiftGroup" [value]="shift.shiftID"
+                                                                    formControlName="shiftID"
+                                                                    (onClick)="onShiftSelect(shift)"
+                                                                    [inputId]="'shift-' + shift.shiftID"
+                                                                    class="scale-110"></p-radioButton>
+
+                                                                <!-- Label -->
+                                                                <label [for]="'shift-' + shift.shiftID"
+                                                                    class="cursor-pointer font-medium text-sm select-none">
+                                                                    {{ formatTime(shift.startTime) }} - {{
+                                                                    formatTime(shift.endTime) }}
+                                                                </label>
+
+                                                            </div>
+                                                        </div>
+
                                                     </div>
+
+
                                                 </div>
+
+
+                                                }
                                                 <div *ngIf="filteredShifts.length === 0"
                                                     class="text-gray-500 text-center flex justify-center items-center h-20">
                                                     No yet selected Date and section to view shift(s).
@@ -291,18 +326,133 @@
 
                                         </div>
                                     </div>
-                                </ng-template>
-                            </p-step-panel>
 
-
-                            <p-step-panel [value]="3">
-                                <ng-template #content let-activateCallback="activateCallback">
-                                    <div class="flex flex-col h-48">
-
-                                        <label for="date" class="block font-bold mb-3">Confirnmation</label>
+                                    <div class="flex pt-6 justify-between">
+                                        <p-button label="Back" severity="secondary" icon="pi pi-arrow-left"
+                                            (onClick)="activateCallback(1)" />
+                                        <p-button label="Next" icon="pi pi-arrow-right" iconPos="right"
+                                            (onClick)="activateCallback(3)" />
                                     </div>
                                 </ng-template>
                             </p-step-panel>
+
+                            <p-step-panel [value]="3">
+                                <ng-template #content let-activateCallback="activateCallback">
+
+                                    <div class="flex flex-col">
+                                        <label class="block font-bold mb-3">Appointment Booking Details</label>
+                                    </div>
+
+                                    <ng-container *ngIf="isLoading; else detailsTemplate">
+                                        <div class="grid grid-cols-1 gap-4 mt-4">
+
+                                            <div class="flex flex-col gap-1">
+                                                <p-skeleton height="1rem"></p-skeleton>
+                                                <p-skeleton width="80%" height="1.2rem"></p-skeleton>
+                                            </div>
+
+                                            <div class="flex flex-col gap-1">
+                                                <p-skeleton height="1rem"></p-skeleton>
+                                                <p-skeleton width="70%" height="1.2rem"></p-skeleton>
+                                            </div>
+
+                                            <div class="flex flex-col gap-1">
+                                                <p-skeleton height="1rem"></p-skeleton>
+                                                <p-skeleton width="60%" height="1.2rem"></p-skeleton>
+                                            </div>
+
+                                            <div class="flex flex-col gap-1">
+                                                <p-skeleton height="1rem"></p-skeleton>
+                                                <p-skeleton width="50%" height="1.2rem"></p-skeleton>
+                                            </div>
+                                        </div>
+                                    </ng-container>
+
+                                    <ng-template #detailsTemplate>
+                                        <div class="mt-4 p-4 border rounded-xl shadow-sm bg-white">
+
+                                            <table class="w-full text-left border-collapse">
+                                                <tbody class="text-sm">
+
+                                                    <tr class="border-b">
+                                                        <td class="py-3 font-medium w-40">
+                                                            <i class="pi pi-building mr-2 text-gray-600"></i>
+                                                            Hospital
+                                                        </td>
+                                                        <td class="py-3 font-semibold text-gray-900">
+                                                            {{ slot.hospitalName }}
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr class="border-b">
+                                                        <td class="py-3 font-medium">
+                                                            <i class="pi pi-sitemap mr-2 text-gray-600"></i>
+                                                            Section
+                                                        </td>
+                                                        <td class="py-3 font-semibold">
+                                                            {{ slot.sectionName }}
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr class="border-b">
+                                                        <td class="py-3 font-medium">
+                                                            <i class="pi pi-clock mr-2 text-gray-600"></i>
+                                                            Shift
+                                                        </td>
+                                                        <td class="py-3 font-semibold">
+                                                            {{ slot.shiftName }}
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr class="border-b">
+                                                        <td class="py-3 font-medium">
+                                                            <i class="pi pi-calendar mr-2 text-gray-600"></i>
+                                                            Date
+                                                        </td>
+                                                        <td class="py-3 font-semibold">
+                                                            {{ slot.dateSlot }}
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr class="border-b">
+                                                        <td class="py-3 font-medium">
+                                                            <i class="pi pi-play mr-2 text-gray-600"></i>
+                                                            Start Time
+                                                        </td>
+                                                        <td class="py-3 font-semibold">
+                                                            {{ slot.startTime }}
+                                                        </td>
+                                                    </tr>
+
+                                                    <!-- End Time -->
+                                                    <tr>
+                                                        <td class="py-3 font-medium">
+                                                            <i class="pi pi-stop mr-2 text-gray-600"></i>
+                                                            End Time
+                                                        </td>
+                                                        <td class="py-3 font-semibold">
+                                                            {{ slot.endTime }}
+                                                        </td>
+                                                    </tr>
+
+                                                </tbody>
+                                            </table>
+
+                                        </div>
+
+                                    </ng-template>
+
+                                    <!-- Buttons -->
+                                    <div class="flex pt-6 justify-between">
+                                        <p-button label="Back" icon="pi pi-arrow-left" iconPos="left"
+                                            (onClick)="activateCallback(2)" />
+                                        <p-button label="Confirm" icon="pi pi-check" iconPos="right"
+                                            (onClick)="save()" />
+                                    </div>
+
+                                </ng-template>
+                            </p-step-panel>
+
 
                         </p-step-panels>
                     </p-stepper>
@@ -318,7 +468,6 @@
 
     <ng-template #footer>
         <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
-        <p-button label="Save" icon="pi pi-check" (click)="save()" />
     </ng-template>
 </p-dialog>
 

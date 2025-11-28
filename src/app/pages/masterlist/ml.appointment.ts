@@ -42,7 +42,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
-import { CalendarOptions } from '@fullcalendar/core/index.js';
+import { SkeletonModule } from 'primeng/skeleton';
 
 
 interface Column {
@@ -90,7 +90,9 @@ interface ExportColumn {
         DatePickerModule,
         MultiSelectModule,
         ChipModule,
-        FullCalendarModule
+        BadgeModule,
+        FullCalendarModule,
+        SkeletonModule
     ],
     templateUrl: './ml.appointment.component.html',
     styleUrl: './css/masterlist.css',
@@ -138,16 +140,15 @@ export class Appointment implements OnInit {
     allowedDates: Date[] = [];
 
     slots: any[] = [];
-    slot: any;
+    public slot: any;
 
     calendarPlugins = [dayGridPlugin, interactionPlugin];
-    availableDates: any[] = [];  // API returned enabled dates
-    events: any[] = [];             // converted to eventss
+    availableDates: any[] = [];
+    events: any[] = [];
 
     selectedDateSlots: any[] = [];
-    distinctSections: any[] = [];        // Unique sections
-    // selectedSection: string | null = null;
-    filteredShifts: any[] = [];          // Shifts for selected section
+    distinctSections: any[] = [];
+    filteredShifts: any[] = [];
 
 
     // Example: only enable dates with active slots
@@ -156,6 +157,10 @@ export class Appointment implements OnInit {
     };
 
     slotsModalVisible: boolean = false;
+
+    shiftOptions: any[] = [];
+
+    isLoading: boolean = true;
 
 
 
@@ -297,20 +302,28 @@ export class Appointment implements OnInit {
     }
 
     getAllocationsByHospitalID(hospitalID: any) {
-        this.allocations = []; // Clear previous allocations
+        this.itemDialog = false;
+        this.slot = null;
+        this.allocations = [];
+        this.distinctSections = [];
         this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);
         this.api.getAllocationsByHospitalID(hospitalID).subscribe({
             next: (res) => {
                 this.allocations = res || [];
                 this.logger.printLogs('i', 'Allocations loaded by Hospital ID', this.allocations)
+                this.itemDialog = true;
             },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch allocations by Hospital ID', err)
+            error: (err) => {
+                this.logger.printLogs('e', 'Failed to fetch allocations by Hospital ID', err)
+                this.showErrorAlert("Error", 'Failed to fetch allocations by Hospital ID', false, "error")
+            }
         });
     }
 
     getSlotsByAllocationIDs(selectedIDs: string[]) {
 
-        this.distinctSections = []
+        this.slot = null;
+        this.distinctSections = [];
         // this.selectedSection = null;
         this.filteredShifts = [];
 
@@ -325,6 +338,8 @@ export class Appointment implements OnInit {
             });
             return;
         }
+
+        this.itemDialog = false;
 
         const payload = { AllocationID: selectedIDs };
         this.logger.printLogs('i', 'Selected Allocation IDs', payload);
@@ -374,10 +389,12 @@ export class Appointment implements OnInit {
 
                 // Refresh calendar options to reapply events and date restrictions
                 this.initCalendar();
+
+                this.itemDialog = true;
             },
             error: (err) => {
-                this.logger.printLogs('e', 'Error on getting Slots By Allocation IDs', err);
-                console.error(err);
+                this.logger.printLogs('e', 'Failed to fetch Slots By Allocation IDs', err);
+                this.showErrorAlert("Error", 'Failed to fetch Slots By Allocation IDs', false, "error")
             }
         });
     }
@@ -385,7 +402,7 @@ export class Appointment implements OnInit {
 
     onEventClick(selectInfo: any) {
 
-
+        this.slot = null;
         const selectedDate = selectInfo?.startStr
             ? new Date(selectInfo.startStr)  // Convert string to Date
             : null;
@@ -422,6 +439,9 @@ export class Appointment implements OnInit {
     }
 
     onSectionChange(section: any) {
+
+        this.slot = null;
+
         if (!section) {
             this.filteredShifts = [];
             return;
@@ -432,10 +452,10 @@ export class Appointment implements OnInit {
         this.filteredShifts = this.selectedDateSlots
             .filter(s => s.sectionID === section.value);
 
-
-        this.logger.printLogs('i', `All Shift under Section ${section.value}`, this.filteredShifts);
+        this.logger.printLogs('i', `All Shift under Section ${section.value} - filteredShifts: `, this.filteredShifts);
 
     }
+
 
     formatTime(timeString: string): string {
         const date = new Date(`1970-01-01T${timeString}`);
@@ -449,8 +469,13 @@ export class Appointment implements OnInit {
 
     onShiftSelect(slot: any) {
         this.logger.printLogs('i', 'Selected slot:', slot);
-        // shift.slotID is available here
-        this.slot = slot;
+
+        // this.slot = slot;
+
+        setTimeout(() => {
+            this.slot = slot; // Or wherever your slot comes from
+            this.isLoading = false;
+        }, 600); // 600ms for smooth feel
     }
 
     exportCSV() {
@@ -566,12 +591,34 @@ export class Appointment implements OnInit {
 
     hideDialog() {
         this.form.reset({
-            schoolName: '',
+            hospitalID: '',
+            sectionID: '',
+            allocationIDs: '',
+            slotID: '',
+            shiftID: '',
             userID: this.tokenPayload.nameid
         });
-        this.school = {};
+
+
+        this.selectedDate = null;
+        this.enabledDates = [];
+        this.allowedDates = [];
+
+        this.slots = [];
+        this.slot = null;
+
+        this.availableDates = [];
+        this.events = [];
+
+        this.selectedDateSlots = [];
+        this.distinctSections = [];
+        this.filteredShifts = [];
+
+        this.currentStep = 1;
+        this.isLoading = true;
         this.itemDialog = false;
         this.submitted = false;
+
     }
 
     step1HasError(): boolean {
