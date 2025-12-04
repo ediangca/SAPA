@@ -214,16 +214,10 @@ export class Roles implements OnInit {
 
     openNew() {
         this.form.reset({
-            email: '',
-            userID: this.tokenPayload.nameid
+            roleName: '',
         });
         this.role = {};
         this.submitted = false;
-        this.itemDialog = true;
-    }
-
-    openNewDialog() {
-        this.form.reset();
         this.itemDialog = true;
     }
 
@@ -236,8 +230,14 @@ export class Roles implements OnInit {
 
     openPrivilege(role: any) {
         this.role = role;
-        this.logger.printLogs('i', 'Edit role', role)
+        this.logger.printLogs('i', 'Create/Edit role', role)
+        this.privelegeDialog = true
+    }
 
+    closePrivilege() {
+        this.role = {};
+        this.privilege = {};
+        this.privelegeDialog = false
     }
 
     hideDialog() {
