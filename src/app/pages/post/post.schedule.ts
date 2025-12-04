@@ -69,7 +69,7 @@ interface ExportColumn {
         SelectButtonModule,
         FormsModule,
         ButtonModule,
-        AppMenuitem,
+        // AppMenuitem,
         RippleModule,
         ToastModule,
         ToolbarModule,
@@ -196,6 +196,9 @@ export class Schedule implements OnInit {
         eventChange:
         eventRemove:
         */
+
+        // height: 'calc(100vh - 12rem)', 
+        // contentHeight: 'auto'
     });
 
     selectedEvent: any = null;
@@ -247,15 +250,10 @@ export class Schedule implements OnInit {
 
         this.subcomponent = [
             {
-                items: [
-                    // { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                    { label: 'Print All', icon: 'fas fa-print', command: () => this.openPrintDialog() },
-
-                ]
-            }
-        ];
-
-        this.properties = [
+                label: 'Print All',
+                icon: 'fas fa-print',
+                command: () => this.openPrintDialog()
+            },
             {
                 label: 'Status',
                 icon: 'fas fa-layer-group',
@@ -266,6 +264,18 @@ export class Schedule implements OnInit {
                 ]
             }
         ];
+
+        // this.properties = [
+        //     {
+        //         label: 'Status',
+        //         icon: 'fas fa-layer-group',
+        //         items: [
+        //             { label: 'UNPOST', icon: 'pi pi-refresh', command: () => this.changeStatus(0) },
+        //             { label: 'POST', icon: 'pi pi-thumbtack', command: () => this.changeStatus(1) },
+        //             { label: 'CLOSED', icon: 'pi pi-lock', command: () => this.changeStatus(2) }
+        //         ]
+        //     }
+        // ];
         // this.properties = [
         //     {
         //         label: 'Status',
@@ -347,31 +357,17 @@ export class Schedule implements OnInit {
     }
 
     onDateSelect(event: any) {
-        // event will contain the selected date
-        // this.selectedDate should also be updated by ngModelChange
-        console.log('Selected date from onSelect:', event);
-        // If you need the ngModel value immediately, and onSelect fires before ngModel updates,
-        // you might need to use a timeout or check the ngModelChange event.
+        this.logger.printLogs('i', 'Selected date from onSelect:', event);
     }
 
     onModelChange(newDate: Date) {
-        console.log('Selected date from ngModelChange:', newDate);
-        // This event fires when the ngModel value actually changes.
+        this.logger.printLogs('i', 'Selected date from ngModelChange:', newDate);
     }
 
     exportCSV() {
         this.dt.exportCSV();
     }
 
-    // loadAllocations() {
-    //     this.api.getAllocations().subscribe({
-    //         next: (res) => {
-    //             this.allocations = res || [];
-    //             this.logger.printLogs('i', 'Allocations loaded', this.allocations)
-    //         },
-    //         error: (err) => this.logger.printLogs('e', 'Failed to fetch allocations', err)
-    //     });
-    // }
 
     getAllocationsByHospitalID(hospitalID: any) {
         this.allocations = []; // Clear previous allocations

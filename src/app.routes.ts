@@ -6,6 +6,8 @@ import { Landing } from './app/pages/landing/landing';
 import { Notfound } from './app/pages/notfound/notfound';
 import { authGuard } from '@/helper/guard/auth.guard';
 import { UserResolver } from '@/helper/resolver/user.resolver';
+import { authRoutes } from './app/pages/auth/auth.routes';
+
 
 export const appRoutes: Routes = [
     { path: '', component: Landing },
@@ -24,8 +26,10 @@ export const appRoutes: Routes = [
             { path: 'pages', loadChildren: () => import('./app/pages/pages.routes') }
         ]
     },
+
+    ...authRoutes,   // <-- Spread standalone auth routes here
     // { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
-    { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
+    // { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
     { path: '**', redirectTo: '/notfound' }
 ];

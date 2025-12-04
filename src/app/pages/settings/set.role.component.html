@@ -1,0 +1,240 @@
+<p-toast></p-toast>
+<div class="flex flex-col md:flex-row gap-8">
+    <!-- SECTION TABLE -->
+    <div class="md:w-5/6">
+        <div class="card">
+            <p-table #dt [value]="roles()" [rows]="10" [columns]="cols" [paginator]="true"
+                [globalFilterFields]="['roleID', 'roleName', 'status`']" [tableStyle]="{ 'min-width': '75rem'}"
+                [(selection)]="selectRoles" [rowHover]="true" dataKey="roleID"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true"
+                scrollHeight="flex">
+
+                <ng-template pTemplate="caption">
+                    <div class="flex row justify-center">
+                        <h5 class="m-0">Manage Roles</h5>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex row">
+                            <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2"
+                                (onClick)="openNew()" />
+                        </div>
+                        <p-iconfield>
+                            <p-inputicon styleClass="pi pi-search" />
+                            <input pInputText type="text" [(ngModel)]="filter" (input)="onGlobalFilter(dt)"
+                                placeholder="Search..." />
+                            @if (filter && filter.length > 0) {
+                            <p-inputicon styleClass="pi pi-times cursor-pointer" style="margin-left: -1.5rem;"
+                                (click)="clear(dt)" />
+                            }
+                            <p-button label="Export" class="mx-2" icon="pi pi-upload" severity="info" rounded="true"
+                                pTooltip="Export" (onClick)="exportCSV()" />
+                            <p-button icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
+                                (click)="loadRoles()" />
+                        </p-iconfield>
+
+                    </div>
+                </ng-template>
+                <ng-template #header>
+                    <tr>
+                        <!-- <th style="width: 3rem">
+                            <p-tableHeaderCheckbox />
+                        </th> -->
+                        <th pSortableColumn="roleID" style="min-width: 3rem">Role ID
+                            <p-sortIcon field="roleID" />
+                        </th>
+                        <th pSortableColumn="roleName" style="min-width:10rem">
+                            Role Name
+                            <p-sortIcon field="roleName" />
+                        </th>
+                        <th pSortableColumn="date_Created" style="min-width:10rem">
+                            Date Created
+                            <p-sortIcon field="date_created" />
+                        </th>
+                        <th style="min-width: 5rem">Action</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-role>
+                    <tr>
+                        <!-- <td style="width: 3rem">
+                            <p-tableCheckbox [value]="user" />
+                        </td> -->
+                        <td style="min-width: 3rem">{{ role.roleID }}</td>
+                        <td style="min-width: 10rem">{{ role.roleName }}</td>
+                        <td style="min-width: 10rem">{{ dateFormat(role.date_Created) }}</td>
+                        <td>
+                            <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                                pTooltip="Edit" (click)="edit(role)" />
+                            <p-button icon="pi pi-trash" class="mr-2" severity="danger" [rounded]="true"
+                                [outlined]="true" pTooltip="Delete" (click)="delete(role)" />
+                            <p-button icon="fa fa-users-gear" class="mr-2" severity="info" [rounded]="true"
+                                [outlined]="true" pTooltip="Modules Privileges" (click)="openPrivilege(role)" />
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div><i class="fa-solid fa-users-gear"></i>
+    </div>
+    <!-- SUBMENU -->
+    <div class="md:w-1/6">
+        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
+            <set-users-sidebar [roles]="roles()"></set-users-sidebar>
+        </div>
+    </div>
+
+</div>
+
+<p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="Role Details" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-6">
+            <form [formGroup]="form" ng-reflect-form="[object Object]">
+                <div>
+
+                    <input type="text" pInputText id="roleID" name="roleID" formControlName="roleID" hidden />
+
+                    <label for="roleName" class="block font-bold mb-3">Role Name</label>
+                    <input type="text" pInputText id="roleName" name="roleName" formControlName="roleName" required
+                        autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['rolename']"> Role Name is
+                        required.</small>
+
+                </div>
+            </form>
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="save()" />
+    </ng-template>
+</p-dialog>
+
+
+
+<p-dialog [(visible)]="privelegeDialog" [modal]="true" [draggable]="false" [resizable]="false"
+    [style]="{ width: '80vw' }" [closable]="false" class="p-fluid">
+    <ng-template pTemplate="header">
+        <div class="flex justify-between items-center w-full">
+            <h1 class="text-xl font-semibold">USER ACCESS - {{ role?.roleName }}</h1>
+            <button pButton icon="pi pi-times" class="p-button-rounded p-button-text"
+                (click)="privelegeDialog = false"></button>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="content">
+        <!-- LOADING STATE -->
+        <div *ngIf="isLoading" class="flex flex-col items-center justify-center h-[50vh] space-y-4">
+            <!-- Skeleton circle (replaces loading.gif) -->
+            <p-skeleton shape="circle" size="6rem"></p-skeleton>
+
+            <!-- Text skeleton -->
+            <p-skeleton width="8rem" height="1.25rem"></p-skeleton>
+
+            <!-- Optional: skeleton rows (table-like placeholder) -->
+            <div class="w-full px-10 mt-6">
+                <p-skeleton height="1.5rem" class="mb-2"></p-skeleton>
+                <p-skeleton height="1.5rem" class="mb-2"></p-skeleton>
+                <p-skeleton height="1.5rem" class="mb-2"></p-skeleton>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <div *ngIf="!isLoading">
+            <p-table [value]="privileges" [scrollable]="true" scrollHeight="60vh" class="shadow-md">
+                <ng-template pTemplate="header">
+                    <tr class="text-sm">
+                        <th class="w-[40%]">
+                            <div class="flex items-center space-x-2">
+                                <p-checkbox [(ngModel)]="isAllChecked"
+                                    (onChange)="toggleAllModule($event)"></p-checkbox>
+                                <span class="font-semibold">Module</span>
+                            </div>
+                        </th>
+
+                        <th class="text-center w-[8%] text-primary"><i class="pi pi-plus-circle"></i> Create</th>
+                        <th class="text-center w-[8%] text-gray-600"><i class="pi pi-download"></i> Retrieve</th>
+                        <th class="text-center w-[8%] text-yellow-600"><i class="pi pi-pencil"></i> Update</th>
+                        <th class="text-center w-[8%] text-red-500"><i class="pi pi-trash"></i> Delete</th>
+                        <th class="text-center w-[8%] text-sky-600"><i class="pi pi-thumbtack"></i> Post</th>
+                        <th class="text-center w-[8%] text-gray-500"><i class="pi pi-thumbtack"></i> Unpost</th>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-p>
+                    <tr class="text-sm">
+                        <!-- MODULE NAME -->
+                        <td>
+                            <div class="flex items-center space-x-2">
+                                <p-checkbox [ngModel]="p.isActive"
+                                    (onChange)="toggleSelectionModule(p, $event)"></p-checkbox>
+                                <span>{{ p.moduleName }}</span>
+                            </div>
+                        </td>
+
+                        <!-- CREATE -->
+                        <td class="text-center">
+                            <ng-container *ngIf="!(p.moduleName === 'GLOBAL' || p.moduleName === 'REPORTS')">
+                                <p-checkbox [ngModel]="p.c" (onChange)="toggleSelection('add', p, $event)"
+                                    [disabled]="!p.isActive"></p-checkbox>
+                            </ng-container>
+                        </td>
+
+                        <!-- RETRIEVE -->
+                        <td class="text-center">
+                            <ng-container *ngIf="p.moduleName !== 'GLOBAL'">
+                                <p-checkbox [ngModel]="p.r" (onChange)="toggleSelection('retrieve', p, $event)"
+                                    [disabled]="!p.isActive"></p-checkbox>
+                                <span *ngIf="p.moduleName === 'REPORTS'" class="ml-1">ALL</span>
+                            </ng-container>
+                        </td>
+
+                        <!-- UPDATE -->
+                        <td class="text-center">
+                            <ng-container *ngIf="!(p.moduleName === 'GLOBAL' || p.moduleName === 'REPORTS')">
+                                <p-checkbox [ngModel]="p.u" (onChange)="toggleSelection('update', p, $event)"
+                                    [disabled]="!p.isActive"></p-checkbox>
+                            </ng-container>
+                        </td>
+
+                        <!-- DELETE -->
+                        <td class="text-center">
+                            <ng-container *ngIf="!(p.moduleName === 'GLOBAL' || p.moduleName === 'REPORTS')">
+                                <p-checkbox [ngModel]="p.d" (onChange)="toggleSelection('delete', p, $event)"
+                                    [disabled]="!p.isActive"></p-checkbox>
+                            </ng-container>
+                        </td>
+
+                        <!-- POST -->
+                        <td class="text-center">
+                            <ng-container
+                                *ngIf="['PAR','ICS','OPR','PTR','ITR','OPTR','PRS','RRSEP','OPRR','USER ACCOUNTS'].includes(p.moduleName)">
+                                <p-checkbox [ngModel]="p.post" (onChange)="toggleSelection('post', p, $event)"
+                                    [disabled]="!p.isActive"></p-checkbox>
+                            </ng-container>
+                        </td>
+
+                        <!-- UNPOST -->
+                        <td class="text-center">
+                            <ng-container
+                                *ngIf="['PAR','ICS','OPR','PTR','ITR','OPTR','PRS','RRSEP','OPRR','USER ACCOUNTS'].includes(p.moduleName)">
+                                <p-checkbox [ngModel]="p.unpost" (onChange)="toggleSelection('unpost', p, $event)"
+                                    [disabled]="!p.isActive"></p-checkbox>
+                            </ng-container>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end space-x-2">
+            <button pButton label="Save" class="p-button-primary px-5 py-2" (click)="onSubmitPrivilege()"></button>
+
+            <button pButton label="Close" class="p-button-secondary px-5 py-2" (click)="closeDialog()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+
+<p-confirmdialog [style]="{ width: '450px' }">

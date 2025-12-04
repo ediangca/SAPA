@@ -11,51 +11,80 @@ export class StoreService {
   private fullname$ = new BehaviorSubject<string>("");
   private role$ = new BehaviorSubject<string>("");
 
+
+  private user$ = new BehaviorSubject<any>(null);
   private tokenPayload$ = new BehaviorSubject<any>(null);
   private privileges$ = new BehaviorSubject<any[]>([]);
+
+
+  constructor(private api: ApiService, private logger: LogsService) {
+  }
 
   public getRoleFromStore() {
     return this.role$.asObservable();
   }
-  public setRoleFromStore(role: string) {
-    return this.role$.next(role);
-  }
   public getFullnameForStore() {
     return this.fullname$.asObservable();
   }
-  public setFullnameForStore(fullname: string) {
-    return this.fullname$.next(fullname);
-  }
-
-  public setTokenPayload(tokenPayload: any) {
-    this.tokenPayload$.next(tokenPayload)
-    // this.loadPrivileges();
-  }
-
-  public setPrivilege(privileges: any[]) {
-    this.privileges$.next(privileges)
-  }
-
-  public getPrivileges() {
-    return this.privileges$.asObservable();
+  public getUser() {
+    return this.user$.asObservable();
   }
 
   public getUserPayload() {
     return this.tokenPayload$.asObservable();
   }
 
-  public clearStore() {
-    this.fullname$ = new BehaviorSubject<string>("");
-    this.role$ = new BehaviorSubject<string>("");
-    this.tokenPayload$ = new BehaviorSubject<any>(null);
+  // public setUser(user: any) {
+  //   this.user$.next(user)
+  //   this.loadPrivileges();
+  // }
+
+  setUser(user: any | null) {
+    this.user$.next(user);
+    if (user) {
+      this.setRoleFromStore(user.role || user.roleID || '');
+      this.setFullnameForStore(user.fullName || user.full_name || '');
+    } else {
+      this.setRoleFromStore('');
+      this.setFullnameForStore('');
+    }
+  }
+
+  public setTokenPayload(tokenPayload: any) {
+    this.tokenPayload$.next(tokenPayload)
+  }
+
+  setPrivilege(privileges: any[]) {
+    this.privileges$.next(privileges || []);
+  }
+
+  public getPrivileges() {
+    return this.privileges$.asObservable();
+  }
+
+  public setRoleFromStore(role: string) {
+    return this.role$.next(role);
+  }
+
+  setFullnameForStore(name: string) {
+    this.fullname$.next(name);
+  }
+
+  clearStore() {
+    this.fullname$.next('');
+    this.role$.next('');
+    this.user$.next(null);
+    this.tokenPayload$.next(null);
+    this.privileges$.next([]);
+    this.logger.printLogs('i', 'Store cleared', null);
   }
 
   // loadPrivileges(): void {
-  //   this.getUserAccount()
+  //   this.getUser()
   //     .pipe(
-  //       switchMap((userAccount) =>
-  //         userAccount 
-  //           ? this.api.retrievePriv ilegByUG(userAccount.ugid) 
+  //       switchMap((user) =>
+  //         user 
+  //           ? this.api.getPrivelegeByRole(user.roleID) 
   //           : of([]) // Return an empty array if `userAccount` is null
   //       )
   //     )
@@ -79,46 +108,31 @@ export class StoreService {
   //       },
   //     });
   // }
-  
 
   isModuleActive(moduleName: string): boolean {
     const privileges = this.privileges$.getValue();
     return privileges.some(
-      (privilege: any) =>
-        privilege.moduleName === moduleName && privilege.isActive
+      (priv: any) => priv.moduleName === moduleName && priv.isActive
     );
   }
 
   isAllowedAction(moduleName: string, action: string): boolean {
-    // Retrieve the current privileges from the BehaviorSubject.
-    const privileges = this.privileges$.getValue(); // This gets the latest value stored in the BehaviorSubject.
-  
-    if (!privileges || privileges.length === 0) {
-      // If no privileges are loaded, return false (user does not have access).
-      return false;
-    }
-  
-    // Find the privilege entry for the given moduleName.
-    const modulePrivilege = privileges.find(priv => priv.moduleName === moduleName);
-  
-    if (!modulePrivilege) {
-      // If no privileges exist for the module, return false.
-      return false;
-    }
-  
-    // Check if the action is allowed for this module.
+    const privileges = this.privileges$.getValue();
+    if (!privileges || privileges.length === 0) return false;
+    const modulePrivilege = privileges.find((p: any) => p.moduleName === moduleName);
+    if (!modulePrivilege) return false;
+
     switch (action.toLowerCase()) {
-      case 'create': return modulePrivilege.c === true;
-      case 'retrieve': return modulePrivilege.r === true;
-      case 'update': return modulePrivilege.u === true;
-      case 'delete': return modulePrivilege.d === true;
-      case 'post': return modulePrivilege.post === true;
-      case 'unpost': return modulePrivilege.unpost === true;
+      case 'create': return !!modulePrivilege.c;
+      case 'retrieve': return !!modulePrivilege.r;
+      case 'update': return !!modulePrivilege.u;
+      case 'delete': return !!modulePrivilege.d;
+      case 'post': return !!modulePrivilege.post;
+      case 'unpost': return !!modulePrivilege.unpost;
       default:
-        // If an invalid action is passed, log a warning and return false.
         console.warn(`Invalid action '${action}' passed to isAllowedAction.`);
         return false;
     }
   }
-  
+
 }

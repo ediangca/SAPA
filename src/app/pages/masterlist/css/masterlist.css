@@ -48,3 +48,28 @@
   background-color: #bbf7d0 !important;
   cursor: pointer;
 }
+
+/* Display Dialog transition */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s forwards;
+}
+
+/* Custom delays for staggered effect */
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+.delay-400 { animation-delay: 0.4s; }
+.delay-500 { animation-delay: 0.5s; }
+
+/*********************************************************/

@@ -56,7 +56,8 @@ interface ExportColumn {
         TableModule,
         FormsModule,
         ButtonModule,
-        AppMenuitem,
+        // AppMenuitem,
+        PanelMenuModule,
         RippleModule,
         ToastModule,
         ToolbarModule,
@@ -71,7 +72,6 @@ interface ExportColumn {
         InputIconModule,
         IconFieldModule,
         ConfirmDialogModule,
-        PanelMenuModule,
         ReactiveFormsModule,
         FormsModule,
         RouterModule,
@@ -149,12 +149,21 @@ export class Student implements OnInit {
 
         this.subcomponent = [
             {
+                label: 'Print All',
+                icon: 'fas fa-print',
+                command: () => this.printAll()
+            },
+            {
+                label: 'Status',
+                icon: 'fas fa-layer-group',
                 items: [
-                    // { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
-
+                    { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
+                    { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
+                    { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+                    { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
                 ]
-            }
+            },
+
         ];
         this.properties = [
             // {
@@ -225,7 +234,7 @@ export class Student implements OnInit {
     onGlobalFilter(table: Table) {
         table.filterGlobal(this.filter, 'contains');
     }
-    
+
     clear(table: Table,) {
         this.filter = ''
         table.clear();
@@ -247,9 +256,24 @@ export class Student implements OnInit {
         }
     }
 
-    /**
-     * Filter if there are spaces in username field
-     */
+    dateFormat(date: Date | string | null): string | null {
+        if (!date) return null;
+
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+
+        if (date instanceof Date && !isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        } else {
+            this.logger.printLogs('w', 'Invalid Date Format', [date]);
+            return null;
+        }
+    }
+
     filterSpace() {
         const usernameControl = this.form.get('username');
         if (usernameControl) {

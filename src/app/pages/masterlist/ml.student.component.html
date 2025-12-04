@@ -61,6 +61,10 @@
                             Status
                             <p-sortIcon field="status" />
                         </th>
+                        <th pSortableColumn="date_Created" style="min-width:10rem">
+                            Date Created
+                            <p-sortIcon field="date_Created" />
+                        </th>
                         <th style="min-width: 5rem">Action</th>
                     </tr>
                 </ng-template>
@@ -88,10 +92,11 @@
                             </button>
                             }
                         </td>
+                        <td style="min-width: 10rem">{{dateFormat(user.date_Created)}}</td>
                         <td>
                             <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
                                 (click)="edit(user)" />
-                                
+
                             @if (user.status == 'U') {
                             <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
                                 (click)="delete(user)" />
@@ -104,22 +109,25 @@
     </div>
     <!-- SUBMENU -->
     <div class="md:w-1/6">
-        <div class="card h-200 px-0">
-            <div class="h-1/2">
+        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
+            <div class="">
                 <h5 class="m-0">Sub Component</h5>
-
+                <!-- 
                 <ul class="layout-menu">
                     <ng-container *ngFor="let item of subcomponent; let i = index">
                         <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
                         <li *ngIf="item.separator" class="menu-separator"></li>
                     </ng-container>
                 </ul>
+                 -->
+                <p-panelmenu [model]="subcomponent" />
             </div>
-
+            <!-- 
             <div class="h-1/2">
                 <div class="font-semibold text-xl mb-4">Properties</div>
                 <p-panelmenu [model]="properties" />
             </div>
+             -->
             <!-- <div class="h-1/2">
                 <h5 class="m-0">Properties</h5>
                 <p-tieredMenu [model]="properties" class="w-full"></p-tieredMenu>

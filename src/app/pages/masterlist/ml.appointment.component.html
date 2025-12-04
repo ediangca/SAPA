@@ -3,13 +3,13 @@
 
     <div class="md:w-5/6">
         <div class="card">
-            <p-table #dt [value]="schools()" [rows]="10" [columns]="cols" [paginator]="true"
-                [globalFilterFields]="['schoolID', 'schoolName', 'address', 'coordinator', 'status', 'date_created']"
-                [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSchools"
+            <p-table #dt [value]="appointments()" [rows]="10" [columns]="cols" [paginator]="true"
+                [globalFilterFields]="['dateSlot','schoolName', 'hospitalName', 'sectionName', 'shiftName', 'status', 'date_Created']"
+                [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectAppointments"
                 [rowHover]="true" dataKey="schoolID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
-                (selectionChange)="onSchoolSelectionChange($event)">
+                (selectionChange)="onAppointmentSelectionChange($event)">
 
                 <ng-template pTemplate="caption">
 
@@ -38,7 +38,7 @@
                             <p-button label="Export" class="mx-2" icon="pi pi-upload" severity="info" rounded="true"
                                 pTooltip="Export" (onClick)="exportCSV()" />
                             <p-button icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
-                                (click)="loadSchools()" />
+                                (click)="loadAppointments()" />
                         </p-iconfield>
 
                     </div>
@@ -48,60 +48,60 @@
                         <th style="width: 3rem">
                             <p-tableHeaderCheckbox />
                         </th>
-                        <th pSortableColumn="schoolID" style="max-width: 1rem">School ID
-                            <p-sortIcon field="schoolID" />
+                        <th pSortableColumn="dateSlot" style="max-width: 1rem">Date
+                            <p-sortIcon field="dateSlot" />
                         </th>
                         <th pSortableColumn="schoolName" style="min-width:3rem">
                             School
                             <p-sortIcon field="schoolName" />
                         </th>
-                        <th pSortableColumn="address" style="min-width:10rem">
-                            Address
-                            <p-sortIcon field="address" />
+                        <th pSortableColumn="hospitalName" style="min-width:3rem">
+                            Hospital
+                            <p-sortIcon field="hospitalName" />
                         </th>
-                        <th pSortableColumn="coordinator" style="min-width:3rem">
-                            Coordinator
-                            <p-sortIcon field="coordinator" />
+                        <th pSortableColumn="sectionName" style="min-width:10rem">
+                            Section
+                            <p-sortIcon field="sectionName" />
+                        </th>
+                        <th pSortableColumn="shiftName" style="min-width:3rem">
+                            Shift
+                            <p-sortIcon field="shiftName" />
                         </th>
                         <th pSortableColumn="status" style="min-width:10rem">
                             Status
                             <p-sortIcon field="status" />
                         </th>
-                        <th pSortableColumn="status" style="min-width:10rem">
-                            Code
-                            <p-sortIcon field="status" />
-                        </th>
-                        <th pSortableColumn="date_created" style="min-width:10rem">
+                        <th pSortableColumn="date_Created" style="min-width:10rem">
                             Date Created
-                            <p-sortIcon field="date_created" />
+                            <p-sortIcon field="date_Created" />
                         </th>
                         <th style="min-width: 5rem">Action</th>
                     </tr>
                 </ng-template>
-                <ng-template #body let-school>
+                <ng-template #body let-appointment>
                     <tr>
                         <td style="width: 3rem">
-                            <p-tableCheckbox [value]="school" />
+                            <p-tableCheckbox [value]="appointment" />
                         </td>
-                        <td style="max-width: 1rem">{{ school.schoolID }}</td>
-                        <td style="min-width: 3rem">{{ school.schoolName }}</td>
-                        <td style="min-width: 10rem">{{ school.address }}</td>
-                        <td style="min-width: 3rem">{{ school.createdBy }}</td>
+                        <td style="max-width: 1rem">{{ dateFormat(appointment.dateSlot) }}</td>
+                        <td style="min-width: 3rem">{{ appointment.schoolName }}</td>
+                        <td style="min-width: 3rem">{{ appointment.hospitalName }}</td>
+                        <td style="min-width: 10rem">{{ appointment.sectionName }}</td>
+                        <td style="min-width: 3rem">{{ appointment.shiftName }}</td>
                         <td style="min-width: 3rem">
-                            <p-tag [value]="getStatus(school.status,'value')"
-                                [severity]="getStatus(school.status,'severirty')" styleClass="dark:bg-surface-900!" />
+                            <p-tag [value]="getStatus(appointment.status,'value')"
+                                [severity]="getStatus(appointment.status,'severirty')"
+                                styleClass="dark:bg-surface-900!" />
                         </td>
-                        <td style="min-width: 3rem">{{ school.code }}
-                            <p-button icon="pi pi-copy cursor-pointer text-gray-600 hover:text-black" [rounded]="true"
-                                [outlined]="false" severity="secondary" (click)="copyCode(school.code)" />
-                        </td>
-                        <td style="min-width: 3rem">{{ school.date_Created }}</td>
+                        <td style="min-width: 3rem">{{ dateFormat(appointment.date_Created) }}</td>
                         <td>
                             <div class="flex flex-row gap-2">
-                                <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true"
-                                    (click)="edit(school)" />
+                                @if(appointment.status === 0){
                                 <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                                    (click)="delete(school)" />
+                                    (click)="delete(appointment)" />
+                                }
+                                <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
+                                    (click)="show(appointment)" />
                             </div>
                         </td>
                     </tr>
@@ -113,22 +113,24 @@
 
     <!-- SUBMENU -->
     <div class="md:w-1/6">
-        <div class="card h-200 px-0">
-            <div class="h-1/2">
+        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
+            <div class="">
                 <h5 class="m-0">Sub Component</h5>
-
+                <!-- 
                 <ul class="layout-menu">
                     <ng-container *ngFor="let item of subcomponent; let i = index">
                         <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
                         <li *ngIf="item.separator" class="menu-separator"></li>
                     </ng-container>
                 </ul>
+                 -->
+                <p-panelmenu [model]="subcomponent" />
             </div>
 
-            <div class="h-1/2">
+            <!-- <div class="h-1/2">
                 <div class="font-semibold text-xl mb-4">Properties</div>
                 <p-panelmenu [model]="properties" />
-            </div>
+            </div> -->
             <!-- <div class="h-1/2">
                 <h5 class="m-0">Properties</h5>
                 <p-tieredMenu [model]="properties" class="w-full"></p-tieredMenu>
@@ -187,6 +189,11 @@
                                 <ng-template #content let-activateCallback="activateCallback">
                                     <div class="flex flex-col">
 
+                                        <label for="schools" class="block font-bold mb-3">Schools</label>
+                                        <p-select styleClass="w-full" id="schools" [options]="schools"
+                                            optionLabel="schoolName" optionValue="schoolID" appendTo="body"
+                                            formControlName="schoolID" placeholder="Select School" />
+
                                         <label for="hospitals" class="block font-bold mb-3">Hospitals</label>
                                         <p-select styleClass="w-full" id="hospitals" [options]="hospitals"
                                             optionLabel="hospitalName" optionValue="hospitalID" appendTo="body"
@@ -227,9 +234,8 @@
 
                                         </p-multiSelect>
                                         }
-
-
                                     </div>
+
                                     <div class="flex pt-6 justify-end">
                                         <p-button label="Next" icon="pi pi-arrow-right" iconPos="right"
                                             (onClick)="activateCallback(2)" />
@@ -396,16 +402,6 @@
 
                                                     <tr class="border-b">
                                                         <td class="py-3 font-medium">
-                                                            <i class="pi pi-clock mr-2 text-gray-600"></i>
-                                                            Shift
-                                                        </td>
-                                                        <td class="py-3 font-semibold">
-                                                            {{ slot.shiftName }}
-                                                        </td>
-                                                    </tr>
-
-                                                    <tr class="border-b">
-                                                        <td class="py-3 font-medium">
                                                             <i class="pi pi-calendar mr-2 text-gray-600"></i>
                                                             Date
                                                         </td>
@@ -416,11 +412,21 @@
 
                                                     <tr class="border-b">
                                                         <td class="py-3 font-medium">
+                                                            <i class="pi pi-clock mr-2 text-gray-600"></i>
+                                                            Shift
+                                                        </td>
+                                                        <td class="py-3 font-semibold">
+                                                            {{ slot.shiftName }}
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr class="border-b">
+                                                        <td class="py-3 font-medium">
                                                             <i class="pi pi-play mr-2 text-gray-600"></i>
                                                             Start Time
                                                         </td>
                                                         <td class="py-3 font-semibold">
-                                                            {{ slot.startTime }}
+                                                            {{ formatTime(slot.startTime) }}
                                                         </td>
                                                     </tr>
 
@@ -431,23 +437,43 @@
                                                             End Time
                                                         </td>
                                                         <td class="py-3 font-semibold">
-                                                            {{ slot.endTime }}
+                                                            {{ formatTime(slot.endTime) }}
                                                         </td>
                                                     </tr>
 
                                                 </tbody>
                                             </table>
 
+
+                                        </div>
+
+                                        <!-- Button to show Terms & Conditions -->
+                                        <div class="flex items-center mt-2">
+
+                                            <p-button label="Terms & Conditions" icon="pi pi-info-circle"
+                                                (onClick)="showTerms()" severity="info"
+                                                class="p-button-text p-button-sm">
+                                            </p-button>
+                                            <p-checkbox inputId="agree" formControlName="agree" name="agree"
+                                                binary="true">
+                                            </p-checkbox>
+                                            <label for="agree" class="ml-2"
+                                                [ngClass]="{'text-gray-700': !form.get('agree')?.invalid,'text-red-700': 
+                                            form.get('agree')?.invalid && (form.get('agree')?.touched || form.get('agree')?.dirty)}">
+                                                I have reviewed my booking details and I understand the terms and
+                                                conditions.
+                                            </label>
                                         </div>
 
                                     </ng-template>
+
 
                                     <!-- Buttons -->
                                     <div class="flex pt-6 justify-between">
                                         <p-button label="Back" icon="pi pi-arrow-left" iconPos="left"
                                             (onClick)="activateCallback(2)" />
-                                        <p-button label="Confirm" icon="pi pi-check" iconPos="right"
-                                            (onClick)="save()" />
+                                        <p-button *ngIf="!isLoading && form.get('agree')?.value" label="Confirm"
+                                            icon="pi pi-check" iconPos="right" (onClick)="save()" />
                                     </div>
 
                                 </ng-template>
@@ -471,28 +497,182 @@
     </ng-template>
 </p-dialog>
 
-<!-- 
-<p-dialog header="Slots for Selected Date" [(visible)]="slotsModalVisible" [modal]="true" [style]="{width: '600px'}">
-    <ng-template pTemplate="content">
-        <table class="w-full">
-            <thead>
-                <tr>
-                    <th>Shift</th>
-                    <th>Start</th>
-                    <th>End</th>
-                    <th>Section</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let slot of selectedDateSlots">
-                    <td>{{ slot.shiftName }}</td>
-                    <td>{{ slot.startTime }}</td>
-                    <td>{{ slot.endTime }}</td>
-                    <td>{{ slot.sectionName }}</td>
-                </tr>
-            </tbody>
-        </table>
+
+<p-dialog header="Appointment Details" [(visible)]="displayDialog" [modal]="true" [closable]="true"
+    [style]="{ width: '520px' }" [resizable]="false" [breakpoints]="{ '640px': '95vw' }">
+
+    <div *ngIf="selectedAppointment" class="space-y-4">
+
+        <!-- Card -->
+        <div class="bg-white rounded-xl shadow px-6 py-6 space-y-4">
+
+            <!-- School -->
+            <div class="flex items-start border-b pb-3 opacity-0 translate-y-4 animate-fadeIn delay-75">
+                <i class="fas fa-school mr-3 text-gray-500 text-lg"></i>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-500">School</p>
+                    <p class="font-semibold text-gray-800">{{ selectedAppointment.schoolName }}</p>
+                </div>
+            </div>
+
+            <!-- Coordinator -->
+            <div class="flex items-start border-b pb-3 opacity-0 translate-y-4 animate-fadeIn delay-75">
+                <i class="fas fa-user mr-3 text-gray-500 text-lg"></i>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-500">Coordinator</p>
+                    <p class="font-semibold text-gray-800">{{ selectedAppointment.coordinator }}</p>
+                </div>
+            </div>
+
+            <!-- Hospital & Section -->
+            <div class="flex items-start border-b pb-3 opacity-0 translate-y-4 animate-fadeIn delay-150">
+                <i class="fas fa-hospital mr-3 text-gray-500 text-lg"></i>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-500">Hospital & Section</p>
+                    <p class="font-semibold text-gray-800">
+                        {{ selectedAppointment.hospitalName }} ({{ selectedAppointment.sectionName }})
+                    </p>
+                </div>
+            </div>
+
+            <!-- Date -->
+            <div class="flex items-start border-b pb-3 opacity-0 translate-y-4 animate-fadeIn delay-200">
+                <i class="fas fa-calendar mr-3 text-gray-500 text-lg"></i>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-500">Date</p>
+                    <p class="font-semibold text-gray-800">
+                        {{ dateFormat(selectedAppointment.dateSlot) }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Shift -->
+            <div class="flex items-start border-b pb-3 opacity-0 translate-y-4 animate-fadeIn delay-300">
+                <i class="fas fa-clock mr-3 text-gray-500 text-lg"></i>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-500">Shift</p>
+                    <p class="font-semibold text-gray-800">
+                        {{ `${selectedAppointment.shiftName} - (${formatTime(selectedAppointment.startTime)} -
+                        ${formatTime(selectedAppointment.endTime)})` }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="flex items-start opacity-0 translate-y-4 animate-fadeIn delay-500">
+                <i class="fas fa-info-circle mr-3 text-gray-500 text-lg"></i>
+                <div class="flex-1">
+                    <p class="text-sm text-gray-500">Status</p>
+                    <p class="mt-1">
+                        <p-tag [value]="getStatus(selectedAppointment.status, 'value')"
+                            [severity]="getStatus(selectedAppointment.status, 'severirty')"
+                            styleClass="dark:bg-surface-900!"></p-tag>
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <ng-template pTemplate="footer">
+        <button pButton type="button" label="Close" class="p-button-secondary w-full" (click)="displayDialog = false">
+        </button>
     </ng-template>
-</p-dialog> -->
+
+</p-dialog>
+<!-- 
+<p-dialog header="Print Schedule" [(visible)]="printDialogVisible" [modal]="true" [style]="{ width: '450px' }"
+    [draggable]="false" [resizable]="false">
+    <div class="flex flex-col gap-4">
+
+        <div class="card filter">
+            <div class="flex flex-col gap-1">
+
+                <label for="schools" class="block font-bold mb-3">Schools</label>
+                <p-select styleClass="w-full" id="schools" [options]="schools" optionLabel="schoolName"
+                    optionValue="schoolID" appendTo="body" [ngModel]="dialogSchool" placeholder="Select School" />
+            </div>
+
+            <div class="flex flex-col gap-1">
+                <label class="font-semibold text-sm">Date Range</label>
+                <p-datepicker [(ngModel)]="dialogDateRange" class="w-full" [inline]="true" selectionMode="range"
+                    [showTime]="false" dateFormat="yyyy-MM-dd" showIcon="true"
+                    placeholder="Select date range"></p-datepicker>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-3">
+                <p-button label="Cancel" severity="secondary" (onClick)="printDialogVisible = false">
+                </p-button>
+
+                <p-button label="Confirm" icon="pi pi-check" (onClick)="confirmPrintSchedule()">
+                </p-button>
+            </div>
+        </div>
+        <div class="card pdfviewer">            
+        </div>
+
+    </div>
+</p-dialog> 
+-->
+
+<p-dialog header="Print Appointment(s)" [(visible)]="printDialogVisible" [modal]="true" [draggable]="true"
+    [resizable]="true">
+
+    <ng-template pTemplate="content">
+        <div class="flex flex-row gap-4 h-full p-4">
+
+            <div class="card filter w-sm">
+
+                <!-- School -->
+                <div class="flex flex-col gap-2">
+                    <label for="schools" class="font-bold">Schools</label>
+                    <p-select styleClass="w-full" id="schools" [options]="schools" optionLabel="schoolName"
+                        optionValue="schoolID" appendTo="body" [(ngModel)]="dialogSchool" placeholder="All Schools"
+                        [showClear]="true"></p-select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="flex flex-col gap-2 mt-3">
+                    <label class="font-semibold">Date Range</label>
+                    <p-datepicker [(ngModel)]="dialogDateRange" class="w-full" [inline]="true" selectionMode="range"
+                        dateFormat="yyyy-MM-dd" showIcon="true" placeholder="Select date range"></p-datepicker>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex justify-end gap-2 mt-3">
+                    <p-button label="Generate" icon="pi pi-check" (onClick)="previewSchedule()"></p-button>
+                </div>
+
+            </div>
+            <!-- PDF Preview -->
+            <div class="card pdfviewer w-full">
+
+                @if(!pdfPreviewSrc){
+                <p class="text-gray-500 text-center mt-4">Not yet Selected | No Appointment found!</p>
+                }@else{
+                <div class="flex flex-row gap-2 justify-end">
+                    <p-button icon="pi pi-download" severity="info" rounded="true" pTooltip="Download"
+                        (onClick)="downloadPdf()" />
+                    <p-button icon="pi pi-print" severity="info" rounded="true" pTooltip="Print" (onClick)="print()" />
+                </div>
+
+                <iframe class="mt-2 w-full h-full" [src]="pdfPreviewSrc | safeUrl" frameborder="0">
+                </iframe>
+                }
+            </div>
+
+        </div>
+    </ng-template>
+
+    <!-- Footer -->
+    <ng-template pTemplate="footer">
+        <div class="flex flex-col justify-end"></div>
+        <p-button label="Cancel" severity="secondary" (onClick)="closeDialog()"></p-button>
+    </ng-template>
+
+</p-dialog>
+
+
 
 <p-confirmdialog [style]="{ width: '450px' }">

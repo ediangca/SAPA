@@ -4,6 +4,12 @@ import { StatsWidget } from './components/statswidget';
 import { RecentSalesWidget } from './components/recentsaleswidget';
 import { BestSellingWidget } from './components/bestsellingwidget';
 import { RevenueStreamWidget } from './components/revenuestreamwidget';
+import { ApiService } from '@/services/api.service';
+import { AuthService } from '@/services/auth.service';
+import { StoreService } from '@/services/store.service';
+import { LogsService } from '@/services/logs.service';
+import { ActivatedRoute } from '@angular/router';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
     selector: 'app-dashboard',
@@ -22,4 +28,78 @@ import { RevenueStreamWidget } from './components/revenuestreamwidget';
         </div>
     `
 })
-export class Dashboard {}
+export class Dashboard {
+
+
+    user: any = null;
+    privileges: any[] = [];
+    private destroy$ = new Subject<void>();
+
+    constructor(
+        public store: StoreService,
+        private auth: AuthService,
+        private logger: LogsService
+    ) { }
+
+    ngOnInit() {
+        this.store.getUser()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(u => {
+                this.user = u;
+                this.logger.printLogs('i', 'Dashboard User', u);
+            });
+
+        this.store.getPrivileges()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(p => {
+                this.privileges = p;
+                this.logger.printLogs('i', 'Dashboard Privileges', p);
+            });
+    }
+
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    // optional: logout button handler
+    logout() {
+        this.auth.logout();
+    }
+    
+    // getUserProfile() {
+
+    //     this.store.getUserPayload()
+    //         .subscribe(res => {
+    //             this.logger.printLogs('i', 'User Payload', res);
+    //             if (!res) {
+    //                 this.auth.exit()
+    //             }
+    //             this.userID = res.unique_name;
+    //             this.username = res.unique_name;
+    //             this.role = res.role;
+    //         });
+
+    //     this.logger.printLogs('i', 'Retrieve UserID', this.userID);
+    //     this.logger.printLogs('i', 'Retrieve Username', this.username);
+    //     this.logger.printLogs('i', 'Retrieve Role', this.role);
+    //     if (this.username)
+    //         //Populate all Users
+    //         this.api.GetUserbyUsername(this.username)
+    //             .subscribe({
+    //                 next: (res: any) => {
+    //                     this.user = res;
+    //                     this.logger.printLogs('i', 'User', this.user);
+    //                     this.store.setUser(this.user);
+    //                     this.userID = this.user.userID;
+    //                     this.fullname = this.user.fullName || this.username;
+
+    //                 },
+    //                 error: (err: any) => {
+    //                     this.logger.printLogs('w', 'Erron on fetching User by Username', err);
+    //                 }
+    //             });
+    // }
+
+
+}

@@ -12,6 +12,7 @@ pdfMakeLib.vfs = (pdfFonts as any).pdfMake?.vfs || (pdfFonts as any).vfs;
 export class PdfService {
   private leftLogo: string | null = null;
   private rightLogo: string | null = null;
+  pdfPreviewSrc: string | null = null;
 
   constructor(
     private logger: LogsService,) {
@@ -276,6 +277,72 @@ export class PdfService {
     pdfMakeLib.createPdf(docDefinition).open();
   }
 
+  async generateSectionsReport(sections: any[]) {
+    this.logger.printLogs('i', "Generate PDF for Sections : ", sections);
+
+    // Ensure logos are loaded
+    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+
+    const docDefinition: any = {
+      content: [
+        this.getHeader('LIST OF SECTIONS'),
+        { text: '\n' },
+
+        {
+          table: {
+            headerRows: 1,
+            widths: [25, '20%', '60%', '20%'],
+            // # | Section ID | Section Name | Created By | Created / Updated
+            body: [
+              [
+                { text: '#', bold: true, fontSize: 10, alignment: 'center' },
+                { text: 'Section ID', bold: true, fontSize: 10 },
+                { text: 'Section Name', bold: true, fontSize: 10 },
+                { text: 'Created', bold: true, fontSize: 10, alignment: 'center' },
+              ],
+
+              ...sections.map((s, i) => [
+                { text: (i + 1).toString(), alignment: 'center', fontSize: 9 },
+                { text: s.sectionID || '—', fontSize: 9 },
+                { text: s.sectionName || '—', fontSize: 9 },
+                {
+                  text: s.dateCreated
+                    ? new Date(s.dateCreated).toLocaleDateString()
+                    : '—',
+                  alignment: 'center',
+                  fontSize: 9
+                },
+              ])
+            ]
+          },
+
+          layout: {
+            fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#aaa',
+            vLineColor: () => '#aaa',
+            paddingLeft: () => 4,
+            paddingRight: () => 4,
+            paddingTop: () => 2,
+            paddingBottom: () => 2,
+          },
+
+          margin: [0, 10, 30, 10]
+        }
+      ],
+
+      footer: this.getFooter(),
+
+      styles: {
+        header: { bold: true, alignment: 'center', fontSize: 13 },
+        tableCell: { fontSize: 9, noWrap: false, lineHeight: 1.1 },
+      }
+    };
+
+    pdfMakeLib.createPdf(docDefinition).open();
+  }
+
 
   /** ✅ Map status IDs to readable labels */
   private mapStatus(status: number): string {
@@ -376,7 +443,7 @@ export class PdfService {
                   { text: item.allocation?.toString() ?? '0', fontSize: 9 },
                   {
                     text:
-                      item.slotStatus === 0 ? 'ONGOING' : item.slotStatus === 1 ? 'OPEN' : 'CLOSED',
+                      item.slotStatus === 0 ? 'DRAFT' : item.slotStatus === 1 ? 'OPEN' : 'CLOSED',
                     alignment: 'center',
                     fontSize: 9
                   }
@@ -421,5 +488,381 @@ export class PdfService {
     pdfMakeLib.createPdf(docDefinition).open();
 
   }
+  async generateAppointmentReport(
+    title: string,
+    appointments: any[],
+    dateFrom: string,
+    dateTo: string,
+    preview: boolean = false
+  ) {
+    // Ensure logos are loaded
+    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+
+    // Group appointments by school → date
+    const grouped: any = {};
+    appointments.forEach(appt => {
+      if (!grouped[appt.schoolName]) grouped[appt.schoolName] = {};
+      if (!grouped[appt.schoolName][appt.dateSlot]) grouped[appt.schoolName][appt.dateSlot] = [];
+      grouped[appt.schoolName][appt.dateSlot].push(appt);
+    });
+
+    const content: any[] = [
+      this.getHeader(title),
+      { text: '\n' }
+    ];
+
+    // Build PDF content
+    Object.keys(grouped)
+      .sort()
+      .forEach(school => {
+        const schoolDates = grouped[school];
+
+        // School Header
+        content.push({
+          text: `SCHOOL: ${school}`,
+          style: 'schoolTitle',
+          margin: [0, 10, 0, 5]
+        });
+
+        Object.keys(schoolDates)
+          .sort()
+          .forEach(date => {
+            const dayAppointments = schoolDates[date];
+
+            // Date Header
+            content.push({
+              text: `DATE: ${this.dateFormat(date)}`,
+              style: 'dateTitle',
+              margin: [0, 5, 0, 3]
+            });
+
+            // Table for the date
+            content.push({
+              table: {
+                headerRows: 1,
+                widths: [25, '25%', '25%', '25%', '10%'],
+                body: [
+                  [
+                    { text: '#', bold: true, alignment: 'center', fontSize: 9 },
+                    { text: 'Full Name', bold: true, fontSize: 9 },
+                    { text: 'Hospital', bold: true, fontSize: 9 },
+                    { text: 'Section', bold: true, fontSize: 9 },
+                    { text: 'Status', bold: true, alignment: 'center', fontSize: 9 }
+                  ],
+                  ...dayAppointments.map((item: any, idx: number) => [
+                    { text: idx + 1, alignment: 'center', fontSize: 9 },
+                    { text: item.fullname, fontSize: 9, noWrap: false },
+                    { text: item.hospitalName, fontSize: 9 },
+                    { text: item.sectionName, fontSize: 9 },
+                    {
+                      text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'OPEN' : 'CLOSED',
+                      alignment: 'center',
+                      fontSize: 9
+                    }
+                  ])
+                ]
+              },
+              layout: {
+                fillColor: (rowIndex: number) => rowIndex === 0 ? '#f2f2f2' : null,
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+                hLineColor: () => '#aaa',
+                vLineColor: () => '#aaa',
+                paddingLeft: () => 4,
+                paddingRight: () => 4,
+                paddingTop: () => 2,
+                paddingBottom: () => 2
+              },
+              margin: [0, 0, 0, 10]
+            });
+          });
+      });
+
+    const docDefinition: any = {
+      content,
+      footer: this.getFooter(),
+      styles: {
+        schoolTitle: {
+          fontSize: 13,
+          bold: true,
+          color: '#333',
+          margin: [0, 10, 0, 5]
+        },
+        dateTitle: {
+          fontSize: 12,
+          bold: true,
+          margin: [0, 5, 0, 3]
+        },
+        tableCell: { fontSize: 9, noWrap: false }
+      }
+    };
+
+    // pdfMakeLib.createPdf(docDefinition).open();
+
+    if (preview) {
+      // Get PDF as data URL
+      pdfMake.createPdf(docDefinition).getDataUrl((dataUrl: string) => {
+        this.pdfPreviewSrc = dataUrl; // bind to iframe
+      });
+    } else {
+      pdfMake.createPdf(docDefinition).open();
+    }
+  }
+
+  // Return a Promise<string> containing the PDF Data URL
+  generateAppointmentReportPreview(
+    title: string,
+    appointments: any[],
+    dateFrom: string,
+    dateTo: string
+  ): Promise<string> {
+    return new Promise(async (resolve, reject) => {
+
+      // Ensure logos are loaded
+      if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+
+      // Group appointments by school → date
+      const grouped: any = {};
+      appointments.forEach(appt => {
+        if (!grouped[appt.schoolName]) grouped[appt.schoolName] = {};
+        if (!grouped[appt.schoolName][appt.dateSlot]) grouped[appt.schoolName][appt.dateSlot] = [];
+        grouped[appt.schoolName][appt.dateSlot].push(appt);
+      });
+
+      const content: any[] = [
+        this.getHeader(title),
+        { text: '\n' }
+      ];
+
+      // Build PDF content
+      Object.keys(grouped)
+        .sort()
+        .forEach(school => {
+          const schoolDates = grouped[school];
+
+          // School Header
+          content.push({
+            text: `${school}`,
+            style: 'schoolTitle',
+            margin: [0, 10, 0, 5]
+          });
+
+          Object.keys(schoolDates)
+            .sort()
+            .forEach(date => {
+              const dayAppointments = schoolDates[date];
+
+              // Date Header
+              content.push({
+                text: `DATE: ${this.dateFormat(date)}`,
+                style: 'dateTitle',
+                margin: [0, 5, 0, 3]
+              });
+
+              // Table for the date
+              content.push({
+                table: {
+                  headerRows: 1,
+                  widths: [25, '25%', '25%', '25%', '10%'],
+                  body: [
+                    [
+                      { text: '#', bold: true, alignment: 'center', fontSize: 9 },
+                      { text: 'Full Name', bold: true, fontSize: 9 },
+                      { text: 'Hospital', bold: true, fontSize: 9 },
+                      { text: 'Section', bold: true, fontSize: 9 },
+                      { text: 'Status', bold: true, alignment: 'center', fontSize: 9 }
+                    ],
+                    ...dayAppointments.map((item: any, idx: number) => [
+                      { text: idx + 1, alignment: 'center', fontSize: 9 },
+                      { text: item.fullname, fontSize: 9, noWrap: false },
+                      { text: item.hospitalName, fontSize: 9 },
+                      { text: item.sectionName, fontSize: 9 },
+                      {
+                        text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'OPEN' : 'CLOSED',
+                        alignment: 'center',
+                        fontSize: 9
+                      }
+                    ])
+                  ]
+                },
+                layout: {
+                  fillColor: (rowIndex: number) => rowIndex === 0 ? '#f2f2f2' : null,
+                  hLineWidth: () => 0.5,
+                  vLineWidth: () => 0.5,
+                  hLineColor: () => '#aaa',
+                  vLineColor: () => '#aaa',
+                  paddingLeft: () => 4,
+                  paddingRight: () => 4,
+                  paddingTop: () => 2,
+                  paddingBottom: () => 2
+                },
+                margin: [0, 0, 0, 10]
+              });
+            });
+        });
+
+
+      const docDefinition: any = {
+        content,
+        footer: this.getFooter(),
+        styles: {
+          schoolTitle: {
+            fontSize: 13,
+            bold: true,
+            color: '#333',
+            margin: [0, 10, 0, 5]
+          },
+          dateTitle: {
+            fontSize: 12,
+            bold: true,
+            margin: [0, 5, 0, 3]
+          },
+          tableCell: { fontSize: 9, noWrap: false }
+        }
+      };
+
+      // Generate Data URL
+      pdfMake.createPdf(docDefinition).getDataUrl((dataUrl: string) => {
+        resolve(dataUrl);
+      });
+
+    });
+  }
+
+  downloadAppointmentReport(
+    fileName: string,
+    appointments: any[],
+    dateFrom: string,
+    dateTo: string
+  ) {
+    // const docDefinition = this.buildAppointmentDoc(
+    //   `LIST OF APPOINTMENTS (${dateFrom} - ${dateTo})`,
+    //   appointments
+    // );
+    // pdfMake.createPdf(docDefinition).download(fileName + '.pdf');
+
+    this.buildAppointmentDoc(`LIST OF APPOINTMENTS (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`, appointments)
+      .then((docDefinition) => {
+        pdfMake.createPdf(docDefinition).download(fileName + '.pdf');
+      })
+      .catch((error) => {
+        console.error('Error building PDF:', error);
+      });
+  }
+
+  // --------------------------
+  // Private helper to build docDefinition
+  // --------------------------
+  private async buildAppointmentDoc(title: string, appointments: any[]) {
+
+    // Ensure logos are loaded
+    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+
+    // Group appointments by school → date
+    const grouped: any = {};
+    appointments.forEach(appt => {
+      if (!grouped[appt.schoolName]) grouped[appt.schoolName] = {};
+      if (!grouped[appt.schoolName][appt.dateSlot]) grouped[appt.schoolName][appt.dateSlot] = [];
+      grouped[appt.schoolName][appt.dateSlot].push(appt);
+    });
+
+    const content: any[] = [
+      this.getHeader(title),
+      { text: '\n' }
+    ];
+
+    // Build PDF content
+    Object.keys(grouped)
+      .sort()
+      .forEach(school => {
+        const schoolDates = grouped[school];
+
+        // School Header
+        content.push({
+          text: `${school}`,
+          style: 'schoolTitle',
+          margin: [0, 10, 0, 5]
+        });
+
+        Object.keys(schoolDates)
+          .sort()
+          .forEach(date => {
+            const dayAppointments = schoolDates[date];
+
+            // Date Header
+            content.push({
+              text: `DATE: ${this.dateFormat(date)}`,
+              style: 'dateTitle',
+              margin: [0, 5, 0, 3]
+            });
+
+            // Table for the date
+            content.push({
+              table: {
+                headerRows: 1,
+                widths: [25, '25%', '25%', '25%', '10%'],
+                body: [
+                  [
+                    { text: '#', bold: true, alignment: 'center', fontSize: 9 },
+                    { text: 'Full Name', bold: true, fontSize: 9 },
+                    { text: 'Hospital', bold: true, fontSize: 9 },
+                    { text: 'Section', bold: true, fontSize: 9 },
+                    { text: 'Status', bold: true, alignment: 'center', fontSize: 9 }
+                  ],
+                  ...dayAppointments.map((item: any, idx: number) => [
+                    { text: idx + 1, alignment: 'center', fontSize: 9 },
+                    { text: item.fullname, fontSize: 9, noWrap: false },
+                    { text: item.hospitalName, fontSize: 9 },
+                    { text: item.sectionName, fontSize: 9 },
+                    {
+                      text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'OPEN' : 'CLOSED',
+                      alignment: 'center',
+                      fontSize: 9
+                    }
+                  ])
+                ]
+              },
+              layout: {
+                fillColor: (rowIndex: number) => rowIndex === 0 ? '#f2f2f2' : null,
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+                hLineColor: () => '#aaa',
+                vLineColor: () => '#aaa',
+                paddingLeft: () => 4,
+                paddingRight: () => 4,
+                paddingTop: () => 2,
+                paddingBottom: () => 2
+              },
+              margin: [0, 0, 0, 10]
+            });
+          });
+      });
+
+    return {
+      content,
+      styles: {
+        header: { fontSize: 14, bold: true, margin: [0, 0, 0, 10] as [number, number, number, number] },
+        schoolTitle: { fontSize: 13, bold: true, margin: [0, 10, 0, 5] as [number, number, number, number] },
+        dateTitle: { fontSize: 12, bold: true, margin: [0, 5, 0, 3] as [number, number, number, number] }
+      }
+    };
+  }
+
+  printAppointmentReport(
+    appointments: any[],
+    dateFrom: string,
+    dateTo: string
+  ) {
+    this.buildAppointmentDoc(`LIST OF APPOINTMENTS (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`, appointments)
+      .then(docDefinition => {
+        const pdf = pdfMake.createPdf(docDefinition);
+        pdf.print();   // <-- This opens the browser print dialog
+      })
+      .catch(error => {
+        console.error("Error printing PDF:", error);
+      });
+  }
+
+
 
 }

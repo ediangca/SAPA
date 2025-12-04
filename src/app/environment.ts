@@ -7,7 +7,8 @@ export const Environment = {
 
   
   // ------------------------------------------------------------------ //
-  apiUrl: "https://localhost:7097/api/", //For Development
+  apiUrl: "http://localhost:5138/api/", //For Development
+  // apiUrl: "https://localhost:7097/api/", //For Development/
   // apiUrl: "https://davnorsystems.gov.ph/SAPA_API/api/", //Live
   // Add other global settings here
 };

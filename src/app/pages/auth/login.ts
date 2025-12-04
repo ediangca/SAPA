@@ -13,6 +13,7 @@ import { LogsService } from '@/services/logs.service';
 import ValidateForm from '@/helper/validator/validateForm';
 import Swal from 'sweetalert2';
 import { ProgressSpinnerModule } from 'primeng/progressspinner'
+import { StoreService } from '@/services/store.service';
 
 declare var bootstrap: any;
 
@@ -34,19 +35,29 @@ export class Login {
 
     isLoading = false;
 
+    userPayload: any | null = null
+
     form!: FormGroup;
     errorMessage: string = '';
 
 
     constructor(private fb: FormBuilder, private auth: AuthService,
         private router: Router, private api: ApiService,
-        private vf: ValidateForm, private logger: LogsService) {
+        private vf: ValidateForm, private logger: LogsService,
+        private store: StoreService) {
 
         this.form = this.fb.group({
             username: ['', Validators.required],
             password: ['', Validators.required]
         });
         this.errorMessage = '';
+
+        if (this.auth.isAuthenticated()) {
+            this.router.navigate(['dashboard']);
+        }
+    }
+
+    ngOnInit() {
 
         if (this.auth.isAuthenticated()) {
             this.router.navigate(['dashboard']);
@@ -83,26 +94,24 @@ export class Login {
 
                                     this.logger.printLogs('i', 'ACCESS GRANTED', res.message);
                                     this.api.showToast(res.message, 'ACCESS GRANTED', 'success');
-
                                 }
                             });
 
                         },
                         error: (err: any) => {
                             this.isLoading = false;
-                            this.logger.printLogs('e', 'Error response', err);
+                            this.logger.printLogs('e', 'Access Denied', err);
                             Swal.fire('Access Denied!', err, 'warning');
                             this.form.reset();
                             this.usernameInput.nativeElement.focus();
                         }
                     });
 
-            }, 3000); // Simulate a 2-second delay
+            }, 3000);
 
         }
         this.vf.validateFormFields(this.form);
     }
-
 
 
 }

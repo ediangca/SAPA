@@ -6,6 +6,7 @@ import { NgToastService } from 'ng-angular-popup';
 import { Router } from '@angular/router';
 import { LogsService } from '../../services/logs.service';
 import Swal from 'sweetalert2';
+// import { HttpErrorHandler } from '../handler/http-error-handler';
 
 
 export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
@@ -13,6 +14,8 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const toast = inject(NgToastService);
   const logger = inject(LogsService);
+
+  // const errorHandler = inject(HttpErrorHandler);
 
   const myToken = authService.getToken();
 
@@ -29,18 +32,21 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   return next(req).pipe(
+
+    // catchError((err) => errorHandler.handle(err)),
+    
     catchError((err: any) => {
 
       let messages: any | null = null;
 
       logger.printLogs('i', 'Pipe Error', `Status: " ${err.status}`);
       if (err instanceof HttpErrorResponse) {
+
         logger.printLogs('i', 'Pipe Error', err);
         logger.printLogs('i', 'Pipe Error', `Status: " ${err.status}`);
         if (err.status == 0) {
           messages = "Failed to establish connection!";
-          toast.warning("Failed to establish connection! Please contact the system administrator.", "Connectivity Error!", 0);
-          Swal.fire('Connectivity Error!', "Failed to establish connection!<br>Please contact the system administrator.", 'error');
+          toast.warning(`${err.error.message} due to connectivity issue. Please contact the system administrator.`, "Connectivity Error!", 0);
 
         } else if (err.status == 400) {// Check if the error response has a message property
           if (err.error && err.error.message) {
@@ -75,7 +81,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
           messages = err.error?.message || "Token is Expired!, Please login again!"; // Get the message from the error response
           // toast.warning("Token is Expired!, Please login again! " + err.status, "Warning!", 5000);
           toast.warning(messages, "Warning!", 5000);
-          authService.exit();
+          // authService.exit();
 
         } else if (err.status === 404) {
           messages = err.error?.message;
@@ -84,46 +90,14 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
           logger.printLogs('i', 'Conflict Error', err);
           messages = err.error.message;
           // toast.warning(err.error.message, "Conflict Error!", 5000);
-        }else if (err.status === 500) {
+        } else if (err.status === 500) {
           messages = err.error.message;
           // toast.error("Internal Server Error! Please contact the system administrator.", "Server Error!", 0);
         }
       }
+
       return throwError(() => new Error(`${messages! || err?.message || err.error?.message}`));
     })
+    
   );
 };
-
-/*
-@Injectable()
-export class TokenInterceptor implements HttpInterceptor {
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-    private toast: NgToastService
-  ) {}
-
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const myToken = this.authService.getToken();
-
-    if (myToken) {
-      req = req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${myToken}`
-        }
-      });
-    }
-
-    return next.handle(req).pipe(
-      catchError((err: HttpErrorResponse) => {
-        if (err.status === 401) {
-          this.toast.warning("Token is Expired! Please log in again!", "Warning!", 5000);
-          this.authService.logout();
-          this.router.navigate(['login']);
-        }
-        return throwError(() => new Error(err.error?.message || "Something went wrong."));
-      })
-    );
-  }
-}
-*/

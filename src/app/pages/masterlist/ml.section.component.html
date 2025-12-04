@@ -80,7 +80,9 @@
     </div>
     <!-- SUBMENU -->
     <div class="md:w-1/6">
-        <ml-hospital-properties></ml-hospital-properties>
+        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
+            <ml-hospital-properties [sections]="sections()"></ml-hospital-properties>
+        </div>
     </div>
 
 </div>

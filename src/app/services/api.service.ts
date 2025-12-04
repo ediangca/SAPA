@@ -7,6 +7,8 @@ import { LogsService } from './logs.service';
 import { NgToastService } from 'ng-angular-popup';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { LoadingService } from './loading.service';
+import { AuthService } from './auth.service';
+// import { HttpErrorHandler } from '@/helper/handler/http-error-handler';
 
 
 @Injectable({
@@ -21,7 +23,9 @@ export class ApiService {
 
   constructor(private http: HttpClient, private router: Router,
     private logger: LogsService, private toast: NgToastService,
-    private loading: LoadingService) { }
+    private loading: LoadingService
+    // private errorHandler: HttpErrorHandler
+  ) { }
 
 
   showToast(msg: string, title: string, type: 'success' | 'warning' | 'error' | 'info' = 'info') {
@@ -80,7 +84,9 @@ export class ApiService {
         if (res && Array.isArray(res.items)) return res.items;
         return res;
       }),
-      catchError(this.handleError),
+      catchError((err) =>
+        this.handleError(err)),
+      // this.errorHandler.handle(err)),
       finalize(() => {
         const elapsed = Date.now() - startTime;
         const remaining = minDuration - elapsed;
@@ -136,7 +142,9 @@ export class ApiService {
         if (res && Array.isArray(res.items)) return res.items;
         return res;
       }),
-      catchError(this.handleError),
+      catchError((err) =>
+        this.handleError(err)),
+      // this.errorHandler.handle(err)),
       finalize(() => {
         const elapsed = Date.now() - startTime;
         const remaining = minDuration - elapsed;
@@ -238,27 +246,6 @@ export class ApiService {
   }
 
 
-  /*----------------------- SLOTS -----------------------*/
-
-  getSlots() {
-    return this.handleRequest<any[]>('get', 'Slots', { logAction: 'Fetching Slots' });
-  }
-
-  getSlotsByAllocationIDs(payload: { AllocationID: string[] }) {
-    return this.handleRequest<any[]>('post', 'Slots/byAllocation', { body: payload, logAction: 'Fetching Slots By AllocationIDs' });
-  }
-
-  createBulkSlots(slots: any) {
-    return this.handleRequest('post', 'Slots/bulk', { body: slots, logAction: 'Creating Bulk Slots' });
-  }
-
-  updateSlotStatus(status: number, slotIDs: string[]) {
-    return this.handleRequest('put', `Slots/status/${status}`, {
-      body: slotIDs,
-      logAction: 'Update Slot Status'
-    });
-  }
-
   /*----------------------- ROLES -----------------------*/
   getRoles() {
     return this.handleRequest<any[]>('get', 'Roles', { logAction: 'Fetching Roles' });
@@ -267,11 +254,30 @@ export class ApiService {
   createRole(role: any) {
     return this.handleRequest('post', 'Roles', { body: role, logAction: 'Creating Role' });
   }
+  updateRole(id: string, role: any) {
+    return this.handleRequest('put', 'Roles', { id, body: role, logAction: 'Updating Role' });
+  }
 
+  deleteRole(id: number) {
+    return this.handleRequest('delete', 'Roles', { id, logAction: 'Deleting Role' });
+  }
+
+  /*----------------------- MODULES -----------------------*/
+
+
+
+  /*----------------------- PRIVILEGES -----------------------*/
+  getPrivelegeByRole(roleID: any) {
+    return this.handleRequest<any[]>('get', 'Privileges/Role/' + roleID, { logAction: `Fetching Privileges By Role ${roleID}` });
+  }
 
   /*----------------------- USERS -----------------------*/
   getUsers() {
     return this.handleRequest<any[]>('get', 'Users', { logAction: 'Fetching Users' });
+  }
+
+  GetUserbyUsername(userame: string): Observable<any> {
+    return this.handleRequest<any[]>('get', 'Users/GetUserbyUsername', { id: userame, logAction: `Fetching User By Username ${userame}` });
   }
 
   createUser(section: any) {
@@ -308,10 +314,14 @@ export class ApiService {
         headers: { 'Content-Type': 'application/json' }
       }
     ).pipe(
-      catchError(this.handleError.bind(this)),
+
+      catchError((err) =>
+        this.handleError(err)),
+      // this.errorHandler.handle(err)),
       finalize(() => this.loading.setLoadingVisible(false)) // always hide after completion (success/error)
     );
   }
+
 
 
   /*----------------------- SCHOOLS -----------------------*/
@@ -351,8 +361,50 @@ export class ApiService {
   }
 
 
+  /*----------------------- SLOTS -----------------------*/
 
+  getSlots() {
+    return this.handleRequest<any[]>('get', 'Slots', { logAction: 'Fetching Slots' });
+  }
 
+  getSlotsByAllocationIDs(payload: { AllocationID: string[] }) {
+    return this.handleRequest<any[]>('post', 'Slots/byAllocation', { body: payload, logAction: 'Fetching Slots By AllocationIDs' });
+  }
+
+  createBulkSlots(slots: any) {
+    return this.handleRequest('post', 'Slots/bulk', { body: slots, logAction: 'Creating Bulk Slots' });
+  }
+
+  updateSlotStatus(status: number, slotIDs: string[]) {
+    return this.handleRequest('put', `Slots/status/${status}`, {
+      body: slotIDs,
+      logAction: 'Update Slot Status'
+    });
+  }
+
+  /*----------------------- APPOINTMENTS -----------------------*/
+  getAppointments() {
+    return this.handleRequest<any[]>('get', 'Appointments', { logAction: 'Fetching Appointments' });
+  }
+
+  createAppointment(appointment: any) {
+    return this.handleRequest('post', 'Appointments', { body: appointment, logAction: 'Creating Appointments' });
+  }
+
+  updateAppointment(id: number, appointment: any) {
+    return this.handleRequest('put', 'Appointments', { id, body: appointment, logAction: 'Updating Appointments' });
+  }
+
+  updateAppoitmentStatus(status: number, AppointmentIDs: string[]) {
+    return this.handleRequest('put', `Appointments/status/${status}`, {
+      body: AppointmentIDs,
+      logAction: 'Update Appointment Status'
+    });
+  }
+
+  deleteAppointment(id: number) {
+    return this.handleRequest('delete', 'Appointments', { id, logAction: 'Deleting Appointments' });
+  }
 
 
   /*----------------------- HOSPITAL -----------------------*/
@@ -507,48 +559,70 @@ export class ApiService {
   }
 */
 
-  /*----------------------- ERROR HANDLING -----------------------*/
+
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Unknown error!';
 
     if (error.error instanceof ErrorEvent) {
-      // Client-side or network error
       errorMessage = `Error: ${error.error.message}`;
-    } else {
-      // Backend (server-side) error
-      if (error.error) {
-        if (typeof error.error === 'string') {
-          // In case backend accidentally returns plain text
-          errorMessage = error.error + "-error.error.String";
-        } else if (error.error.message) {
-          // Your backend always sends: { message: "..." }
-          errorMessage = error.error.message + "-error.error.message";;
-        } else if (error.error.errors) {
-          // ASP.NET Core validation errors (ModelState)
-          const validationErrors = error.error.errors;
-          const messages: string[] = [];
+    } else if (error instanceof HttpErrorResponse) {
 
-          for (const field in validationErrors) {
-            if (validationErrors.hasOwnProperty(field)) {
-              messages.push(`${field}: ${validationErrors[field].join(', ')} <br>`);
-            }
-          }
+      this.logger.printLogs('i', 'Pipe Error', error);
+      this.logger.printLogs('i', 'Pipe Error', `Status: " ${error.status}`);
+      if (error.status == 0) {
+        errorMessage = "Failed to establish connection!";
+        this.toast.warning(`${error.error.message} due to connectivity issue. Please contact the system administrator.`, "Connectivity Error!", 0);
 
-          errorMessage = messages.join(' | ');
-        } else if (error.error.title) {
-          // Fallback for default problem details object
-          errorMessage = error.error.title + "-error.error.title";;;
+      } else if (error.status == 400) {// Check if the error response has a message property
+        if (error.error && error.error.message) {
+          // Display the custom message from the API
+          errorMessage = error.error.message;
+          this.toast.warning(error.error.message, "Error!", 5000);
         } else {
-          // errorMessage = `Server returned code ${error.status}<br>Please contact the system administrator.`;
+          // Handle validation errors
+          const validationErrors = error.error?.errors;
+
+          if (validationErrors) {
+            for (const key in validationErrors) {
+              if (validationErrors.hasOwnProperty(key)) {
+                const messages = validationErrors[key];
+                if (Array.isArray(messages)) {
+                  messages.forEach((message: string) => {
+                    this.toast.warning(message, "Validation Error!", 5000);
+                  });
+                } else {
+                  // If messages is not an array, display a custom message
+                  this.toast.warning(messages, "Validation Error!", 5000); // Assuming messages is a string
+                }
+              }
+            }
+          } else {
+            // Handle generic bad request error
+            this.toast.warning("An unknown error occurred.", "Error!", 5000);
+          }
         }
-      } else {
-        errorMessage = error.message || `Server returned code ${error.status}` + "-else.Server.returned.code";
+      } else if (error.status === 401) {
+
+        errorMessage = error.error?.message || "Token is Expired!, Please login again!"; // Get the message from the error response
+        // toast.warning("Token is Expired!, Please login again! " + err.status, "Warning!", 5000);
+        this.toast.warning(errorMessage, "Warning!", 5000);
+
+      } else if (error.status === 404) {
+        errorMessage = error.error?.message;
+        // toast.warning(err.error.message, "Not Found!", 5000);
+      } else if (error.status === 409) {
+        this.logger.printLogs('i', 'Conflict Error', error);
+        errorMessage = error.error.message;
+        // toast.warning(err.error.message, "Conflict Error!", 5000);
+      } else if (error.status === 500) {
+        errorMessage = error.error.message;
+        // toast.error("Internal Server Error! Please contact the system administrator.", "Server Error!", 0);
       }
+    } else {
+      errorMessage = `Server Error`;
     }
 
     return throwError(() => errorMessage);
   }
-
-
-
 }

@@ -12,6 +12,8 @@ import { TableModule } from "primeng/table";
 import { ApiService } from '@/services/api.service';
 import { LogsService } from '@/services/logs.service';
 import { PdfService } from '@/services/pdf.service';
+import { PanelMenuModule } from 'primeng/panelmenu';
+import { NgToastService } from 'ng-angular-popup';
 
 
 @Component({
@@ -22,7 +24,8 @@ import { PdfService } from '@/services/pdf.service';
         FormsModule,
         ButtonModule,
         DialogModule,
-        AppMenuitem,
+        // AppMenuitem,
+        PanelMenuModule,
         ReactiveFormsModule,
         FormsModule,
         OrderListModule,
@@ -47,30 +50,27 @@ export class HospitalProperties implements OnInit {
     selectedHospital: any[] = [];
 
     @Input() hospitals: any[] = [];
+    @Input() sections: any[] = [];
 
-    constructor(private api: ApiService, private logger: LogsService, 
-            private pdfService: PdfService) {
+    constructor(private api: ApiService, private logger: LogsService,
+        private pdfService: PdfService, private toast: NgToastService) {
 
     }
 
     ngOnInit(): void {
         this.subcomponent = [
-            {
-                items: [
-                    { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                    { label: 'Print All', icon: 'fas fa-table-columns', command: () => this.printAll() },
+            { label: 'Sections', icon: 'fas fa-section', routerLink: ['/dashboard/masterlist/sections'] },
+            { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
 
-                ]
-            }
         ];
-        this.properties = [
-            {
-                items: [
-                    // { label: 'Assign Section', icon: 'fas fa-table-columns', command: () => this.openAssignDialog() },
-                    // { label: 'Allocation', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                ]
-            }
-        ];
+        // this.properties = [
+        //     {
+        //         items: [
+        //             // { label: 'Assign Section', icon: 'fas fa-table-columns', command: () => this.openAssignDialog() },
+        //             // { label: 'Allocation', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
+        //         ]
+        //     }
+        // ];
 
         // this.loadSections();
         // this.loadHospitals();
@@ -103,14 +103,21 @@ export class HospitalProperties implements OnInit {
     }
 
     printAll() {
-        if (!this.hospitals || this.hospitals.length === 0) {
-            console.warn('No hospital found to print');
+        if (this.hospitals && this.hospitals.length > 0) {
+            this.logger.printLogs('e', 'Generate Report for Hospitals', this.hospitals)
+            this.pdfService.generateHopitalsReport(this.hospitals);
             return;
         }
-        
-        this.pdfService.generateHopitalsReport(this.hospitals);
+        if (this.sections && this.sections.length > 0) {
+            this.logger.printLogs('e', 'Generate Report for Sections', this.sections)
+            this.pdfService.generateSectionsReport(this.sections);
+            return;
+        }
+        this.toast.warning("No Record found to print.", 'No Record', 3000);
+
     }
 
 }
 
 
+    

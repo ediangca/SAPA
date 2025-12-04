@@ -7,6 +7,9 @@ import { AppMenuitem } from '@/layout/component/app.menuitem';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { PdfService } from '@/services/pdf.service';
+import { PanelMenuModule } from 'primeng/panelmenu';
+import { LogsService } from '@/services/logs.service';
+import { NgToastService } from 'ng-angular-popup';
 
 
 @Component({
@@ -17,7 +20,8 @@ import { PdfService } from '@/services/pdf.service';
         FormsModule,
         ButtonModule,
         DialogModule,
-        AppMenuitem,
+        // AppMenuitem,
+        PanelMenuModule,
         ReactiveFormsModule,
         FormsModule,
     ],
@@ -32,28 +36,28 @@ export class UsersProperties implements OnInit {
     assignDialog: boolean = false;
 
     @Input() users: any[] = [];
+    @Input() roles: any[] = [];
 
-    constructor(private pdfService: PdfService) {
+    constructor(private pdfService: PdfService, private logger: LogsService,
+        private toast: NgToastService
+    ) {
 
     }
 
     ngOnInit(): void {
         this.subcomponent = [
-            {
-                items: [
-                    { label: 'Roles', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
-                ]
-            }
+            { label: 'Roles', icon: 'fas fa-table-columns', routerLink: ['/dashboard/settings/roles'] },
+            { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+
         ];
-        this.properties = [
-            {
-                items: [
-                    // { label: 'Assign Section', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                    // { label: 'Set Allocation', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                ]
-            }
-        ];
+        // this.properties = [
+        //     {
+        //         items: [
+        //             // { label: 'Assign Section', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
+        //             // { label: 'Set Allocation', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
+        //         ]
+        //     }
+        // ];
     }
 
 
@@ -70,14 +74,18 @@ export class UsersProperties implements OnInit {
         this.assignDialog = false;
     }
 
-
     printAll() {
-        if (!this.users || this.users.length === 0) {
-            console.warn('No users found to print');
+        if (this.users && this.users.length > 0) {
+            this.logger.printLogs('e', 'Generate Report for Users', this.users)
+            this.pdfService.generateUserReport(this.users, 'LIST OF USER');
             return;
         }
-
-        this.pdfService.generateUserReport(this.users, 'LIST OF USERS');
+        if (this.roles && this.roles.length > 0) {
+            this.logger.printLogs('e', 'Generate Report for Roles', this.roles)
+            this.pdfService.generateUserReport(this.roles, 'LIST OF ROLE');
+            return;
+        }
+        this.toast.warning("No Record found to print.", 'No Record', 3000);
     }
 
 }

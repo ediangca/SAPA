@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 <div class="flex flex-col md:flex-row gap-8">
 
-    <div class="md:w-5/6">
+    <div class="md:w-5/6" >
         <div class="card">
 
             <div class="flex row justify-end mb-2">
@@ -149,23 +149,26 @@
 
     <!-- SUBMENU -->
     <div class="md:w-1/6">
-        <div class="card h-200 px-0">
-            <div class="h-1/2">
+        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
+            <div class="">
                 <h5 class="m-0">Sub Component</h5>
-
+<!-- 
                 <ul class="layout-menu">
                     <ng-container *ngFor="let item of subcomponent; let i = index">
                         <li app-menuitem *ngIf="!item.separator" [item]="item" [index]="i" [root]="true"></li>
                         <li *ngIf="item.separator" class="menu-separator"></li>
                     </ng-container>
                 </ul>
+                 -->
+                <p-panelmenu [model]="subcomponent"></p-panelmenu>
             </div>
+            <!--             
             <div class="h-1/2">
                 <div class="font-semibold text-xl mb-4">Properties</div>
                 <p-panelmenu [model]="properties"></p-panelmenu>
 
-            </div>
-
+            </div> 
+            -->
 
         </div>
     </div>
@@ -187,7 +190,7 @@
                         @if (form.get('date')?.invalid && (form.get('date')?.touched || submitted)) {
                         <small class="text-red-500">Date is required.</small>
                         }
-                    </div> 
+                    </div>
                     <div>
                         <label for="shifts" class="block font-bold mb-3">Shifts</label>
                         <p-multiSelect styleClass="w-full" formControlName="shiftID" [options]="shiftOption"
@@ -255,7 +258,6 @@
                 </div>
 
 
-
             </form>
         </div>
     </ng-template>
@@ -276,9 +278,10 @@
 
             <!-- Title -->
             <div class="flex items-center border-b pb-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
-                <i class="pi pi-calendar mr-2 text-blue-500"></i>
+                <i class="fas fa-hospital mr-2 text-blue-500"></i>
                 <span class="font-semibold text-gray-700 flex-1">Hospital & Section</span>
-                <span class="text-gray-800">{{ `${selectedEvent.extendedProps.hospitalName} - ${selectedEvent.extendedProps.sectionName}` }}</span>
+                <span class="text-gray-800">{{ `${selectedEvent.extendedProps.hospitalName} -
+                    ${selectedEvent.extendedProps.sectionName}` }}</span>
             </div>
 
             <!-- Shift -->

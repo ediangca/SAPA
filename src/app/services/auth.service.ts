@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, delay, finalize, switchMap } from 'rxjs/operators';
+import { catchError, delay, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { throwError, Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -10,6 +10,9 @@ import { Environment } from '@/environment';
 import { AppComponent } from 'src/app.component';
 import { LoadingService } from './loading.service';
 import { StoreService } from './store.service';
+import { NgToastService } from 'ng-angular-popup';
+import { ApiService } from './api.service';
+// import { HttpErrorHandler } from '@/helper/handler/http-error-handler';
 
 
 @Injectable({
@@ -26,7 +29,10 @@ export class AuthService {
 
   constructor(private http: HttpClient, private router: Router,
     private logger: LogsService, private store: StoreService,
-    private loading: LoadingService) {
+    private api: ApiService,
+    private loading: LoadingService, private toast: NgToastService,
+    // private errorHandler: HttpErrorHandler
+  ) {
     this.tokenPayload = this.getTokenPayloadFromToken();
   }
 
@@ -34,27 +40,117 @@ export class AuthService {
   registerUser(userAccount: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}UserAccount/Create/`, userAccount)
       .pipe(
-        catchError(this.handleError)
+        catchError((err) => this.handleError(err)),
+        // catchError((err) => this.errorHandler.handle(err)),
       );
   }
 
-  login(userAccount: any): Observable<any> {
-    this.loading.setLoadingVisible(true);
-    this.logger.printLogs('i', 'Logging in...', userAccount);
+  // login(userAccount: any): Observable<any> {
+  //   this.loading.setLoadingVisible(true);
+  //   this.logger.printLogs('i', 'Logging in...', userAccount);
 
-    return of(userAccount).pipe(
-      delay(3000), // ⏳ Simulate a 3-second delay
-      switchMap(account =>
-        this.http.post<any>(`${this.apiUrl}Auth/`, account).pipe(
-          catchError(this.handleError),
-          finalize(() => {
-            this.loading.setLoadingVisible(false);
-            this.logger.printLogs('i', 'Finished login process', userAccount);
+  //   return of(userAccount).pipe(
+  //     delay(3000),
+  //     switchMap(account =>
+  //       this.http.post<any>(`${this.apiUrl}Auth/`, account).pipe(
+  //         catchError((err) =>
+  //           this.handleError(err)),
+  //         // this.errorHandler.handle(err)),
+  //         finalize(() => {
+  //           this.loading.setLoadingVisible(false);
+  //           this.logger.printLogs('i', 'Finished login process', userAccount);
+  //         })
+  //       )
+  //     )
+  //   );
+  // }
+
+  login(credentials: any): Observable<any> {
+    this.loading.setLoadingVisible(true);
+    this.logger.printLogs('i', 'Logging in...', credentials);
+
+    return this.http.post<any>(`${this.apiUrl}Auth/`, credentials).pipe(
+      switchMap(res => {
+        // expect res.token or similar
+        const token = res?.token;
+        if (!token) {
+          throw new Error('Token not returned from server.');
+        }
+
+        // store token
+        localStorage.setItem('token', token);
+
+        // decode payload synchronously
+        const payload = this.jwtHelper.decodeToken(token);
+        this.store.setTokenPayload(payload);
+        this.logger.printLogs('i', 'Decoded token payload', payload);
+
+        // fetch full user by username then privileges (no nested subscriptions)
+        return this.api.GetUserbyUsername(payload.unique_name).pipe(
+          switchMap((user: any) => {
+            this.store.setUser(user);
+            // retrieve privileges by roleID
+            return this.api.getPrivelegeByRole(user.roleID).pipe(
+              tap((privs: any[]) => {
+                this.store.setPrivilege(privs || []);
+              }),
+              // map back to original server response so caller can still use it
+              map(() => res)
+            );
           })
-        )
-      )
+        );
+      }),
+      catchError(err => {
+        this.logger.printLogs('e', 'Login error', err);
+        throw err; // let component handle showing messages or use a global handler
+      }),
+      finalize(() => {
+        this.loading.setLoadingVisible(false);
+        this.logger.printLogs('i', 'Finished login process', credentials);
+      })
     );
   }
+
+  getTokenPayloadFromToken(): Observable<any | null> {
+    const token = localStorage.getItem('token');
+    if (!token || this.jwtHelper.isTokenExpired(token)) {
+      return of(null);
+    }
+
+    const payload = this.jwtHelper.decodeToken(token);
+    this.store.setTokenPayload(payload);
+
+    // If user already in store, simply return payload
+    return this.store.getUser().pipe(
+      // take 1 is not shown to avoid importing, but we can use map+switch logic:
+      switchMap(user => {
+        if (user) {
+          // already hydrated
+          this.logger.printLogs('i', 'Store already hydrated with user', user);
+          return of(payload);
+        }
+
+        // not hydrated — fetch user then privileges then return payload
+        return this.api.GetUserbyUsername(payload.unique_name).pipe(
+          switchMap((userRes: any) => {
+            this.store.setUser(userRes);
+          this.logger.printLogs('i', 'GetUserbyUsername - userRes ', userRes);
+            return this.api.getPrivelegeByRole(userRes.roleID).pipe(
+              tap((privs: any[]) => this.store.setPrivilege(privs || [])),
+              map(() => payload)
+            );
+          }),
+          catchError(err => {
+            this.logger.printLogs('w', 'Error hydrating store from token', err);
+            // If hydration failed, still return payload (or choose null). Prefer to return payload
+            // so guard can allow access but UI may show less features. You can change to of(null) if desired.
+            return of(payload);
+          })
+        );
+      })
+    );
+  }
+
 
   register(userAccount: any): Observable<any> {
     this.loading.setLoadingVisible(true);
@@ -64,7 +160,8 @@ export class AuthService {
       delay(3000), // ⏳ Simulate a 3-second delay
       switchMap(account =>
         this.http.post<any>(`${this.apiUrl}Auth/register/`, account).pipe(
-          catchError(this.handleError),
+          catchError((err) => this.handleError(err)),
+          // catchError((err) => this.errorHandler.handle(err)),
           finalize(() => {
             this.loading.setLoadingVisible(false);
             this.logger.printLogs('i', 'Finished register process', userAccount);
@@ -73,25 +170,6 @@ export class AuthService {
       )
     );
   }
-
-
-  /*----------------------- ERROR HANDLING -----------------------*/
-
-  // private handleError(err: HttpErrorResponse) {
-  //   let errorMessage = 'Unknown error!';
-  //   if (err.error instanceof ErrorEvent) {
-  //     // Client-side errors
-  //     errorMessage = `Error: ${err.error.message}`;
-  //   } else {
-  //     // Backend error
-  //     if (err.error && err.error.message) {
-  //       errorMessage = err.error.message;
-  //     } else if (err.message) {
-  //       errorMessage = err.message;
-  //     }
-  //   }
-  //   return throwError(errorMessage);
-  // }
 
   logout() {
     Swal.fire({
@@ -143,6 +221,7 @@ export class AuthService {
     // return localStorage.getItem('token');
     return localStorage.getItem('token') || this.tokenPayload.token;
   }
+
   getUserID(): string | null {
     // return localStorage.getItem('userID');
     this.logger.printLogs('i', 'User Payload - UserID', this.tokenPayload.userID);
@@ -152,7 +231,6 @@ export class AuthService {
   getRoleID(): string | null {
     return localStorage.getItem('roleID') || this.tokenPayload.role;
   }
-
 
   isAuthenticated(): boolean {
     const token = localStorage.getItem('token');
@@ -168,86 +246,111 @@ export class AuthService {
     return null;
   }
 
-  getTokenPayloadFromToken(): Observable<string | null> {
+  getRoleFromToken() {
+    if (this.tokenPayload) {
+      return this.tokenPayload.role;
+    }
+  }
+
+  getUsernameFromToken(): Observable<string | null> {
     const token = localStorage.getItem('token');
     if (token && !this.jwtHelper.isTokenExpired(token)) {
       const decodedToken = this.jwtHelper.decodeToken(token);
       this.tokenPayload = decodedToken;
-      this.store.setTokenPayload(this.tokenPayload);
-      // this.logger.printLogs('i', "Decoded Token: ", decodedToken);
       return of(decodedToken?.unique_name || null); // Adjust according to your token's structure
     } else {
       return of(null);
     }
   }
 
-
-
-  // private handleError(error: HttpErrorResponse) {
-  //   let errorMessage = 'Unknown error!';
-
-  //   if (error.error instanceof ErrorEvent) {
-  //     // Client-side error
-  //     errorMessage = `Error: ${error.error.message}`;
+  // getTokenPayloadFromToken(): Observable<string | null> {
+  //   const token = localStorage.getItem('token');
+  //   if (token && !this.jwtHelper.isTokenExpired(token)) {
+  //     const decodedToken = this.jwtHelper.decodeToken(token);
+  //     this.tokenPayload = decodedToken;
+  //     this.store.setTokenPayload(this.tokenPayload);
+  //     // this.logger.printLogs('i', "Decoded Token: ", decodedToken);
+  //     return of(decodedToken?.unique_name || null); // Adjust according to your token's structure
   //   } else {
-  //     // Server-side error
-  //     if (error.error) {
-  //       // Case 1: Custom message from backend
-  //       if (error.error.message) {
-  //         errorMessage = error.error.message;
+  //     return of(null);
+  //   }
+  // }
+  // getTokenPayloadFromToken(): Observable<any | null> {
+  //   const token = localStorage.getItem('token');
 
-  //         // Case 2: ASP.NET Core validation errors
-  //       } else if (error.error.errors) {
-  //         const validationErrors = error.error.errors;
-  //         const messages: string[] = [];
-
-  //         for (const field in validationErrors) {
-  //           if (validationErrors.hasOwnProperty(field)) {
-  //             messages.push(`${field}: ${validationErrors[field].join(', ')}`);
-  //           }
-  //         }
-
-  //         errorMessage = messages.join(' | ');
-
-  //         // Case 3: Fallback to "title" if provided
-  //       } else if (error.error.title) {
-  //         errorMessage = error.error.title;
-
-  //       } else {
-  //         errorMessage = `Server returned code ${error.status} - Please contact the system administrator.`;
-  //       }
-  //     } else if (error.message) {
-  //       errorMessage = error.message;
-  //     }
+  //   if (token && !this.jwtHelper.isTokenExpired(token)) {
+  //     const payload = this.jwtHelper.decodeToken(token);
+  //     this.store.setTokenPayload(payload);
+  //     return of(payload);  // return full payload
   //   }
 
-  //   return throwError(() => `${errorMessage}`);
+  //   return of(null);
   // }
+
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Unknown error!';
 
     if (error.error instanceof ErrorEvent) {
       errorMessage = `Error: ${error.error.message}`;
-    } else {
-      if (error.error?.message) {
-        errorMessage = error.error.message;
-      } else if (error.error?.errors) {
-        const messages: string[] = [];
-        for (const field in error.error.errors) {
-          if (error.error.errors.hasOwnProperty(field)) {
-            messages.push(`${field}: ${error.error.errors[field].join(', ')}`);
+    } else if (error instanceof HttpErrorResponse) {
+
+      this.logger.printLogs('i', 'Pipe Error', error);
+      this.logger.printLogs('i', 'Pipe Error', `Status: " ${error.status}`);
+      if (error.status == 0) {
+        errorMessage = "Failed to establish connection!";
+        this.toast.warning(`${error.error.message} due to connectivity issue. Please contact the system administrator.`, "Connectivity Error!", 0);
+
+      } else if (error.status == 400) {// Check if the error response has a message property
+        if (error.error && error.error.message) {
+          // Display the custom message from the API
+          errorMessage = error.error.message;
+          this.toast.warning(error.error.message, "Error!", 5000);
+        } else {
+          // Handle validation errors
+          const validationErrors = error.error?.errors;
+
+          if (validationErrors) {
+            for (const key in validationErrors) {
+              if (validationErrors.hasOwnProperty(key)) {
+                const messages = validationErrors[key];
+                if (Array.isArray(messages)) {
+                  messages.forEach((message: string) => {
+                    this.toast.warning(message, "Validation Error!", 5000);
+                  });
+                } else {
+                  // If messages is not an array, display a custom message
+                  this.toast.warning(messages, "Validation Error!", 5000); // Assuming messages is a string
+                }
+              }
+            }
+          } else {
+            // Handle generic bad request error
+            this.toast.warning("An unknown error occurred.", "Error!", 5000);
           }
         }
-        errorMessage = messages.join(' | ');
-      } else if (error.error?.title) {
-        errorMessage = error.error.title;
-      } else {
-        errorMessage = `Server returned code ${error.status}`;
+      } else if (error.status === 401) {
+
+        errorMessage = error.error?.message || "Token is Expired!, Please login again!"; // Get the message from the error response
+        // toast.warning("Token is Expired!, Please login again! " + err.status, "Warning!", 5000);
+        this.toast.warning(errorMessage, "Warning!", 5000);
+        this.exit();
+
+      } else if (error.status === 404) {
+        errorMessage = error.error?.message;
+        // toast.warning(err.error.message, "Not Found!", 5000);
+      } else if (error.status === 409) {
+        this.logger.printLogs('i', 'Conflict Error', error);
+        errorMessage = error.error.message;
+        // toast.warning(err.error.message, "Conflict Error!", 5000);
+      } else if (error.status === 500) {
+        errorMessage = error.error.message;
+        // toast.error("Internal Server Error! Please contact the system administrator.", "Server Error!", 0);
       }
+    } else {
+      errorMessage = `Server Error`;
     }
 
-    // 🔔 Show toast automatically
     Swal.fire({
       toast: true,
       icon: 'error',

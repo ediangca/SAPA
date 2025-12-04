@@ -252,6 +252,27 @@ export class Hospital implements OnInit {
         table.clear();
     }
 
+    dateFormat(date: Date | string | null): string | null {
+        if (!date) return null;
+
+        // If the date is a string, convert it to a Date object
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+
+        // Ensure it's a valid Date object
+        if (date instanceof Date && !isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        } else {
+            // Handle invalid date
+            this.logger.printLogs('w', 'Invalid Date Format', [date]);
+            return null;
+        }
+    }
+    
     openNew() {
         this.form.reset({
             hospitalName: '',

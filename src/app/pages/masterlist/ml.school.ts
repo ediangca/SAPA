@@ -53,7 +53,7 @@ interface ExportColumn {
         TableModule,
         FormsModule,
         ButtonModule,
-        AppMenuitem,
+        // AppMenuitem,
         RippleModule,
         ToastModule,
         ToolbarModule,
@@ -131,15 +131,15 @@ export class School implements OnInit {
     ngOnInit() {
         this.subcomponent = [
             {
-                items: [
-                    // { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
-
-                ]
-            }
-        ];
-
-        this.properties = [
+                label: 'Print All',
+                icon: 'fas fa-print',
+                command: () => this.printAll()
+            },
+            {
+                label: 'Re-assign Coordinator',
+                icon: 'pi pi-user-edit',
+                command: () => this.reAssignDialog()
+            },
             {
                 label: 'Status',
                 icon: 'fas fa-layer-group',
@@ -150,13 +150,27 @@ export class School implements OnInit {
                     { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
                 ]
             },
-            {
-                label: 'Re-assign Coordinator',
-                icon: 'pi pi-user-edit',
-                command: () => this.reAssignDialog()
-            }
-        ];
 
+        ];
+        /*
+                this.properties = [
+                    {
+                        label: 'Status',
+                        icon: 'fas fa-layer-group',
+                        items: [
+                            { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
+                            { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
+                            { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+                            { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
+                        ]
+                    },
+                    {
+                        label: 'Re-assign Coordinator',
+                        icon: 'pi pi-user-edit',
+                        command: () => this.reAssignDialog()
+                    }
+                ];
+        */
         this.loadData();
     }
 
@@ -228,6 +242,23 @@ export class School implements OnInit {
         });
     }
 
+    dateFormat(date: Date | string | null): string | null {
+        if (!date) return null;
+
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+
+        if (date instanceof Date && !isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        } else {
+            this.logger.printLogs('w', 'Invalid Date Format', [date]);
+            return null;
+        }
+    }
 
     onSchoolSelectionChange(selected: any[]) {
         this.logger.printLogs('i', "Select schools : ", selected)
@@ -334,6 +365,8 @@ export class School implements OnInit {
             return;
         }
 
+        this.logger.printLogs('s', 'Updating Status...', schoolIDs);
+
         this.confirmationService.confirm({
             message: `Are you sure you want to change the status of selected schools <br><br>${schools.join('<br>')}<br><br>to<b>${this.getStatus(status, 'value')}</b>?`,
             header: 'Confirm Status Update',
@@ -355,7 +388,7 @@ export class School implements OnInit {
 
                         this.logger.printLogs('s', 'Status updated successfully', res);
                         this.loadSchools();
-                        this.showErrorAlert('Successful', 'School status updated', false, 'success', );
+                        this.showErrorAlert('Successful', 'School status updated', false, 'success',);
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Successful',

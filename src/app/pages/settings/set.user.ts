@@ -72,7 +72,7 @@ interface ExportColumn {
     ],
     templateUrl: './set.user.component.html',
     providers: [MessageService, ConfirmationService],
-    styleUrl: './css/set.user.componnent.css'
+    styleUrl: './css/set.css'
 })
 export class Users implements OnInit {
 
@@ -119,7 +119,7 @@ export class Users implements OnInit {
             lastname: ['', Validators.required],
             firstname: ['', Validators.required],
             middlename: ['', Validators.required],
-            roleId: ['', Validators.required],
+            roleID: ['', Validators.required],
             email: ['', Validators.required],
             autoUsername: [false]
         });
@@ -159,6 +159,7 @@ export class Users implements OnInit {
             { field: 'email', header: 'Email' },
             { field: 'role', header: 'Role' },
             { field: 'status', header: 'Status' },
+            { field: 'date_create', header: 'Date Created' },
         ];
 
     }
@@ -171,8 +172,8 @@ export class Users implements OnInit {
             return;
         }
         const csv = [
-            ['User ID', 'FullName', 'Email', 'User Role', 'Status'],
-            ...users.map(u => [u.userID, u.fullname, u.email, u.rolename, this.getStatus(u.status, 'value')])
+            ['User ID', 'FullName', 'Email', 'User Role', 'Status', 'Date Created'],
+            ...users.map(u => [u.userID, u.fullname, u.email, u.rolename, this.getStatus(u.status, 'value'), u.date_created])
         ]
             .map(row => row.map(v => `"${v}"`).join(','))
             .join('\n');
@@ -208,6 +209,24 @@ export class Users implements OnInit {
 
             default:
                 return (type == 'value' ? 'Suspend' : 'danger');
+        }
+    }
+
+    dateFormat(date: Date | string | null): string | null {
+        if (!date) return null;
+
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+
+        if (date instanceof Date && !isNaN(date.getTime())) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        } else {
+            this.logger.printLogs('w', 'Invalid Date Format', [date]);
+            return null;
         }
     }
 
