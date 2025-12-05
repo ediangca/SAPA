@@ -254,6 +254,7 @@ export class ApiService {
   createRole(role: any) {
     return this.handleRequest('post', 'Roles', { body: role, logAction: 'Creating Role' });
   }
+
   updateRole(id: string, role: any) {
     return this.handleRequest('put', 'Roles', { id, body: role, logAction: 'Updating Role' });
   }
@@ -269,6 +270,18 @@ export class ApiService {
   /*----------------------- PRIVILEGES -----------------------*/
   getPrivelegeByRole(roleID: any) {
     return this.handleRequest<any[]>('get', 'Privileges/Role/' + roleID, { logAction: `Fetching Privileges By Role ${roleID}` });
+  }
+
+  retrieveModules() {
+    return this.handleRequest<any[]>('get', 'Privileges/Modules', { logAction: `Fetching Privileges By Modules` });
+  }
+
+  createPrivilege(privileges: any[]) {
+    return this.handleRequest('post', 'Privileges', { body: privileges, logAction: 'Creating Privileges' });
+  }
+
+  updatePrivilege(privilegeID: string, privileges: any[]): Observable<any> {
+    return this.handleRequest('put', 'Privileges', { id: privilegeID, body: privileges, logAction: 'Updating Privileges' });
   }
 
   /*----------------------- USERS -----------------------*/

@@ -198,6 +198,56 @@ export class PdfService {
 
     pdfMakeLib.createPdf(docDefinition).open();
   }
+  
+  async generateRoleReport(roles: any[], title: string) {
+    // Ensure logos are loaded before generating
+    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+
+    const docDefinition: any = {
+      content: [
+        this.getHeader(title),
+        { text: '\n' },
+        {
+          table: {
+            headerRows: 1,
+            widths: [25, '80%', '20%'], // adjust proportionally
+            body: [
+              [
+                { text: '#', bold: true, fontSize: 10, alignment: 'center' },
+                { text: 'Role Name', bold: true, fontSize: 10 },
+                { text: 'Date Created', bold: true, fontSize: 10, alignment: 'center' }
+              ],
+              ...roles.map((s, i) => [
+                { text: (i + 1).toString(), alignment: 'center', fontSize: 9 },
+                { text: s.roleName || '—', fontSize: 9, noWrap: false },
+                { text: new Date(s.date_Created).toLocaleDateString(), alignment: 'center', fontSize: 9 }
+              ])
+            ]
+          },
+          layout: {
+            fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#aaa',
+            vLineColor: () => '#aaa',
+            paddingLeft: () => 4,
+            paddingRight: () => 4,
+            paddingTop: () => 2,
+            paddingBottom: () => 2,
+          },
+          margin: [0, 10, 30, 10]
+
+        },
+      ],
+      footer: this.getFooter(),
+      styles: {
+        header: { bold: true, alignment: 'center', fontSize: 13 },
+        tableCell: { fontSize: 9, noWrap: false, lineHeight: 1.1 },
+      }
+    };
+
+    pdfMakeLib.createPdf(docDefinition).open();
+  }
 
   async generateHopitalsReport(hospitals: any[]) {
     this.logger.printLogs('i', "Generate PDF for Hospitals : ", hospitals);

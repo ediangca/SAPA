@@ -79,35 +79,40 @@ export class StoreService {
     this.logger.printLogs('i', 'Store cleared', null);
   }
 
-  // loadPrivileges(): void {
-  //   this.getUser()
-  //     .pipe(
-  //       switchMap((user) =>
-  //         user 
-  //           ? this.api.getPrivelegeByRole(user.roleID) 
-  //           : of([]) // Return an empty array if `userAccount` is null
-  //       )
-  //     )
-  //     .subscribe({
-  //       next: (res: any) => {
-  //         const privileges = res.map((privilege: any) => ({
-  //           moduleName: privilege.moduleName,
-  //           isActive: privilege.isActive,
-  //           c: privilege.c,
-  //           r: privilege.r,
-  //           u: privilege.u,
-  //           d: privilege.d,
-  //           post: privilege.post,
-  //           unpost: privilege.unpost,
-  //         }));
-  //         this.setPrivilege(privileges);
-  //         this.logger.printLogs('i', 'Privileges Loaded', privileges);
-  //       },
-  //       error: (err: any) => {
-  //         this.logger.printLogs('w', 'Error Retrieving Privileges', err);
-  //       },
-  //     });
-  // }
+  loadPrivileges() {
+    this.getUser()
+      .pipe(
+        switchMap((user) =>
+          user
+            ? this.api.getPrivelegeByRole(user.roleID)
+            : of([]) // Return an empty array if `userAccount` is null
+        )
+      )
+      .subscribe({
+        next: (res: any) => {
+          const privileges = res.map((privilege: any) => ({
+            rid: privilege.roleID,
+            roleName: privilege.roleName,
+            mid: privilege.moduleID,
+            moduleName: privilege.moduleName,
+            isActive: privilege.isActive,
+            c: privilege.c,
+            r: privilege.r,
+            u: privilege.u,
+            d: privilege.d,
+            status: privilege.s,
+            printall: privilege.pa,
+          }));
+          this.setPrivilege(privileges);
+          this.logger.printLogs('i', 'Privileges Loaded', privileges);
+          return this.privileges$.asObservable()
+        },
+        error: (err: any) => {
+          this.logger.printLogs('w', 'Error Retrieving Privileges', err);
+        },
+      });
+    return null;
+  }
 
   isModuleActive(moduleName: string): boolean {
     const privileges = this.privileges$.getValue();
@@ -127,8 +132,8 @@ export class StoreService {
       case 'retrieve': return !!modulePrivilege.r;
       case 'update': return !!modulePrivilege.u;
       case 'delete': return !!modulePrivilege.d;
-      case 'post': return !!modulePrivilege.post;
-      case 'unpost': return !!modulePrivilege.unpost;
+      case 'status': return !!modulePrivilege.s;
+      case 'printall': return !!modulePrivilege.pa;
       default:
         console.warn(`Invalid action '${action}' passed to isAllowedAction.`);
         return false;

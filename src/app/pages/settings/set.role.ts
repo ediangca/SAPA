@@ -29,6 +29,7 @@ import { Tooltip } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { CheckboxChangeEvent, CheckboxModule } from "primeng/checkbox";
 import { SkeletonModule } from 'primeng/skeleton';
+import { s } from 'node_modules/@fullcalendar/core/internal-common';
 
 interface Column {
     field: string;
@@ -82,7 +83,8 @@ export class Roles implements OnInit {
 
     itemDialog: boolean = false;
     privelegeDialog: boolean = false;
-    isLoading: boolean = false;
+    isLoading: boolean = true;
+    isEditPrivilege: boolean = false;
 
     roles = signal<any[]>([]);
     role!: any;
@@ -111,7 +113,6 @@ export class Roles implements OnInit {
 
     emailPattern: string = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
-    autoUsername: boolean = false;
     newPassword: string = '';
 
     constructor(private fb: FormBuilder,
@@ -134,6 +135,7 @@ export class Roles implements OnInit {
         this.form = this.fb.group({
             roleID: [null],
             roleName: ['', Validators.required],
+            notes: ['', Validators.required],
         });
     }
 
@@ -163,15 +165,15 @@ export class Roles implements OnInit {
 
 
     exportCSV() {
-        const users = this.roles();
+        const roles = this.roles();
 
-        if (!users || users.length === 0) {
+        if (!roles || roles.length === 0) {
             this.logger.printLogs('i', 'No roles to export', null)
             return;
         }
         const csv = [
             ['Role ID', 'Role Name', 'Date Created'],
-            ...users.map(r => [r.roleID, r.roleName, r.date_created])
+            ...roles.map(r => [r.roleID, r.roleName, r.date_created])
         ]
             .map(row => row.map(v => `"${v}"`).join(','))
             .join('\n');
@@ -230,9 +232,110 @@ export class Roles implements OnInit {
 
     openPrivilege(role: any) {
         this.role = role;
-        this.logger.printLogs('i', 'Create/Edit role', role)
-        this.privelegeDialog = true
+        this.isLoading = true;
+        this.logger.printLogs('i', 'Create/Edit Privilege of role : ', role)
+
+
+        this.api.getPrivelegeByRole(this.role.roleID).subscribe({
+            next: (res) => {
+                this.privileges = res;
+                this.logger.printLogs('i', 'Retrieved Privilegessssss', res);
+
+
+                this.isEditPrivilege = !(this.privileges && this.privileges.length < 1);
+
+                if (!this.isEditPrivilege) {
+                    this.loadDefaultModules();
+                } else {
+                    this.restoreLoadModule();
+                }
+
+                this.privelegeDialog = true
+            },
+            error: (err: any) => {
+                this.isLoading = false; // Hide loading indicator
+                this.logger.printLogs('w', 'Error Retrieving Privileges', err);
+                Swal.fire('Denied', err.message || 'Error retrieving privileges.', 'warning');
+            },
+        });
     }
+
+    restoreLoadModule() {
+        const updatedPrivileges: any[] = [];
+
+        this.api.retrieveModules().subscribe({
+            next: (modules) => {
+                this.logger.printLogs('i', 'Retrieving Modules', modules);
+                this.modules = modules;
+
+                this.modules.forEach(m => {
+                    const matched = this.privileges?.find(p => p.moduleID === m.moduleID);
+
+                    updatedPrivileges.push({
+                        // ...(matched?.privilegeID && { privilegeID: matched.privilegeID }), // only include if matched
+                        privilegeID: matched.privilegeID ?? null,
+                        roleID: this.role.roleID,
+                        moduleID: m.moduleID,
+                        moduleName: m.moduleName,
+                        isActive: matched?.isActive ?? false,
+                        c: matched?.c ?? false,
+                        r: matched?.r ?? false,
+                        u: matched?.u ?? false,
+                        d: matched?.d ?? false,
+                        s: matched?.s ?? false,
+                        pa: matched?.pa ?? false
+                    });
+                });
+
+                this.privileges = updatedPrivileges;
+
+                this.logger.printLogs('i', 'Updated Privileges (Merged)', this.privileges);
+
+                setTimeout(() => {
+                    this.isLoading = false;
+                }, 3);
+            },
+            error: (err) => {
+                this.logger.printLogs('w', 'Problem Retrieving Modules', err);
+                Swal.fire('Denied', err, 'warning');
+            }
+        });
+    }
+
+    loadDefaultModules() {
+        this.api.retrieveModules().subscribe({
+            next: (modules) => {
+                this.logger.printLogs('i', 'Retrieving Modules', modules);
+                this.modules = modules;
+
+                this.privileges = this.modules.map(m => ({
+                    privilegeID: null,
+                    roleID: this.role.roleID,
+                    moduleID: m.moduleID,
+                    moduleName: m.moduleName,
+                    isActive: false,
+                    c: false,
+                    r: false,
+                    u: false,
+                    d: false,
+                    s: false,
+                    pa: false
+                }));
+
+                this.selectedPrivileges = this.privileges;
+
+                this.logger.printLogs('i', 'Default Privileges Created', this.privileges);
+
+                this.isLoading = false;
+            },
+            error: (err) => {
+                this.logger.printLogs('w', 'Problem Retrieving Modules', err);
+                Swal.fire('Denied', err, 'warning');
+            }
+        });
+    }
+
+
 
     closePrivilege() {
         this.role = {};
@@ -251,7 +354,7 @@ export class Roles implements OnInit {
             p.isActive = e.checked;
 
             if (!p.isActive) {
-                p.c = p.r = p.u = p.d = p.post = p.unpost = false;
+                p.c = p.r = p.u = p.d = p.s = p.pa = false;
             }
         });
     }
@@ -260,31 +363,27 @@ export class Roles implements OnInit {
         const isChecked = event.checked;
 
         this.privileges.forEach(item => {
-            if (item.moduleName == privilege.moduleName) {
-                item.isActive = isChecked;
 
-                if (!(item.moduleName == 'GLOBAL' || item.moduleName == 'REPORTS')) {
+            if (item.moduleID == privilege.moduleID) {
+
+                this.logger.printLogs('i', 'List of Item', item);
+
+                if (item) {
                     item.c = isChecked;
                     item.r = isChecked;
                     item.u = isChecked;
                     item.d = isChecked;
                 }
+                item.isActive = isChecked;
 
-                if (['PAR', 'ICS', 'OPR', 'PTR', 'ITR', 'OPTR', 'PRS', 'RRSEP', 'OPRR', 'USER ACCOUNTS'].includes(item.moduleName)) {
-                    item.post = isChecked;
-                    item.unpost = isChecked;
+                // status
+                if (['MOD0004', 'MOD0005', 'MOD0006', 'MOD0007', 'MOD0008', 'MOD0009', 'MOD0010', 'MOD0013'].includes(item.moduleID)) {
+                    item.s = isChecked;
                 }
-            }
-        });
-
-        const importantModules = ['ITEM CATEGORY', 'COMPANY', 'POSITION', 'USER GROUPS', 'REPORTS'];
-        const isAnyActive = this.privileges
-            .filter(item => importantModules.includes(item.moduleName))
-            .some(item => item.isActive);
-
-        this.privileges.forEach(item => {
-            if (item.moduleName === 'GLOBAL') {
-                item.isActive = isAnyActive;
+                // printAll
+                if (['MOD0002', 'MOD0003', 'MOD0005', 'MOD0006', 'MOD0007', 'MOD0008', 'MOD0009', 'MOD0010', 'MOD0013'].includes(item.moduleID)) {
+                    item.pa = isChecked;
+                }
             }
         });
 
@@ -300,15 +399,16 @@ export class Roles implements OnInit {
     toggleSelection(action: string, privilege: any, event: CheckboxChangeEvent) {
         const isChecked = event.checked;
 
-        this.privileges.forEach(item => {
-            if (item.moduleName === privilege.moduleName) {
+        this.privileges.forEach((item: any) => {
+            if (item.moduleID === privilege.moduleID) {
+                this.logger.printLogs('i', 'List of Item', item);
                 switch (action) {
                     case 'add': item.c = isChecked; break;
                     case 'retrieve': item.r = isChecked; break;
                     case 'update': item.u = isChecked; break;
                     case 'delete': item.d = isChecked; break;
-                    case 'post': item.post = isChecked; break;
-                    case 'unpost': item.unpost = isChecked; break;
+                    case 'status': item.s = isChecked; break;
+                    case 'printall': item.pa = isChecked; break;
                 }
             }
         });
@@ -336,12 +436,12 @@ export class Roles implements OnInit {
         this.itemDialog = false;
 
         if (this.role?.roleID) {
-            let id = this.role.userID
+            let id = this.role.roleID
             this.role = this.form.value;
             this.logger.printLogs('i', 'role details', this.role);
-            this.api.updateUser(id, this.role).subscribe({
+            this.api.updateRole(id, this.role).subscribe({
                 next: (res) => {
-                    this.logger.printLogs('i', 'User updated successfully', res);
+                    this.logger.printLogs('i', 'Role updated successfully', res);
                     this.loadRoles();
                     this.showErrorAlert('Role Updated', 'Role has been Successfully updated!', false, 'success');
                 },
@@ -396,7 +496,7 @@ export class Roles implements OnInit {
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Error',
-                            detail: 'Failed to delete user',
+                            detail: 'Failed to delete role',
                             life: 3000
                         });
                     }
@@ -430,6 +530,7 @@ export class Roles implements OnInit {
         }).then((result) => {
             if (result.isConfirmed) {
                 this.itemDialog = dialogOpen;
+                this.privelegeDialog = dialogOpen;
             }
         });
     }
@@ -444,7 +545,40 @@ export class Roles implements OnInit {
 
 
     onSubmitPrivilege() {
+        if (!this.privileges || this.privileges.length === 0) {
+            Swal.fire('Warning', 'No privileges to submit.', 'warning');
+            return;
+        }
 
+        this.privelegeDialog = false
+
+        if (!this.isEditPrivilege) {
+            // Saving new privileges
+            this.logger.printLogs('i', 'Saving Privilege', this.privileges);
+            this.api.createPrivilege(this.privileges).subscribe({
+                next: (res: any) => {
+                    this.showErrorAlert('Saved', res.message || 'Privileges saved successfully!', false, 'success')
+                },
+                error: (err) => {
+                    this.closePrivilege();
+                    this.showErrorAlert('Error', err.message || 'Privileges failed to save!', false, 'error')
+                },
+            });
+        } else {
+            // Updating privileges
+            this.logger.printLogs('i', 'Updating Privilege', this.privileges);
+            this.api.updatePrivilege(this.role.roleID, this.privileges).subscribe({
+                next: (res) => {
+                    Swal.fire('Updated', res.message || 'Privileges updated successfully!', 'success');
+                },
+                error: (err) => {
+                    this.showErrorAlert('Saved', err.message || 'Privileges failed to update!', false, 'error')
+                },
+            });
+
+        }
     }
+
+
 
 }

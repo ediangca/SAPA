@@ -581,40 +581,6 @@
     </ng-template>
 
 </p-dialog>
-<!-- 
-<p-dialog header="Print Schedule" [(visible)]="printDialogVisible" [modal]="true" [style]="{ width: '450px' }"
-    [draggable]="false" [resizable]="false">
-    <div class="flex flex-col gap-4">
-
-        <div class="card filter">
-            <div class="flex flex-col gap-1">
-
-                <label for="schools" class="block font-bold mb-3">Schools</label>
-                <p-select styleClass="w-full" id="schools" [options]="schools" optionLabel="schoolName"
-                    optionValue="schoolID" appendTo="body" [ngModel]="dialogSchool" placeholder="Select School" />
-            </div>
-
-            <div class="flex flex-col gap-1">
-                <label class="font-semibold text-sm">Date Range</label>
-                <p-datepicker [(ngModel)]="dialogDateRange" class="w-full" [inline]="true" selectionMode="range"
-                    [showTime]="false" dateFormat="yyyy-MM-dd" showIcon="true"
-                    placeholder="Select date range"></p-datepicker>
-            </div>
-
-            <div class="flex justify-end gap-2 mt-3">
-                <p-button label="Cancel" severity="secondary" (onClick)="printDialogVisible = false">
-                </p-button>
-
-                <p-button label="Confirm" icon="pi pi-check" (onClick)="confirmPrintSchedule()">
-                </p-button>
-            </div>
-        </div>
-        <div class="card pdfviewer">            
-        </div>
-
-    </div>
-</p-dialog> 
--->
 
 <p-dialog header="Print Appointment(s)" [(visible)]="printDialogVisible" [modal]="true" [draggable]="true"
     [resizable]="true">

@@ -82,7 +82,7 @@ export class UsersProperties implements OnInit {
         }
         if (this.roles && this.roles.length > 0) {
             this.logger.printLogs('e', 'Generate Report for Roles', this.roles)
-            this.pdfService.generateUserReport(this.roles, 'LIST OF ROLE');
+            this.pdfService.generateRoleReport(this.roles, 'LIST OF ROLE');
             return;
         }
         this.toast.warning("No Record found to print.", 'No Record', 3000);

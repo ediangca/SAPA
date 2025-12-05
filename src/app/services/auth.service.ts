@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { catchError, delay, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, delay, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 import { throwError, Observable, of } from 'rxjs';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -87,11 +87,13 @@ export class AuthService {
 
         // fetch full user by username then privileges (no nested subscriptions)
         return this.api.GetUserbyUsername(payload.unique_name).pipe(
+          take(1),
           switchMap((user: any) => {
             this.store.setUser(user);
             // retrieve privileges by roleID
             return this.api.getPrivelegeByRole(user.roleID).pipe(
               tap((privs: any[]) => {
+                this.logger.printLogs('i', 'Setting Privilege', privs);
                 this.store.setPrivilege(privs || []);
               }),
               // map back to original server response so caller can still use it
@@ -120,30 +122,22 @@ export class AuthService {
     const payload = this.jwtHelper.decodeToken(token);
     this.store.setTokenPayload(payload);
 
-    // If user already in store, simply return payload
     return this.store.getUser().pipe(
-      // take 1 is not shown to avoid importing, but we can use map+switch logic:
       switchMap(user => {
         if (user) {
-          // already hydrated
-          this.logger.printLogs('i', 'Store already hydrated with user', user);
           return of(payload);
         }
 
-        // not hydrated — fetch user then privileges then return payload
         return this.api.GetUserbyUsername(payload.unique_name).pipe(
-          switchMap((userRes: any) => {
+          tap(userRes => {
             this.store.setUser(userRes);
-          this.logger.printLogs('i', 'GetUserbyUsername - userRes ', userRes);
-            return this.api.getPrivelegeByRole(userRes.roleID).pipe(
-              tap((privs: any[]) => this.store.setPrivilege(privs || [])),
-              map(() => payload)
-            );
+            this.store.loadPrivileges();
+            // this.logger.printLogs('i', 'User loaded', userRes);
+            // this.logger.printLogs('i', 'Privilege loaded', this.store.getPrivileges());
           }),
+          map(() => payload),
           catchError(err => {
-            this.logger.printLogs('w', 'Error hydrating store from token', err);
-            // If hydration failed, still return payload (or choose null). Prefer to return payload
-            // so guard can allow access but UI may show less features. You can change to of(null) if desired.
+            this.logger.printLogs('w', 'Error during hydration', err);
             return of(payload);
           })
         );

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NotificationsWidget } from './components/notificationswidget';
 import { StatsWidget } from './components/statswidget';
 import { RecentSalesWidget } from './components/recentsaleswidget';
@@ -9,7 +9,7 @@ import { AuthService } from '@/services/auth.service';
 import { StoreService } from '@/services/store.service';
 import { LogsService } from '@/services/logs.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
+import { combineLatest, filter, Subject, take, takeUntil } from 'rxjs';
 
 @Component({
     selector: 'app-dashboard',
@@ -28,7 +28,7 @@ import { Subject, takeUntil } from 'rxjs';
         </div>
     `
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
 
 
     user: any = null;
@@ -42,31 +42,31 @@ export class Dashboard {
     ) { }
 
     ngOnInit() {
-        this.store.getUser()
-            .pipe(takeUntil(this.destroy$))
-            .subscribe(u => {
-                this.user = u;
-                this.logger.printLogs('i', 'Dashboard User', u);
-            });
+        // Load privileges only once when user becomes available
+        // this.store.getUser()
+        //     .pipe(take(1))
+        //     .subscribe(user => {
+        //         if (user) {
+        //             this.store.loadPrivileges();  // ⬅️ USE YOUR EXISTING FUNCTION
+        //         }
+        //     });
+            
+        // combineLatest([
+        //     this.store.getUser(),
+        //     this.store.getPrivileges()
+        // ])
+        //     .pipe(
+        //         filter(([user, priv]) => !!user && priv.length > 0), // both ready
+        //         take(1)
+        //     )
+        //     .subscribe(([user, priv]) => {
+        //         this.logger.printLogs('i', 'User + Privileges FULLY LOADED ✔', { user, priv });
+        //     });
 
-        this.store.getPrivileges()
-            .pipe(takeUntil(this.destroy$))
-            .subscribe(p => {
-                this.privileges = p;
-                this.logger.printLogs('i', 'Dashboard Privileges', p);
-            });
     }
 
-    ngOnDestroy() {
-        this.destroy$.next();
-        this.destroy$.complete();
-    }
 
-    // optional: logout button handler
-    logout() {
-        this.auth.logout();
-    }
-    
+
     // getUserProfile() {
 
     //     this.store.getUserPayload()
