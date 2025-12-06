@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, of, switchMap } from 'rxjs';
+import { BehaviorSubject, map, Observable, of, switchMap } from 'rxjs';
 import { ApiService } from './api.service';
 import { LogsService } from './logs.service';
 
@@ -93,7 +93,7 @@ export class StoreService {
           const privileges = res.map((privilege: any) => ({
             rid: privilege.roleID,
             roleName: privilege.roleName,
-            mid: privilege.moduleID,
+            moduleID: privilege.moduleID,
             moduleName: privilege.moduleName,
             isActive: privilege.isActive,
             c: privilege.c,
@@ -114,30 +114,51 @@ export class StoreService {
     return null;
   }
 
-  isModuleActive(moduleName: string): boolean {
+  isModuleActive(moduleID: string): boolean {
     const privileges = this.privileges$.getValue();
     return privileges.some(
-      (priv: any) => priv.moduleName === moduleName && priv.isActive
+      (priv: any) =>
+        priv.moduleID === moduleID && priv.isActive
     );
   }
 
-  isAllowedAction(moduleName: string, action: string): boolean {
+  isAllowedAction(moduleID: string, action: string): boolean {
     const privileges = this.privileges$.getValue();
     if (!privileges || privileges.length === 0) return false;
-    const modulePrivilege = privileges.find((p: any) => p.moduleName === moduleName);
+    const modulePrivilege = privileges.find((p: any) => p.moduleID === moduleID);
     if (!modulePrivilege) return false;
 
+    this.logger.printLogs('i', 'Module Privilege', modulePrivilege);
     switch (action.toLowerCase()) {
       case 'create': return !!modulePrivilege.c;
       case 'retrieve': return !!modulePrivilege.r;
       case 'update': return !!modulePrivilege.u;
       case 'delete': return !!modulePrivilege.d;
-      case 'status': return !!modulePrivilege.s;
-      case 'printall': return !!modulePrivilege.pa;
+      case 'status': return !!modulePrivilege.status;
+      case 'printall': return !!modulePrivilege.printall;
       default:
-        console.warn(`Invalid action '${action}' passed to isAllowedAction.`);
+        this.logger.printLogs('w', 'Invalid action', action);
         return false;
     }
   }
+
+  //   isAllowedAction$(moduleID: string, action: string): Observable<boolean> {
+  //   return this.privileges$.pipe(
+  //     map(privileges => {
+  //       if (!privileges || privileges.length === 0) return false;
+  //       const modulePrivilege = privileges.find(p => p.moduleID === moduleID);
+  //       if (!modulePrivilege) return false;
+  //       switch (action.toLowerCase()) {
+  //         case 'create': return !!modulePrivilege.c;
+  //         case 'retrieve': return !!modulePrivilege.r;
+  //         case 'update': return !!modulePrivilege.u;
+  //         case 'delete': return !!modulePrivilege.d;
+  //         case 'status': return !!modulePrivilege.s;
+  //         case 'printall': return !!modulePrivilege.pa;
+  //         default: return false;
+  //       }
+  //     })
+  //   );
+  // }
 
 }

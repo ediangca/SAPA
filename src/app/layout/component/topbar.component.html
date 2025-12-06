@@ -18,8 +18,10 @@
                 </g>
             </svg> <span class="text-3xl">SAP</span> </a>
     </div>
-    <span class="hidden md:inline text-surface-900 dark:text-surface-0 text-2xl">
-        Welcome to School Affiliation Program Application
+
+    <p-skeleton *ngIf="!user"; width="80%" height="1.2rem"></p-skeleton>
+    <span  *ngIf="user"; class="hidden md:inline text-surface-900 dark:text-surface-0 text-2xl">
+        Hi <b>{{user? user.firstname : ''}}</b>! Welcome to School Affiliation Program Application
     </span>
 
     <div class="layout-topbar-actions">

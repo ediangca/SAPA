@@ -270,21 +270,22 @@ export class Roles implements OnInit {
 
                 this.modules.forEach(m => {
                     const matched = this.privileges?.find(p => p.moduleID === m.moduleID);
-
-                    updatedPrivileges.push({
-                        // ...(matched?.privilegeID && { privilegeID: matched.privilegeID }), // only include if matched
-                        privilegeID: matched.privilegeID ?? null,
-                        roleID: this.role.roleID,
-                        moduleID: m.moduleID,
-                        moduleName: m.moduleName,
-                        isActive: matched?.isActive ?? false,
-                        c: matched?.c ?? false,
-                        r: matched?.r ?? false,
-                        u: matched?.u ?? false,
-                        d: matched?.d ?? false,
-                        s: matched?.s ?? false,
-                        pa: matched?.pa ?? false
-                    });
+                    if (matched.privilegeID) {
+                        updatedPrivileges.push({
+                            // ...(matched?.privilegeID && { privilegeID: matched.privilegeID }), // only include if matched
+                            privilegeID: matched.privilegeID ?? null,
+                            roleID: this.role.roleID,
+                            moduleID: m.moduleID,
+                            moduleName: m.moduleName,
+                            isActive: matched?.isActive ?? false,
+                            c: matched?.c ?? false,
+                            r: matched?.r ?? false,
+                            u: matched?.u ?? false,
+                            d: matched?.d ?? false,
+                            s: matched?.s ?? false,
+                            pa: matched?.pa ?? false
+                        });
+                    }
                 });
 
                 this.privileges = updatedPrivileges;

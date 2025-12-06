@@ -31,6 +31,7 @@ import { AppMenuitem } from '@/layout/component/app.menuitem';
 import { MenuModule } from 'primeng/menu';
 import { TieredMenuModule } from 'primeng/tieredmenu';
 import { PdfService } from '@/services/pdf.service';
+import { combineLatest, filter, take } from 'rxjs';
 
 interface Column {
     field: string;
@@ -107,6 +108,14 @@ export class School implements OnInit {
     coordinatorID: any | null;
 
 
+    c: boolean = false;
+    r: boolean = false;
+    u: boolean = false;
+    d: boolean = false;
+    s: boolean = false;
+    p: boolean = false;
+
+
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
@@ -131,16 +140,19 @@ export class School implements OnInit {
     ngOnInit() {
         this.subcomponent = [
             {
+                id: 'p',
                 label: 'Print All',
                 icon: 'fas fa-print',
                 command: () => this.printAll()
             },
             {
+                id: 's',
                 label: 'Re-assign Coordinator',
                 icon: 'pi pi-user-edit',
                 command: () => this.reAssignDialog()
             },
             {
+                id: 's',
                 label: 'Status',
                 icon: 'fas fa-layer-group',
                 items: [
@@ -152,26 +164,40 @@ export class School implements OnInit {
             },
 
         ];
-        /*
-                this.properties = [
-                    {
-                        label: 'Status',
-                        icon: 'fas fa-layer-group',
-                        items: [
-                            { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
-                            { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
-                            { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-                            { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
-                        ]
-                    },
-                    {
-                        label: 'Re-assign Coordinator',
-                        icon: 'pi pi-user-edit',
-                        command: () => this.reAssignDialog()
-                    }
-                ];
-        */
+
+        this.store.getPrivileges()
+            .pipe(
+                filter(priv => priv.length > 0),
+                take(1)
+            )
+            .subscribe(priv => {
+                if (priv.length > 0) {
+                    this.logger.printLogs('i', 'Accessability Loaded:', priv);
+                    this.validateAccessability();
+                }
+            });
+
         this.loadData();
+    }
+
+    validateAccessability() {
+        const moduleID = 'MOD0005';
+        this.c = this.store.isAllowedAction(moduleID, 'create');
+        this.r = this.store.isAllowedAction(moduleID, 'retrieve');
+        this.u = this.store.isAllowedAction(moduleID, 'update');
+        this.d = this.store.isAllowedAction(moduleID, 'delete');
+        this.s = this.store.isAllowedAction(moduleID, 'status');
+        this.p = this.store.isAllowedAction(moduleID, 'printall');
+
+
+        this.subcomponent = this.subcomponent.filter((item: any) => {
+                    this.logger.printLogs('i', `Component Accessability: s${this.s}, p${this.p}`, item);
+                    switch (item.id) {
+                        case 's': return this.s;
+                        case 'p': return this.p;
+                        default: return true; 
+                    }
+                });
     }
 
     loadData() {

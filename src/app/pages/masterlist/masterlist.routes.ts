@@ -6,10 +6,10 @@ import { Student } from './ml.student';
 import { Section } from './ml.section';
 
 export default [
-    { path: 'schools', data: { breadcrumb: 'School' }, component: School },
-    { path: 'hospitals', data: { breadcrumb: 'Hospital' }, component: Hospital },
-    { path: 'sections', data: { breadcrumb: 'Section' }, component: Section },
-    { path: 'students', data: { breadcrumb: 'Student' }, component: Student },
-    { path: 'appointments', data: { breadcrumb: 'Appointment' }, component: Appointment },
+    { path: 'schools', data: { breadcrumb: 'School', id: 'MOD0005' }, component: School },
+    { path: 'hospitals', data: { breadcrumb: 'Hospital', id: 'MOD0002' }, component: Hospital },
+    { path: 'sections', data: { breadcrumb: 'Section', id: 'MOD0003' }, component: Section },
+    { path: 'students', data: { breadcrumb: 'Student', id: 'MOD0006' }, component: Student },
+    { path: 'appointments', data: { breadcrumb: 'Appointment', id: 'MOD0007' }, component: Appointment },
     { path: '**', redirectTo: '/notfound' }
 ] as Routes;

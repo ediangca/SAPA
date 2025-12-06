@@ -74,7 +74,7 @@ export class AppLayout implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-
+        /*
         combineLatest([
             this.store.getUser(),
             this.store.getPrivileges()
@@ -84,10 +84,11 @@ export class AppLayout implements OnInit, OnDestroy {
                 take(1)
             )
             .subscribe(([user, priv]) => {
-                this.logger.printLogs('i', 'User + Privileges FULLY LOADED ✔', { user, priv });
+                if (!!user && priv.length > 0) {
+                    this.logger.printLogs('i', 'Privileges FULLY LOADEDzzzzzzzzzz ✔', user);
+                }
             });
-
-
+            */
     }
 
     isOutsideClicked(event: MouseEvent) {

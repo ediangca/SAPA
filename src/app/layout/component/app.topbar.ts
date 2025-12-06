@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { StyleClassModule } from 'primeng/styleclass';
@@ -11,6 +11,10 @@ import { BadgeModule } from 'primeng/badge';
 import { AuthService } from '@/services/auth.service';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ButtonModule } from 'primeng/button';
+import { combineLatest, filter, take } from 'rxjs';
+import { StoreService } from '@/services/store.service';
+import { LogsService } from '@/services/logs.service';
+import { SkeletonModule } from 'primeng/skeleton';
 @Component({
     selector: 'app-topbar',
     standalone: true,
@@ -23,17 +27,37 @@ import { ButtonModule } from 'primeng/button';
         TooltipModule,
         BadgeModule,
         ProgressSpinnerModule,
-        MenuModule],
+        MenuModule,
+        SkeletonModule
+    ],
     templateUrl: './topbar.component.html',
     styleUrl: './css/topbar.component.css'
 })
-export class AppTopbar {
+export class AppTopbar implements OnInit {
 
     nestedMenuItems: any[] = [];
 
+    user: any | null = null
 
-    constructor(public layoutService: LayoutService, public router: Router, private authService: AuthService) {
+
+    constructor(public layoutService: LayoutService,
+        public router: Router, private authService: AuthService,
+        private store: StoreService, private logger: LogsService) {
         this.buildMenuItems();
+    }
+    ngOnInit() {
+
+        this.store.getUser()
+            .pipe(
+                filter(user => !!user),
+                take(1)
+            )
+            .subscribe(user => {
+                if (!!user) {
+                    this.user = user;
+                    this.logger.printLogs('i', 'Get User from storessss :', user);
+                }
+            });
     }
 
     toggleDarkMode() {
