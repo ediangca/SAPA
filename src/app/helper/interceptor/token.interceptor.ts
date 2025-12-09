@@ -46,7 +46,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
         logger.printLogs('i', 'Pipe Error', `Status: " ${err.status}`);
         if (err.status == 0) {
           messages = "Failed to establish connection!";
-          toast.warning(`${err.error.message} due to connectivity issue. Please contact the system administrator.`, "Connectivity Error!", 0);
+          toast.warning(`${err.error.message} due to connectivity issue. Please contact the System Administrator.`, "Connectivity Error!", 0);
 
         } else if (err.status == 400) {// Check if the error response has a message property
           if (err.error && err.error.message) {

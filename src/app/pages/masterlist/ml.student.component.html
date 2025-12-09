@@ -169,19 +169,21 @@
                         Email is
                         required.</small>
 
-                    <!-- <label for="username" class="block font-bold mb-3">Username</label>
+                    <div class="flex flex-row gap-2 item-center justify-end mt-2">
+                        <p-check-box id="autoUsername" formControlName="autoUsername"
+                            (onChange)="toggleAutoUsername($event)" binary="true" label="Auto-generate username"
+                            binary="true" />
+
+                        <small class="text-cyan-500">Copy Email ID to Username</small>
+                    </div>
+
+                    <label for="username" class="block font-bold mb-3">Username</label>
                     <input type="text" pInputText id="username" name="username" formControlName="username"
                         (keyup)="filterSpace()" required autofocus fluid />
                     <small class="text-red-500" *ngIf="submitted && !form.value['username']"> Username is
-                        required.</small> -->
+                        required.</small>
 
-
-                    <!-- <label for="roleId" class="block font-bold mb-3">Role</label>
-                    <p-select inputId="roleId" [options]="roles" formControlName="roleId" optionLabel="roleName"
-                        optionValue="roleId" placeholder="Select a Role" [appendTo]="'body'" fluid>
-                    </p-select>
-                    <small class="text-red-500" *ngIf="submitted && !form.value['roleId']"> Role is
-                        required.</small> -->
+                    <input type="text" pInputText id="roleID" name="roleID" formControlName="roleID" hidden />
 
                 </div>
             </form>

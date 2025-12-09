@@ -318,8 +318,8 @@ export class Appointment implements OnInit {
                     this.logger.printLogs('i', 'Schools loaded for AdminSys', this.schools)
                     this.schools = schools || [];
                 } else {
-                    this.logger.printLogs('i', 'Schools loaded for Others', this.schools)
-                    this.schools = schools.filter(s => s.userID === this.tokenPayload.role) || [];
+                    this.logger.printLogs('i', 'Schools loaded for Other User', this.schools)
+                    this.schools = schools.filter(s => s.userID === this.tokenPayload.nameid) || [];
                 }
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
@@ -573,7 +573,7 @@ export class Appointment implements OnInit {
                     this.appointments.set(appointments || []);
                 } else {
                     const filtered = (appointments || []).filter(
-                        s => s.userID === this.tokenPayload.role
+                        s => s.userID === this.tokenPayload.nameid
                     );
                     this.logger.printLogs('i', 'Appointments loaded for Others', filtered);
                     this.appointments.set(filtered);
@@ -586,7 +586,7 @@ export class Appointment implements OnInit {
     getStatus(status: any, type: string): any {
         switch (status) {
             case 1:
-                return (type == 'value' ? 'Approved' : 'info')
+                return (type == 'value' ? 'Confirmed' : 'info')
             case 2:
                 return (type == 'value' ? 'Inactive' : 'contrast')
             case 3:
@@ -877,10 +877,10 @@ export class Appointment implements OnInit {
                 this.logger.printLogs('i', 'Appointment created successfully', res);
                 this.loadAppointment(); // reload list
                 this.hideDialog();
-                this.showErrorAlert('Successful', 'Appointment created successfully', false, 'success');
+                this.showErrorAlert('Successful', 'Appointment created successfully, Please confirm your booking to your email.', false, 'success');
             },
             error: (err) => {
-                this.showErrorAlert('Saving Failed', err, true, 'error');
+                this.showErrorAlert('Saving Failed', err, false, 'error');
             },
             complete: () => {
                 this.submitted = false;
@@ -891,7 +891,9 @@ export class Appointment implements OnInit {
 
     delete(appointment: any) {
         this.confirmationService.confirm({
-            message: `Are you sure you want to delete ${appointment.dateSlot}?`,
+            message: `Are you sure you want to delete the appointment <br> 
+            <b>${appointment.hospitalName} (${appointment.sectionName}) <br> 
+            ${this.dateFormat(appointment.dateSlot)} - ${appointment.shiftName} shift </b>?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             rejectLabel: 'Cancel',
@@ -904,7 +906,7 @@ export class Appointment implements OnInit {
             accept: () => {
                 this.logger.printLogs('i', `Deleting Appointment ${appointment.dateSlot}`, appointment);
 
-                this.api.deleteSchool(appointment.schoolID).subscribe({
+                this.api.deleteAppointment(appointment.appointmentID).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'Appointment deleted successfully', res);
                         this.loadAppointment();

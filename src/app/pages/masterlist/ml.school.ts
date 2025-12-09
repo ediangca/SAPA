@@ -191,13 +191,13 @@ export class School implements OnInit {
 
 
         this.subcomponent = this.subcomponent.filter((item: any) => {
-                    this.logger.printLogs('i', `Component Accessability: s${this.s}, p${this.p}`, item);
-                    switch (item.id) {
-                        case 's': return this.s;
-                        case 'p': return this.p;
-                        default: return true; 
-                    }
-                });
+            this.logger.printLogs('i', `Component Accessability: s${this.s}, p${this.p}`, item);
+            switch (item.id) {
+                case 's': return this.s;
+                case 'p': return this.p;
+                default: return true;
+            }
+        });
     }
 
     loadData() {
@@ -227,7 +227,16 @@ export class School implements OnInit {
 
     loadSchools() {
         this.api.getSchools().subscribe({
-            next: (schools) => this.schools.set(schools),
+            next: (schools) => {
+                this.logger.printLogs('i', 'View School with Role: ', this.tokenPayload.role)
+                if (this.tokenPayload.role === 'UGR0001') {
+                    this.logger.printLogs('i', 'Schools loaded for AdminSys', this.schools)
+                    this.schools.set(schools || []);
+                } else {
+                    this.logger.printLogs('i', 'Schools loaded for Other User', this.schools)
+                    this.schools.set(schools.filter(s => s.userID === this.tokenPayload.nameid) || []);
+               }
+            },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
         });
     }

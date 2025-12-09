@@ -4,6 +4,7 @@ import { Hospital } from './ml.hospital';
 import { Appointment } from './ml.appointment';
 import { Student } from './ml.student';
 import { Section } from './ml.section';
+import { ConfirmAppointmentSuccess } from './confirm-success';
 
 export default [
     { path: 'schools', data: { breadcrumb: 'School', id: 'MOD0005' }, component: School },

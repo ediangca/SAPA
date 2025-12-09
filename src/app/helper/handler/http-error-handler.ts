@@ -49,7 +49,7 @@ export class HttpErrorHandler {
       case 0:
         message = 'Failed to establish connection!';
         this.toast.warning(
-          `${error.error?.message} due to connectivity issue. Please contact the system administrator.`,
+          `${error.error?.message} due to connectivity issue. Please contact the System Administrator.`,
           'Connectivity Error!',
           0
         );

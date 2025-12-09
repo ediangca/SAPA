@@ -56,6 +56,7 @@ interface ExportColumn {
         TableModule,
         FormsModule,
         ButtonModule,
+        CheckboxModule,
         // AppMenuitem,
         PanelMenuModule,
         RippleModule,
@@ -126,12 +127,12 @@ export class Student implements OnInit {
 
         this.form = this.fb.group({
             userID: [null],
-            username: ['', Validators.required],
+            roleID: [null],
             lastname: ['', Validators.required],
             firstname: ['', Validators.required],
             middlename: ['', Validators.required],
-            roleId: ['', Validators.required],
             email: ['', Validators.required],
+            username: ['', Validators.required]
         });
     }
 
@@ -274,6 +275,33 @@ export class Student implements OnInit {
         }
     }
 
+    toggleAutoUsername(event: any) {
+        const email = this.form.get('email')?.value || null;
+
+        // If email is missing and user tried to check the box
+        if (!email && event.checked) {
+            this.messageService.add({
+                severity: 'warning',
+                summary: 'Warning',
+                detail: 'Please enter email first!',
+                life: 3000
+            });
+
+            // Revert checkbox to its original unchecked state
+            this.form.get('autoUsername')?.setValue(false, { emitEvent: false });
+            return;
+        }
+
+        if (event.checked) {
+            const username = email.split('@')[0];
+            this.form.get('username')?.patchValue(username);
+            // this.form.get('username')?.disable();
+        } else {
+            this.form.get('username')?.reset();
+            // this.form.get('username')?.enable();
+        }
+    }
+
     filterSpace() {
         const usernameControl = this.form.get('username');
         if (usernameControl) {
@@ -297,6 +325,7 @@ export class Student implements OnInit {
     openNew() {
         this.form.reset({
             email: '',
+            roleID: 'UGR0004',
             userID: this.tokenPayload.nameid
         });
         this.user = {};
@@ -404,10 +433,24 @@ export class Student implements OnInit {
     }
 
     loadStudents() {
-        this.api.getUsers().subscribe({
-            next: (users) => this.users.set(users.filter((user: any) => user.roleId === 'UGR0004')), //Role ID - Student
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
-        });
+        if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
+            this.api.getUsers().subscribe({
+                next: (users) => {
+                    this.logger.printLogs('i', 'Students loaded', users)
+                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
+                    this.logger.printLogs('i', 'Students loaded for AdminSys | SAP Admin', this.users)
+                },
+                error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+            });
+        } else {
+            this.api.GetStudentBySchoolCoordinatorID(this.tokenPayload.nameid).subscribe({
+                next: (users) => {
+                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
+                    this.logger.printLogs('i', 'Students loaded for Others', this.users)
+                },
+                error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+            });
+        }
     }
 
     loadSchools() {

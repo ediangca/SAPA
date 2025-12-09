@@ -292,6 +292,10 @@ export class ApiService {
   GetUserbyUsername(userame: string): Observable<any> {
     return this.handleRequest<any[]>('get', 'Users/GetUserbyUsername', { id: userame, logAction: `Fetching User By Username ${userame}` });
   }
+  
+  GetStudentBySchoolCoordinatorID(coordinatorID: string): Observable<any> {
+    return this.handleRequest<any[]>('get', 'Users/GetStudentBySchoolCoordinatorID', { id: coordinatorID, logAction: `Fetching Students By School Coordinator ID ${coordinatorID}` });
+  }
 
   createUser(section: any) {
     return this.handleRequest('post', 'Users', { body: section, logAction: 'Creating User' });

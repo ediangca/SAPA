@@ -7,6 +7,7 @@ import { Notfound } from './app/pages/notfound/notfound';
 import { authGuard } from '@/helper/guard/auth.guard';
 import { UserResolver } from '@/helper/resolver/user.resolver';
 import { authRoutes } from './app/pages/auth/auth.routes';
+import { ConfirmAppointmentSuccess } from '@/pages/masterlist/confirm-success';
 
 
 export const appRoutes: Routes = [
@@ -27,7 +28,8 @@ export const appRoutes: Routes = [
         ]
     },
 
-    ...authRoutes,   // <-- Spread standalone auth routes here
+    ...authRoutes,
+    { path: 'confirm-success', component: ConfirmAppointmentSuccess },
     // { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
     // { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
