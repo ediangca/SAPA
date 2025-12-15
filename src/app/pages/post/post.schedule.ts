@@ -452,6 +452,8 @@ export class Schedule implements OnInit {
                 return (type == 'value' ? 'Unposted' : 'contrast')
             case 1:
                 return (type == 'value' ? 'Posted' : 'info')
+            case 2:
+                return (type == 'value' ? 'Inactive' : 'secondary')
 
             default:
                 return (type == 'value' ? 'Closed' : 'danger');

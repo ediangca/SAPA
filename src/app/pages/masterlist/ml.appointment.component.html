@@ -6,7 +6,7 @@
             <p-table #dt [value]="appointments()" [rows]="10" [columns]="cols" [paginator]="true"
                 [globalFilterFields]="['dateSlot','schoolName', 'hospitalName', 'sectionName', 'shiftName', 'status', 'date_Created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectAppointments"
-                [rowHover]="true" dataKey="schoolID"
+                [rowHover]="true" dataKey="appointmentID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
                 (selectionChange)="onAppointmentSelectionChange($event)">
@@ -89,6 +89,7 @@
                         <td style="min-width: 10rem">{{ appointment.sectionName }}</td>
                         <td style="min-width: 3rem">{{ appointment.shiftName }}</td>
                         <td style="min-width: 3rem">
+                            {{appointment.status}}
                             <p-tag [value]="getStatus(appointment.status,'value')"
                                 [severity]="getStatus(appointment.status,'severirty')"
                                 styleClass="dark:bg-surface-900!" />
@@ -267,7 +268,7 @@
                                                         placeholder="Select Section" class="w-full"></p-select>
                                                 </div>
 
-                                                @if(!filteredShifts || filteredShifts.length>0){
+                                                @if(!filteredSlots || filteredSlots.length>0){
                                                 <div class="w-full mt-4">
                                                     <label class="block font-bold mb-2">Available Shifts</label>
 
@@ -288,29 +289,33 @@
                                                                     </small>
                                                                 </span>
                                                             </div>
-
                                                         </p-button>
                                                     </div> -->
 
                                                     <div class="flex flex-col w-full gap-3 mt-3">
 
-                                                        <div *ngFor="let shift of filteredShifts" class="w-full">
+                                                        <div *ngFor="let slot of filteredSlots" class="w-full">
                                                             <div class="flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-all duration-200"
-                                                                [ngClass]="{'bg-white border-gray-300 text-gray-800 hover:bg-gray-100': form.value.shiftID !== shift.shiftID, 
-                                                            'bg-green-700 border-green-700 text-white': form.value.shiftID === shift.shiftID}">
+                                                                [ngClass]="{'bg-white border-gray-300 text-gray-800 hover:bg-gray-100': form.value.shiftID !== slot.shiftID && slot.slotStatus === 1,
+                                                            'bg-red-300 border-red-300 text-white-800': form.value.shiftID !== slot.shiftID && slot.slotStatus === 3, 
+                                                            'bg-green-700 border-green-700 text-white': form.value.shiftID === slot.shiftID}">
 
                                                                 <!-- PrimeNG Radio -->
-                                                                <p-radioButton name="shiftGroup" [value]="shift.shiftID"
+                                                                @if(slot.slotStatus === 3){
+                                                                <i class="pi pi-lock"></i>
+                                                                }@else{
+                                                                <p-radioButton name="shiftGroup" [value]="slot.shiftID"
                                                                     formControlName="shiftID"
-                                                                    (onClick)="onShiftSelect(shift)"
-                                                                    [inputId]="'shift-' + shift.shiftID"
+                                                                    (onClick)="onShiftSelect(slot)"
+                                                                    [inputId]="'shift-' + slot.shiftID"
                                                                     class="scale-110"></p-radioButton>
+                                                                }
 
                                                                 <!-- Label -->
-                                                                <label [for]="'shift-' + shift.shiftID"
+                                                                <label [for]="'shift-' + slot.shiftID"
                                                                     class="cursor-pointer font-medium text-sm select-none">
-                                                                    {{ formatTime(shift.startTime) }} - {{
-                                                                    formatTime(shift.endTime) }}
+                                                                    {{ formatTime(slot.startTime) }} - {{
+                                                                    formatTime(slot.endTime) }}
                                                                 </label>
 
                                                             </div>
@@ -323,9 +328,9 @@
 
 
                                                 }
-                                                <div *ngIf="filteredShifts.length === 0"
+                                                <div *ngIf="filteredSlots.length === 0"
                                                     class="text-gray-500 text-center flex justify-center items-center h-20">
-                                                    No yet selected Date and section to view shift(s).
+                                                    No yet selected Date and section to view shift slot(s).
                                                 </div>
 
                                             </div>
@@ -498,7 +503,7 @@
 </p-dialog>
 
 
-<p-dialog header="Appointment Details" [(visible)]="displayDialog" [modal]="true" [closable]="true"
+<p-dialog header="Appointment Details" [(visible)]="displayDialog" [modal]="true" [closable]="false"
     [style]="{ width: '520px' }" [resizable]="false" [breakpoints]="{ '640px': '95vw' }">
 
     <div *ngIf="selectedAppointment" class="space-y-4">
@@ -576,8 +581,12 @@
 
     <!-- Footer -->
     <ng-template pTemplate="footer">
-        <button pButton type="button" label="Close" class="p-button-secondary w-full" (click)="displayDialog = false">
-        </button>
+        <div class="flex flex-row justify-between">
+            <p-button *ngIf="selectedAppointment.status == 1" label="Request to Cancel" class="mr-2" severity="warn" (click)="changeStatus(3, selectedAppointment)">
+            </p-button>
+            <p-button label="Close" severity="secondary" (click)="closeDialog()">
+            </p-button>
+        </div>
     </ng-template>
 
 </p-dialog>
@@ -614,9 +623,9 @@
             <!-- PDF Preview -->
             <div class="card pdfviewer w-full">
 
-                @if(!pdfPreviewSrc){
+                @if(filteredAppointments.length === 0){
                 <p class="text-gray-500 text-center mt-4">Not yet Selected | No Appointment found!</p>
-                }@else{
+                }@else if(pdfPreviewSrc){
                 <div class="flex flex-row gap-2 justify-end">
                     <p-button icon="pi pi-download" severity="info" rounded="true" pTooltip="Download"
                         (onClick)="downloadPdf()" />
@@ -625,6 +634,12 @@
 
                 <iframe class="mt-2 w-full h-full" [src]="pdfPreviewSrc | safeUrl" frameborder="0">
                 </iframe>
+                }
+
+                @if(isLoading){
+                <div class="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-white/50 z-100">
+                    <p-progressSpinner style="width:50px; height:50px"></p-progressSpinner>
+                </div>
                 }
             </div>
 

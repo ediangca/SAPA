@@ -26,7 +26,7 @@ import { StoreService } from '@/services/store.service';
 import { ToastModule } from 'primeng/toast';
 import { ToastrService } from 'ngx-toastr';
 import { NgToastService } from 'ng-angular-popup';
-import { Tooltip } from "primeng/tooltip";
+import { Tooltip, TooltipModule } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { CheckboxModule } from "primeng/checkbox";
 import { PdfService } from '@/services/pdf.service';
@@ -74,6 +74,7 @@ interface ExportColumn {
         IconFieldModule,
         ConfirmDialogModule,
         ReactiveFormsModule,
+        TooltipModule,
         FormsModule,
         RouterModule,
     ],
@@ -149,39 +150,41 @@ export class Student implements OnInit {
         ];
 
         this.subcomponent = [
-            {
-                label: 'Print All',
-                icon: 'fas fa-print',
-                command: () => this.printAll()
-            },
-            {
-                label: 'Status',
-                icon: 'fas fa-layer-group',
-                items: [
-                    { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
-                    { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
-                    { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-                    { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
-                ]
-            },
+            ...(this.tokenPayload.role === 'UGR0001'
+                ? [
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+                    {
+                        id: 's',
+                        label: 'Re-assign Coordinator',
+                        icon: 'pi pi-user-edit',
+                        command: () => this.reAssignDialog()
+                    },]
+                : [
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+                ]),
 
-        ];
-        this.properties = [
-            // {
-            //     label: 'Status',
-            //     icon: 'fas fa-layer-group',
-            //     items: [
-            //         { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
-            //         { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
-            //         { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-            //         { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
-            //     ]
-            // },
-            // {
-            //     label: 'Re-assign Coordinator',
-            //     icon: 'pi pi-user-edit',
-            //     command: () => this.reAssignDialog()
-            // }
+            ...(this.tokenPayload.role === 'UGR0001' ? [
+                {
+                    id: 's',
+                    label: 'Status',
+                    icon: 'fas fa-layer-group',
+                    items: [
+                        ...(this.tokenPayload.role === 'UGR0001' ?
+                            [
+                                { label: 'Unverified', icon: 'fas fa-clock', command: () => this.changeStatus('U') },
+                                { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus('P') },
+                                { label: 'Approve', icon: 'fas fa-check', command: () => this.changeStatus('A') },
+                                { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus('S') },
+                                { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus('I') },
+                            ] : [
+                            ]
+                        ),
+
+                    ]
+                },
+            ] : [
+
+            ]),
         ];
 
     }
@@ -453,13 +456,6 @@ export class Student implements OnInit {
         }
     }
 
-    loadSchools() {
-        this.api.getSchools().subscribe({
-            next: (users) => { this.schools = users.filter((user: any) => user.userID === this.tokenPayload.nameid) || [], this.logger.printLogs('i', 'Schools loaded', this.schools) },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch shools', err)
-        });
-    }
-
     reAssignDialog() {
         if (!this.selectUsers || this.selectUsers.length === 0) {
             this.messageService.add({
@@ -473,7 +469,7 @@ export class Student implements OnInit {
 
         this.assignDialog = true;
         this.schoolID = null;
-        this.loadSchools();
+        this.loadStudents();
     }
 
 
@@ -482,21 +478,21 @@ export class Student implements OnInit {
         this.submitted = false;
     }
 
-    changeStatus(status: number) {
-        const schoolIDs = this.selectUsers?.map((school: any) => school.schoolID) ?? [];
+    changeStatus(status: any) {
+        const userIDs = this.selectUsers?.map((user: any) => user.userID) ?? [];
 
-        if (!schoolIDs.length) {
+        if (!userIDs.length) {
             this.messageService.add({
                 severity: 'warn',
-                summary: 'No Selected School',
-                detail: 'Please select at least one school first!',
+                summary: 'No Selected USer',
+                detail: 'Please select at least one Student first!',
                 life: 3000
             });
             return;
         }
 
         this.confirmationService.confirm({
-            message: `Are you sure you want to change the status of selected schools to  <b>${this.getStatus(status, 'value')}</b>?`,
+            message: `Are you sure you want to change the status of selected Student to  <b>${this.getStatus(status, 'value')}</b>?`,
             header: 'Confirm Status Update',
             icon: 'pi pi-exclamation-triangle',
             acceptLabel: "Yes! I'm Sure",
@@ -505,7 +501,7 @@ export class Student implements OnInit {
             rejectButtonStyleClass: 'p-button-danger',
 
             accept: () => {
-                this.api.updateSchoolStatus(status, schoolIDs).subscribe({
+                this.api.updateUserStatus(status, userIDs).subscribe({
                     next: (res: any) => {
                         this.messageService.add({
                             severity: 'success',

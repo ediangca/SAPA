@@ -3,8 +3,8 @@
     <div class="md:w-5/6">
         <div class="card">
             <p-table #dt [value]="users()" [rows]="10" [columns]="cols" [paginator]="true"
-                [globalFilterFields]="['userID', 'email', 'rolename', 'status', 'date_created']" [tableStyle]="{ 'min-width': '75rem'}"
-                [(selection)]="selectUsers" [rowHover]="true" dataKey="userID"
+                [globalFilterFields]="['userID', 'email', 'rolename', 'status', 'date_created']"
+                [tableStyle]="{ 'min-width': '75rem'}" [(selection)]="selectedUsers" [rowHover]="true" dataKey="userID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true"
                 scrollHeight="flex">
@@ -38,9 +38,9 @@
                 </ng-template>
                 <ng-template #header>
                     <tr>
-                        <!-- <th style="width: 3rem">
+                        <th style="width: 3rem">
                             <p-tableHeaderCheckbox />
-                        </th> -->
+                        </th>
                         <th pSortableColumn="userID" style="min-width: 3rem">User ID
                             <p-sortIcon field="userID" />
                         </th>
@@ -69,9 +69,9 @@
                 </ng-template>
                 <ng-template #body let-user>
                     <tr>
-                        <!-- <td style="width: 3rem">
+                        <td style="width: 3rem">
                             <p-tableCheckbox [value]="user" />
-                        </td> -->
+                        </td>
                         <td style="min-width: 3rem">{{ user.userID }}</td>
                         <td style="min-width: 10rem">{{ user.fullname }}</td>
                         <td style="min-width: 10rem">{{ user.email }}</td>
@@ -111,7 +111,8 @@
     <!-- SUBMENU -->
     <div class="md:w-1/6">
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
-            <set-users-sidebar [users]="users()"></set-users-sidebar>
+            <set-users-sidebar [users]="users()" [selectedUsers]="selectedUsers"
+                (statusChanged)="onStatusChanged()"></set-users-sidebar>
         </div>
     </div>
 

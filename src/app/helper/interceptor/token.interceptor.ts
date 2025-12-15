@@ -39,11 +39,10 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
 
       let messages: any | null = null;
 
-      logger.printLogs('i', 'Pipe Error', `Status: " ${err.status}`);
+      // logger.printLogs('i', 'Pipe Error', `Status: " ${err.status}`);
       if (err instanceof HttpErrorResponse) {
-
-        logger.printLogs('i', 'Pipe Error', err);
-        logger.printLogs('i', 'Pipe Error', `Status: " ${err.status}`);
+        // logger.printLogs('i', 'Pipe Error', err);
+        // logger.printLogs('i', 'Pipe Error', `Status: " ${err.status}`);
         if (err.status == 0) {
           messages = "Failed to establish connection!";
           toast.warning(`${err.error.message} due to connectivity issue. Please contact the System Administrator.`, "Connectivity Error!", 0);
@@ -88,7 +87,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
           // toast.warning(err.error.message, "Not Found!", 5000);
         } else if (err.status === 409) {
           logger.printLogs('i', 'Conflict Error', err);
-          messages = err.error.message;
+          messages = err.error?.message;
           // toast.warning(err.error.message, "Conflict Error!", 5000);
         } else if (err.status === 500) {
           messages = err.error.message;
@@ -96,7 +95,8 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      return throwError(() => new Error(`${messages! || err?.message || err.error?.message}`));
+      return throwError(() => messages );
+      // return throwError(() => new Error(`${messages! || err?.message || err.error?.message}`));
     })
     
   );

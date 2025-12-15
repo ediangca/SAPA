@@ -44,6 +44,7 @@ import listPlugin from '@fullcalendar/list';
 import { SkeletonModule } from 'primeng/skeleton';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SafeUrlPipe } from '@/helper/handler/safe-url-pipe';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 
 interface Column {
@@ -95,6 +96,7 @@ interface ExportColumn {
         FullCalendarModule,
         SkeletonModule,
         CheckboxModule,
+        ProgressSpinnerModule,
         SafeUrlPipe
     ],
     templateUrl: './ml.appointment.component.html',
@@ -142,6 +144,7 @@ export class Appointment implements OnInit {
 
     slots: any[] = [];
     public slot: any;
+    slotConfirmed: { [slotId: string]: boolean } = {};
 
     calendarPlugins = [dayGridPlugin, interactionPlugin];
     availableDates: any[] = [];
@@ -149,7 +152,9 @@ export class Appointment implements OnInit {
 
     selectedDateSlots: any[] = [];
     distinctSections: any[] = [];
-    filteredShifts: any[] = [];
+    filteredSlots: any[] = [];
+
+    filteredAppointments: any[] = [];
 
 
     // Example: only enable dates with active slots
@@ -169,7 +174,7 @@ export class Appointment implements OnInit {
     dialogSections: string[] = [];
     dialogShift: string | null = null;
 
-    dialogDateRange: any[] = []; // [startDate, endDate]
+    dialogDateRange: any[] = [];
 
     // Lists (populate from API)
     schoolList: any[] = [];
@@ -194,7 +199,6 @@ export class Appointment implements OnInit {
 
 
     ngOnInit() {
-        this.initSubComponent();
         this.initCalendar();
         this.initData();
     }
@@ -213,45 +217,6 @@ export class Appointment implements OnInit {
             agree: [false, Validators.required]
         });
 
-    }
-
-    initSubComponent() {
-        this.subcomponent = [
-            // { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-            { 
-                label: 'Print All', 
-                icon: 'fas fa-print', 
-                command: () => this.printAll() 
-            },
-            {
-                label: 'Status',
-                icon: 'fas fa-layer-group',
-                items: [
-                    { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
-                    { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
-                    { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-                    { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
-                ]
-            },
-        ];
-
-        // this.properties = [
-        //     {
-        //         label: 'Status',
-        //         icon: 'fas fa-layer-group',
-        //         items: [
-        //             { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
-        //             { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
-        //             { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-        //             { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
-        //         ]
-        //     },
-            // {
-            // label: 'Re-assign Coordinator',
-            // icon: 'pi pi-user-edit',
-            // command: () => this.reAssignDialog()
-            // }
-        // ];
     }
 
     initCalendar() {
@@ -284,19 +249,20 @@ export class Appointment implements OnInit {
         };
     }
     initData() {
-        this.loadAppointment();
+        this.loadData();
         this.loadHospitals();
     }
 
-    loadAppointment() {
+    loadData() {
 
         this.store.getUserPayload()
             .subscribe(res => {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
+                this.initSubComponent();
+                this.loadAppointments();
+                this.loadSchools();
             });
-        this.loadAppointments();
-        this.loadSchools();
 
         this.cols = [
             { field: 'AppointmentID', header: 'ID', customExportHeader: 'Appointment ID' },
@@ -308,6 +274,52 @@ export class Appointment implements OnInit {
         ];
 
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
+    }
+
+    initSubComponent() {
+        this.subcomponent = [
+            ...(this.tokenPayload.role === 'UGR0001'
+                ? [
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+                    {
+                        id: 's',
+                        label: 'Status',
+                        icon: 'fas fa-layer-group',
+                        items: [
+                            { label: 'Pending', icon: 'fas fa-pause-circle', command: () => this.changeStatus(0) },
+                            { label: 'Confirm', icon: 'fas fa-pause-circle', command: () => this.changeStatus(1) },
+                            { label: 'Request Cancel', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+                            { label: 'Confirm Cancelation', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(4) },
+                            { label: 'Declined', icon: 'fas fa-ban', command: () => this.changeStatus(2) }
+                        ]
+                    }
+                ]
+                : [
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+                    { label: 'Request Cancel', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+                ]),
+        ]
+
+    }
+
+    loadAppointments() {
+        this.api.getAppointments().subscribe({
+            next: (appointments) => {
+                this.logger.printLogs('i', `Loading appointments`, appointments);
+
+                if (this.tokenPayload.role === 'UGR0001') {
+                    this.logger.printLogs('i', 'Appointments loaded for AdminSys', appointments);
+                    this.appointments.set(appointments || []);
+                } else {
+                    const filtered = (appointments || []).filter(
+                        s => s.userID === this.tokenPayload.nameid
+                    );
+                    this.logger.printLogs('i', 'Appointments loaded for Others', filtered);
+                    this.appointments.set(filtered);
+                }
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch Appointments', err)
+        });
     }
 
     loadSchools() {
@@ -343,18 +355,6 @@ export class Appointment implements OnInit {
 
         this.selectedDate = info.dateStr;
     }
-    /*
-            this.form = this.fb.group({
-                appointmentID: [null],
-                hospitalID: ['', Validators.required],
-                allocationIDs: ['', Validators.required],
-                date:  ['', Validators.required],
-                sectionID: ['', Validators.required],
-                slotID: ['', Validators.required],
-                shiftID: ['', Validators.required],
-                userID: ['', Validators.required]
-            });
-    */
 
     getAllocationsByHospitalID(hospitalID: any) {
         this.itemDialog = false;
@@ -387,7 +387,7 @@ export class Appointment implements OnInit {
         this.slot = null;
         this.distinctSections = [];
         // this.selectedSection = null;
-        this.filteredShifts = [];
+        this.filteredSlots = [];
         this.isLoading = true;
 
         this.form.get('date')?.setValue(null);
@@ -468,7 +468,6 @@ export class Appointment implements OnInit {
         });
     }
 
-
     onEventClick(selectInfo: any) {
 
         this.slot = null;
@@ -511,7 +510,7 @@ export class Appointment implements OnInit {
 
         // Reset UI
         // this.selectedSection = null;
-        this.filteredShifts = [];
+        this.filteredSlots = [];
     }
 
     onSectionChange(section: any) {
@@ -522,18 +521,17 @@ export class Appointment implements OnInit {
         this.form.get('shiftID')?.setValue(null);
 
         if (!section) {
-            this.filteredShifts = [];
+            this.filteredSlots = [];
             return;
         }
 
         this.logger.printLogs('i', `Selected Section`, section.value);
         this.form.get('shiftID')?.setValue(section.value);
         // Filter shifts belonging only to this section
-        this.filteredShifts = this.selectedDateSlots
+        this.filteredSlots = this.selectedDateSlots
             .filter(s => s.sectionID === section.value);
 
-        this.logger.printLogs('i', `All Shift under Section ${section.value} - filteredShifts: `, this.filteredShifts);
-
+        this.logger.printLogs('i', `All Slots under Section ${section.value} - filteredSlots: `, this.filteredSlots);
     }
 
 
@@ -545,7 +543,6 @@ export class Appointment implements OnInit {
             hour12: true
         }).format(date);
     }
-
 
     onShiftSelect(slot: any) {
         this.logger.printLogs('i', 'Selected slot:', slot);
@@ -563,34 +560,17 @@ export class Appointment implements OnInit {
         this.dt.exportCSV();
     }
 
-    loadAppointments() {
-        this.api.getAppointments().subscribe({
-            next: (appointments) => {
-                this.logger.printLogs('i', `Loading appointments`, appointments);
-
-                if (this.tokenPayload.role === 'UGR0001') {
-                    this.logger.printLogs('i', 'Appointments loaded for AdminSys', appointments);
-                    this.appointments.set(appointments || []);
-                } else {
-                    const filtered = (appointments || []).filter(
-                        s => s.userID === this.tokenPayload.nameid
-                    );
-                    this.logger.printLogs('i', 'Appointments loaded for Others', filtered);
-                    this.appointments.set(filtered);
-                }
-            },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch Appointments', err)
-        });
-    }
 
     getStatus(status: any, type: string): any {
         switch (status) {
             case 1:
-                return (type == 'value' ? 'Confirmed' : 'info')
+                return (type == 'value' ? 'Confirm/ed' : 'info')
             case 2:
-                return (type == 'value' ? 'Inactive' : 'contrast')
+                return (type == 'value' ? 'Declined' : 'contrast')
             case 3:
-                return (type == 'value' ? 'Suspend' : 'danger')
+                return (type == 'value' ? 'Cancel Request' : 'warn')
+            case 4:
+                return (type == 'value' ? 'Cancel/ed' : 'danger')
 
             default:
                 return (type == 'value' ? 'Pending' : 'warn');
@@ -695,7 +675,7 @@ export class Appointment implements OnInit {
 
         this.selectedDateSlots = [];
         this.distinctSections = [];
-        this.filteredShifts = [];
+        this.filteredSlots = [];
 
         this.currentStep = 1;
 
@@ -777,12 +757,16 @@ export class Appointment implements OnInit {
         }
     }
 
-    changeStatus(status: number) {
-        const appointmentIDs = this.selectAppointments?.map((school: any) => school.schoolID) ?? [];
-        const appointments = this.selectAppointments?.map(
-            (appointment: any) =>
-                `${appointment.hospitalName}(${this.dateFormat(appointment.sectionName)}) - (${this.dateFormat(appointment.dateSlot)} ${this.formatTime(appointment.startTime)} - ${this.formatTime(appointment.endTime)})`
-        ) ?? [];
+    changeStatus(status: number, appointment: any | null = null) {
+
+        const appointmentIDs = appointment ? [appointment.appointmentID] :
+            (this.selectAppointments?.map((appointment: any) => appointment.appointmentID) ?? []);
+        const appointments =
+            appointment ? [`${appointment.hospitalName}(${appointment.sectionName}) - (${this.dateFormat(appointment.dateSlot)} ${this.formatTime(appointment.startTime)} - ${this.formatTime(appointment.endTime)})`] :
+                (this.selectAppointments?.map(
+                    (appointment: any) =>
+                        `${appointment.hospitalName}(${appointment.sectionName}) - (${this.dateFormat(appointment.dateSlot)} ${this.formatTime(appointment.startTime)} - ${this.formatTime(appointment.endTime)})`
+                ) ?? []);
 
         if (!appointmentIDs.length) {
             this.messageService.add({
@@ -794,34 +778,96 @@ export class Appointment implements OnInit {
             return;
         }
 
+
+        if (status === 3) {
+            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
+                return s.status !== 1;
+            });
+            if (validateOnlyConfirmAppointments.length > 0) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Invalid Apppointment(s) Selection',
+                    detail: 'Please select only those confirmed Appoinments!',
+                    life: 3000
+                });
+                return;
+            }
+        }
+        if (status === 0) {
+            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
+                return s.status !== 1 && s.status !== 4  && s.status !== 2;
+            });
+            if (validateOnlyConfirmAppointments.length > 0) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Invalid Apppointment(s) Selection',
+                    detail: 'Please select only those Confirmed Appoinments!',
+                    life: 3000
+                });
+                return;
+            }
+        }
+        if (status === 1) {
+            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
+                return s.status !== 0;
+            });
+            if (validateOnlyConfirmAppointments.length > 0) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Invalid Apppointment(s) Selection',
+                    detail: 'Please select only those Pending Appoinments!',
+                    life: 3000
+                });
+                return;
+            }
+        }
+        if (status === 4) {
+            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
+                return s.status !== 3;
+            });
+            if (validateOnlyConfirmAppointments.length > 0) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Invalid Apppointment(s) Selection',
+                    detail: 'Please select only those requested to Cancel Appoinments!',
+                    life: 3000
+                });
+                return;
+            }
+        }
+        if (status === 2) {
+            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
+                return s.status !== 0;
+            });
+            if (validateOnlyConfirmAppointments.length > 0) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Invalid Apppointment(s) Selection',
+                    detail: 'Please select only those Pending Appoinments!',
+                    life: 3000
+                });
+                return;
+            }
+        }
+
         this.confirmationService.confirm({
-            message: `Are you sure you want to change the status of selected appointment(s) <br><br>${appointments.join('<br>')}<br><br>to<b>${this.getStatus(status, 'value')}</b>?`,
+            message: `Are you sure you want to <b>${this.getStatus(status, 'value')}</b> the selected appointment(s)? <br><br>${appointments.join('<br>')}`,
             header: 'Confirm Status Update',
-            icon: 'pi pi-exclamation-triangle',
+            icon: 'pi pi-exclamation-circle',
             acceptLabel: "Yes! I'm Sure",
             rejectLabel: 'Cancel',
             acceptButtonStyleClass: 'p-button-success',
             rejectButtonStyleClass: 'p-button-outlined  p-button-secondary',
 
             accept: () => {
-                this.api.updateSchoolStatus(status, appointmentIDs).subscribe({
+
+                this.displayDialog = false;
+                this.api.updateAppoitmentStatus(status, appointmentIDs).subscribe({
                     next: (res: any) => {
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: res.message,
-                            life: 3000
-                        });
 
                         this.logger.printLogs('i', 'Status updated successfully', res);
-                        this.loadAppointment();
+                        this.loadAppointments();
                         this.showErrorAlert('Successful', 'Appointment status updated', false, 'success',);
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Successful',
-                            detail: 'Appointment status updated',
-                            life: 3000
-                        });
                         this.selectAppointments = [];
                     },
                     error: (err) => {
@@ -875,12 +921,12 @@ export class Appointment implements OnInit {
         this.api.createAppointment(this.appointment).subscribe({
             next: (res) => {
                 this.logger.printLogs('i', 'Appointment created successfully', res);
-                this.loadAppointment(); // reload list
+                this.loadAppointments(); // reload list
                 this.hideDialog();
                 this.showErrorAlert('Successful', 'Appointment created successfully, Please confirm your booking to your email.', false, 'success');
             },
             error: (err) => {
-                this.showErrorAlert('Saving Failed', err, false, 'error');
+                this.showErrorAlert('Failed to Book Appointment', err, false, 'warning');
             },
             complete: () => {
                 this.submitted = false;
@@ -891,7 +937,7 @@ export class Appointment implements OnInit {
 
     delete(appointment: any) {
         this.confirmationService.confirm({
-            message: `Are you sure you want to delete the appointment <br> 
+            message: `Are you sure you want to delete the selected appointment <br> 
             <b>${appointment.hospitalName} (${appointment.sectionName}) <br> 
             ${this.dateFormat(appointment.dateSlot)} - ${appointment.shiftName} shift </b>?`,
             header: 'Confirm',
@@ -909,7 +955,7 @@ export class Appointment implements OnInit {
                 this.api.deleteAppointment(appointment.appointmentID).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'Appointment deleted successfully', res);
-                        this.loadAppointment();
+                        this.loadAppointments();
                         this.showErrorAlert('Successful', 'Appointment deleted successfully', false, 'success');
                     },
                     error: (err) => {
@@ -956,6 +1002,8 @@ export class Appointment implements OnInit {
     printAll() {
         this.dialogSchool = null;
         this.dialogDateRange = [];
+        this.pdfPreviewSrc = null;
+        this.isLoading = false;
 
         this.printDialogVisible = true;
     }
@@ -977,20 +1025,20 @@ export class Appointment implements OnInit {
         const dateFrom = start.toISOString().split('T')[0];
         const dateTo = end.toISOString().split('T')[0];
 
-        let filteredAppointments = this.appointments().filter((s: any) => {
+        this.filteredAppointments = this.appointments().filter((s: any) => {
             return s.dateSlot >= dateFrom && s.dateSlot <= dateTo;
         });
 
         // Optional school filter
         if (this.dialogSchool) {
-            filteredAppointments = filteredAppointments.filter(a => a.schoolID === this.dialogSchool);
+            this.filteredAppointments = this.filteredAppointments.filter(a => a.schoolID === this.dialogSchool);
         }
 
-        this.logger.printLogs('i', `Filtered Appointments`, filteredAppointments);
+        this.logger.printLogs('i', `Filtered Appointments`, this.filteredAppointments);
 
         this.pdfService.generateAppointmentReport(
             `LIST OF APPOINTMENTS (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
-            filteredAppointments,
+            this.filteredAppointments,
             start.toString(),
             end.toString(),
             true
@@ -1002,34 +1050,50 @@ export class Appointment implements OnInit {
     previewSchedule() {
         const start = this.dialogDateRange[0];
         const end = this.dialogDateRange[1];
+        this.isLoading = true;
 
-        if (!start || !end) return;
+        setTimeout(() => {
 
-        const dateFrom = start.toISOString().split('T')[0];
-        const dateTo = end.toISOString().split('T')[0];
+            if (!start || !end) {
+                this.isLoading = false;   // stop spinner
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Missing Date Range',
+                    detail: 'Please select a start and end date.'
+                });
+                return;
+            }
 
-        let filteredAppointments = this.appointments().filter(
-            (s: any) => s.dateSlot >= dateFrom && s.dateSlot <= dateTo
-        );
+            const dateFrom = start.toISOString().split('T')[0];
+            const dateTo = end.toISOString().split('T')[0];
 
-        if (this.dialogSchool) {
-            filteredAppointments = filteredAppointments.filter(
-                s => s.schoolID === this.dialogSchool
+            this.filteredAppointments = this.appointments().filter(
+                (s: any) => s.dateSlot >= dateFrom && s.dateSlot <= dateTo
             );
-        }
 
-        this.pdfService.generateAppointmentReportPreview(
-            `LIST OF APPOINTMENTS (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
-            filteredAppointments,
-            start.toString(),
-            end.toString()
-        ).then(dataUrl => {
-            this.pdfPreviewSrc = dataUrl; // bind to iframe in dialog
-        });
+            if (this.dialogSchool) {
+                this.filteredAppointments = this.filteredAppointments.filter(
+                    s => s.schoolID === this.dialogSchool
+                );
+            }
+
+            this.pdfService.generateAppointmentReportPreview(
+                `LIST OF APPOINTMENTS (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
+                this.filteredAppointments,
+                start.toString(),
+                end.toString()
+            ).then(dataUrl => {
+                this.pdfPreviewSrc = dataUrl; // bind to iframe in dialog
+            });
+
+            this.isLoading = false;
+        }, 600);
     }
 
     closeDialog() {
         this.printDialogVisible = false;
+        this.displayDialog = false;
+        this.selectedAppointment = null;
         this.pdfPreviewSrc = null; // clear preview when closing
     }
 
@@ -1040,12 +1104,12 @@ export class Appointment implements OnInit {
         const dateFrom = start.toISOString().split('T')[0];
         const dateTo = end.toISOString().split('T')[0];
 
-        let filteredAppointments = this.appointments().filter(
+        this.filteredAppointments = this.appointments().filter(
             (a: any) => a.dateSlot >= dateFrom && a.dateSlot <= dateTo
         );
 
         if (this.dialogSchool) {
-            filteredAppointments = filteredAppointments.filter(
+            this.filteredAppointments = this.filteredAppointments.filter(
                 a => a.schoolID === this.dialogSchool
             );
         }
@@ -1053,7 +1117,7 @@ export class Appointment implements OnInit {
         // Use pdfMake directly for download
         this.pdfService.generateAppointmentReportPreview(
             `LIST OF APPOINTMENTS (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
-            filteredAppointments,
+            this.filteredAppointments,
             start.toString(),
             end.toString()
         ).then(() => {
@@ -1061,7 +1125,7 @@ export class Appointment implements OnInit {
             // or add a separate method in your pdfService specifically for downloading
             this.pdfService.downloadAppointmentReport(
                 `LIST_OF_APPOINTMENTS_${dateFrom}_to_${dateTo}`,
-                filteredAppointments,
+                this.filteredAppointments,
                 start.toString(),
                 end.toString()
             );
@@ -1075,11 +1139,17 @@ export class Appointment implements OnInit {
         const dateFrom = start.toISOString().split('T')[0];
         const dateTo = end.toISOString().split('T')[0];
 
-        let filteredAppointments = this.appointments().filter(
+        this.filteredAppointments = this.appointments().filter(
             (a: any) => a.dateSlot >= dateFrom && a.dateSlot <= dateTo
         );
 
-        this.pdfService.printAppointmentReport(filteredAppointments,
+        if (this.dialogSchool) {
+            this.filteredAppointments = this.filteredAppointments.filter(
+                a => a.schoolID === this.dialogSchool
+            );
+        }
+
+        this.pdfService.printAppointmentReport(this.filteredAppointments,
             start.toString(),
             end.toString())
     }

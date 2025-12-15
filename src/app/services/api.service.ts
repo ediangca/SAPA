@@ -85,7 +85,8 @@ export class ApiService {
         return res;
       }),
       catchError((err) =>
-        this.handleError(err)),
+        throwError(() => err)),
+      // this.handleError(err)),
       // this.errorHandler.handle(err)),
       finalize(() => {
         const elapsed = Date.now() - startTime;
@@ -292,7 +293,7 @@ export class ApiService {
   GetUserbyUsername(userame: string): Observable<any> {
     return this.handleRequest<any[]>('get', 'Users/GetUserbyUsername', { id: userame, logAction: `Fetching User By Username ${userame}` });
   }
-  
+
   GetStudentBySchoolCoordinatorID(coordinatorID: string): Observable<any> {
     return this.handleRequest<any[]>('get', 'Users/GetStudentBySchoolCoordinatorID', { id: coordinatorID, logAction: `Fetching Students By School Coordinator ID ${coordinatorID}` });
   }
@@ -315,6 +316,13 @@ export class ApiService {
 
   approve(email: string) {
     return this.handleStringRequest('post', 'Users/approve', email, 'Account Approval');
+  }
+
+  updateUserStatus(status: any, userIDs: string[]) {
+    return this.handleRequest('put', `Users/status/${status}`, {
+      body: userIDs,
+      logAction: 'Update User Status'
+    });
   }
 
   changePassword(id: string, newPassword: any) {
@@ -386,6 +394,10 @@ export class ApiService {
 
   getSlotsByAllocationIDs(payload: { AllocationID: string[] }) {
     return this.handleRequest<any[]>('post', 'Slots/byAllocation', { body: payload, logAction: 'Fetching Slots By AllocationIDs' });
+  }
+
+  isConfirmSlot(slotID: string) {
+    return this.handleRequest<any[]>('get', 'Slots/is-confirmed', { id: slotID, logAction: 'Fetching Slots' });
   }
 
   createBulkSlots(slots: any) {
@@ -578,66 +590,60 @@ export class ApiService {
 
 
 
-  private handleError(error: HttpErrorResponse) {
+  private handleError(error: any) {
     let errorMessage = 'Unknown error!';
 
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Error: ${error.error.message}`;
-    } else if (error instanceof HttpErrorResponse) {
+    this.logger.printLogs('i', 'Pipe Errorzzzzz', error);
+    this.logger.printLogs('i', 'Pipe Errorzzzzzzzz', `Status: " ${error.status}`);
 
-      this.logger.printLogs('i', 'Pipe Error', error);
-      this.logger.printLogs('i', 'Pipe Error', `Status: " ${error.status}`);
-      if (error.status == 0) {
-        errorMessage = "Failed to establish connection!";
-        this.toast.warning(`${error.error.message} due to connectivity issue. Please contact the system administrator.`, "Connectivity Error!", 0);
+    if (error.status == 0) {
+      errorMessage = "Failed to establish connection!";
+      this.toast.warning(`${error.error?.message} due to connectivity issue. Please contact the system administrator.`, "Connectivity Error!", 0);
 
-      } else if (error.status == 400) {// Check if the error response has a message property
-        if (error.error && error.error.message) {
-          // Display the custom message from the API
-          errorMessage = error.error.message;
-          this.toast.warning(error.error.message, "Error!", 5000);
-        } else {
-          // Handle validation errors
-          const validationErrors = error.error?.errors;
+    } else if (error.status == 400) {// Check if the error response has a message property
+      if (error.error && error.error.message) {
+        // Display the custom message from the API
+        errorMessage = error.error?.message;
+        this.toast.warning(error.error?.message, "Error!", 5000);
+      } else {
+        // Handle validation errors
+        const validationErrors = error.error?.errors;
 
-          if (validationErrors) {
-            for (const key in validationErrors) {
-              if (validationErrors.hasOwnProperty(key)) {
-                const messages = validationErrors[key];
-                if (Array.isArray(messages)) {
-                  messages.forEach((message: string) => {
-                    this.toast.warning(message, "Validation Error!", 5000);
-                  });
-                } else {
-                  // If messages is not an array, display a custom message
-                  this.toast.warning(messages, "Validation Error!", 5000); // Assuming messages is a string
-                }
+        if (validationErrors) {
+          for (const key in validationErrors) {
+            if (validationErrors.hasOwnProperty(key)) {
+              const messages = validationErrors[key];
+              if (Array.isArray(messages)) {
+                messages.forEach((message: string) => {
+                  this.toast.warning(message, "Validation Error!", 5000);
+                });
+              } else {
+                // If messages is not an array, display a custom message
+                this.toast.warning(messages, "Validation Error!", 5000); // Assuming messages is a string
               }
             }
-          } else {
-            // Handle generic bad request error
-            this.toast.warning("An unknown error occurred.", "Error!", 5000);
           }
+        } else {
+          // Handle generic bad request error
+          this.toast.warning("An unknown error occurred.", "Error!", 5000);
         }
-      } else if (error.status === 401) {
-
-        errorMessage = error.error?.message || "Token is Expired!, Please login again!"; // Get the message from the error response
-        // toast.warning("Token is Expired!, Please login again! " + err.status, "Warning!", 5000);
-        this.toast.warning(errorMessage, "Warning!", 5000);
-
-      } else if (error.status === 404) {
-        errorMessage = error.error?.message;
-        // toast.warning(err.error.message, "Not Found!", 5000);
-      } else if (error.status === 409) {
-        this.logger.printLogs('i', 'Conflict Error', error);
-        errorMessage = error.error.message;
-        // toast.warning(err.error.message, "Conflict Error!", 5000);
-      } else if (error.status === 500) {
-        errorMessage = error.error.message;
-        // toast.error("Internal Server Error! Please contact the system administrator.", "Server Error!", 0);
       }
-    } else {
-      errorMessage = `Server Error`;
+    } else if (error.status === 401) {
+
+      errorMessage = error.error?.message || "Token is Expired!, Please login again!"; // Get the message from the error response
+      // toast.warning("Token is Expired!, Please login again! " + err.status, "Warning!", 5000);
+      this.toast.warning(errorMessage, "Warning!", 5000);
+
+    } else if (error.status === 404) {
+      errorMessage = error.error?.message;
+      // toast.warning(err.error.message, "Not Found!", 5000);
+    } else if (error.status === 409) {
+      this.logger.printLogs('i', 'Conflict Errorzzzzzzzzzz', error);
+      errorMessage = error.error?.message;
+      // toast.warning(err.error.message, "Conflict Error!", 5000);
+    } else if (error.status === 500) {
+      errorMessage = error.error?.message;
+      // toast.error("Internal Server Error! Please contact the system administrator.", "Server Error!", 0);
     }
 
     return throwError(() => errorMessage);

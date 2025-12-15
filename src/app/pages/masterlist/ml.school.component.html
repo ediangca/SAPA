@@ -4,7 +4,7 @@
     <div class="md:w-5/6">
         <div class="card">
             <p-table #dt [value]="schools()" [rows]="10" [columns]="cols" [paginator]="true"
-                [globalFilterFields]="['schoolID', 'schoolName', 'address', 'coordinator', 'status', 'date_created']"
+                [globalFilterFields]="['schoolID', 'schoolName', 'address', 'createdBy', 'status', 'code', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSchools"
                 [rowHover]="true" dataKey="schoolID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} schools"
@@ -64,9 +64,9 @@
                             Status
                             <p-sortIcon field="status" />
                         </th>
-                        <th pSortableColumn="status" style="min-width:10rem">
+                        <th pSortableColumn="code" style="min-width:10rem">
                             Code
-                            <p-sortIcon field="status" />
+                            <p-sortIcon field="code" />
                         </th>
                         <th pSortableColumn="date_created" style="min-width:10rem">
                             Date Created

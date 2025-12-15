@@ -293,7 +293,7 @@ export class Register {
                                 if (result.isConfirmed) {
                                     this.logger.printLogs('i', 'ACCESS GRANTED', res.message);
                                     this.api.showToast(res.message, 'SUCCESSFULL', 'success');
-                                    this.router.navigate(['/auth/login']);
+                                    this.router.navigate(['login']);
                                 }
                             });
 

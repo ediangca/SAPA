@@ -81,7 +81,7 @@ export class Users implements OnInit {
 
     users = signal<any[]>([]);
     user!: any;
-    selectUsers!: any[] | null;
+    selectedUsers!: any[] | null;
 
     form!: FormGroup;
 
@@ -93,7 +93,7 @@ export class Users implements OnInit {
 
     cols!: Column[];
     filter: string = '';
-    
+
     model: MenuItem[] = [];
     tokenPayload: any | null;
 
@@ -163,6 +163,11 @@ export class Users implements OnInit {
         ];
 
     }
+    
+    onStatusChanged() {
+        this.selectedUsers = [];
+        this.loadUsers();
+    }
 
     exportCSV() {
         const users = this.users();
@@ -190,7 +195,7 @@ export class Users implements OnInit {
     onGlobalFilter(table: Table) {
         table.filterGlobal(this.filter, 'contains');
     }
-    
+
     clear(table: Table,) {
         this.filter = ''
         table.clear();
@@ -230,17 +235,6 @@ export class Users implements OnInit {
         }
     }
 
-    // toggleAutoUsername() {
-    //     this.logger.printLogs('i', 'Auto Username toggled', this.form.get('autoUsername')?.value);
-    //     if (this.form.get('autoUsername')?.value) {
-    //         const email = this.form.get('email')?.value || '';
-    //         const username = email.split('@')[0];
-    //         this.form.get('username')?.setValue(username, { emitEvent: false });
-    //     } else {
-    //         this.form.get('username')?.setValue('', { emitEvent: false });
-    //     }
-    // }
-
     toggleAutoUsername(event: any) {
         const email = this.form.get('email')?.value || null;
 
@@ -269,17 +263,6 @@ export class Users implements OnInit {
     }
 
 
-    // updateUsername() {
-    //     if (this.form.get('autoUsername')?.value) {
-    //         const email = this.form.get('email')?.value || '';
-    //         const username = email.split('@')[0];
-    //         this.form.get('username')?.setValue(username, { emitEvent: false });
-    //     }
-    // }
-
-    /**
-     * Filter if there are spaces in username field
-     */
     filterSpace() {
         const usernameControl = this.form.get('username');
         if (usernameControl) {
@@ -402,8 +385,8 @@ export class Users implements OnInit {
             acceptButtonStyleClass: 'p-button-success',
             rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
             accept: () => {
-                this.users.set(this.users().filter((val) => !this.selectUsers?.includes(val)));
-                this.selectUsers = null;
+                this.users.set(this.users().filter((val) => !this.selectedUsers?.includes(val)));
+                this.selectedUsers = null;
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Successful',
@@ -433,11 +416,6 @@ export class Users implements OnInit {
         });
     }
 
-    // "userID",
-    // "email",
-    // "userID",
-    // "dateCreated",
-    // "dateUpdated"
     save() {
         this.submitted = true;
 

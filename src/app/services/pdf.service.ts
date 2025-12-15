@@ -169,7 +169,7 @@ export class PdfService {
                 { text: s.fullname || '—', fontSize: 9, noWrap: false },
                 { text: s.email || '—', fontSize: 9, noWrap: false, style: 'tableCell' },
                 { text: s.rolename || '—', fontSize: 9, noWrap: false },
-                { text: this.mapStatus(s.status), alignment: 'center', fontSize: 9 },
+                { text: this.mapUserStatus(s.status), alignment: 'center', fontSize: 9 },
                 { text: new Date(s.date_Created).toLocaleDateString(), alignment: 'center', fontSize: 9 }
               ])
             ]
@@ -401,6 +401,17 @@ export class PdfService {
       case 2: return 'Inactive';
       case 3: return 'Suspended';
       default: return 'Pending';
+    }
+  }
+  
+  /** ✅ Map status IDs to readable labels */
+  private mapUserStatus(status: String): string {
+    switch (status) {
+      case 'P': return 'Pending';
+      case 'A': return 'Approved';
+      case 'S': return 'Suspend';
+      case 'I': return 'Inactive';
+      default: return 'Unverified';
     }
   }
 
@@ -728,7 +739,7 @@ export class PdfService {
                       { text: item.hospitalName, fontSize: 9 },
                       { text: item.sectionName, fontSize: 9 },
                       {
-                        text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'OPEN' : 'CLOSED',
+                        text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'CONFIRMED' : 'CLOSED',
                         alignment: 'center',
                         fontSize: 9
                       }
@@ -865,7 +876,7 @@ export class PdfService {
                     { text: item.hospitalName, fontSize: 9 },
                     { text: item.sectionName, fontSize: 9 },
                     {
-                      text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'OPEN' : 'CLOSED',
+                      text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'CONFIRMED' : 'CLOSED',
                       alignment: 'center',
                       fontSize: 9
                     }

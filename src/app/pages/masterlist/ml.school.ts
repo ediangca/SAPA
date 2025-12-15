@@ -138,30 +138,66 @@ export class School implements OnInit {
 
 
     ngOnInit() {
+        this.loadData();
+    }
+
+    loadData() {
+        this.store.getUserPayload()
+            .subscribe(res => {
+                this.tokenPayload = res;
+                this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
+                this.initSubComponent();
+                this.loadSchools();
+            });
+
+        this.cols = [
+            { field: 'SchoolID', header: 'ID', customExportHeader: 'School ID' },
+            { field: 'schoolName', header: 'Name' },
+            { field: 'address', header: 'Address' },
+            { field: 'createdBy', header: 'Coordinator' },
+            { field: 'status', header: 'Status' },
+            { field: 'date_created', header: 'Date Created' },
+        ];
+
+        this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
+    }
+
+
+    initSubComponent() {
+
         this.subcomponent = [
-            {
-                id: 'p',
-                label: 'Print All',
-                icon: 'fas fa-print',
-                command: () => this.printAll()
-            },
-            {
-                id: 's',
-                label: 'Re-assign Coordinator',
-                icon: 'pi pi-user-edit',
-                command: () => this.reAssignDialog()
-            },
-            {
-                id: 's',
-                label: 'Status',
-                icon: 'fas fa-layer-group',
-                items: [
-                    { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
-                    { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
-                    { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-                    { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) }
-                ]
-            },
+            ...(this.tokenPayload.role === 'UGR0001'
+                ? [
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+                    {
+                        id: 's',
+                        label: 'Re-assign Coordinator',
+                        icon: 'pi pi-user-edit',
+                        command: () => this.reAssignDialog()
+                    },]
+                : [
+                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+                ]),
+
+            ...(this.tokenPayload.role === 'UGR0001' ? [
+                {
+                    id: 's',
+                    label: 'Status',
+                    icon: 'fas fa-layer-group',
+                    items: [
+                        ...(this.tokenPayload.role === 'UGR0001' ?
+                            [
+                                { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus(0) },
+                                { label: 'Approve', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(1) },
+                                { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus(2) },
+                                { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+                            ] : [
+                            ]
+                        ),
+
+                    ]
+                },
+            ] : []),
 
         ];
 
@@ -176,9 +212,8 @@ export class School implements OnInit {
                     this.validateAccessability();
                 }
             });
-
-        this.loadData();
     }
+
 
     validateAccessability() {
         const moduleID = 'MOD0005';
@@ -200,42 +235,22 @@ export class School implements OnInit {
         });
     }
 
-    loadData() {
-
-        this.store.getUserPayload()
-            .subscribe(res => {
-                this.tokenPayload = res;
-                this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
-            });
-        this.loadSchools();
-
-        this.cols = [
-            { field: 'SchoolID', header: 'ID', customExportHeader: 'School ID' },
-            { field: 'schoolName', header: 'Name' },
-            { field: 'address', header: 'Address' },
-            { field: 'coordinator', header: 'Coordinator' },
-            { field: 'date_created', header: 'Date Created' },
-        ];
-
-        this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
-    }
-
-
     exportCSV() {
         this.dt.exportCSV();
     }
 
     loadSchools() {
+
         this.api.getSchools().subscribe({
             next: (schools) => {
                 this.logger.printLogs('i', 'View School with Role: ', this.tokenPayload.role)
                 if (this.tokenPayload.role === 'UGR0001') {
-                    this.logger.printLogs('i', 'Schools loaded for AdminSys', this.schools)
                     this.schools.set(schools || []);
+                    this.logger.printLogs('i', 'Schools loaded for AdminSys', this.schools())
                 } else {
-                    this.logger.printLogs('i', 'Schools loaded for Other User', this.schools)
                     this.schools.set(schools.filter(s => s.userID === this.tokenPayload.nameid) || []);
-               }
+                    this.logger.printLogs('i', 'Schools loaded for Other User', this.schools())
+                }
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
         });
@@ -414,22 +429,10 @@ export class School implements OnInit {
             accept: () => {
                 this.api.updateSchoolStatus(status, schoolIDs).subscribe({
                     next: (res: any) => {
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: res.message,
-                            life: 3000
-                        });
 
                         this.logger.printLogs('s', 'Status updated successfully', res);
                         this.loadSchools();
                         this.showErrorAlert('Successful', 'School status updated', false, 'success',);
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Successful',
-                            detail: 'School status updated',
-                            life: 3000
-                        });
                         this.selectSchools = [];
                     },
                     error: (err) => {
@@ -701,7 +704,7 @@ export class School implements OnInit {
             life: 3000
         });
         Swal.fire({
-            title: 'Saving Failed',
+            title: title,
             text: message,
             icon: severity,
             showCancelButton: false,
