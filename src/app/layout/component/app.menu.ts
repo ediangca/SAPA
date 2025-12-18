@@ -60,6 +60,7 @@ export class AppMenu implements OnInit {
             {
                 label: 'Post',
                 items: [
+                    // { id: "MOD0008", label: 'Slot', icon: 'fas fa-calendar-days', routerLink: ['/dashboard/post/slots'] },
                     { id: "MOD0008", label: 'Schedule', icon: 'fas fa-calendar-days', routerLink: ['/dashboard/post/schedules'] },
                     { id: "MOD0009", label: 'Orientation', icon: 'fas fa-bullhorn', routerLink: ['/dashboard/post/orientations'] },
                     { id: "MOD0010", label: 'News & Updates', icon: 'fas fa-newspaper', routerLink: ['/dashboard/post/newsupdates'] },
@@ -75,7 +76,7 @@ export class AppMenu implements OnInit {
 
         ];
 
-       
+
 
         this.store.getPrivileges()
             .pipe(

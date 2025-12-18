@@ -1,3 +1,5 @@
+// @use '../../../../assets/layout/_severity.scss';
+
 ::ng-deep .p-confirm-dialog .p-confirm-dialog-accept {
   background-color: #4caf50 !important; /* custom green */
   border-color: #4caf50 !important;
@@ -73,3 +75,4 @@
 .delay-500 { animation-delay: 0.5s; }
 
 /*********************************************************/
+

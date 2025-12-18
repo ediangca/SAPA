@@ -25,7 +25,7 @@ import Swal from 'sweetalert2';
 import { StoreService } from '@/services/store.service';
 import { ToastModule } from 'primeng/toast';
 import { ToastrService } from 'ngx-toastr';
-import { NgToastService } from 'ng-angular-popup';
+import { NgToastService, ToastIconDirective } from 'ng-angular-popup';
 import { Tooltip, TooltipModule } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { CheckboxModule } from "primeng/checkbox";
@@ -50,37 +50,37 @@ interface ExportColumn {
     selector: 'ml-student',
     standalone: true,
     imports: [
-        CommonModule,
-        MenuModule,
-        TieredMenuModule,
-        TableModule,
-        FormsModule,
-        ButtonModule,
-        CheckboxModule,
-        // AppMenuitem,
-        PanelMenuModule,
-        RippleModule,
-        ToastModule,
-        ToolbarModule,
-        RatingModule,
-        InputTextModule,
-        TextareaModule,
-        SelectModule,
-        RadioButtonModule,
-        InputNumberModule,
-        DialogModule,
-        TagModule,
-        InputIconModule,
-        IconFieldModule,
-        ConfirmDialogModule,
-        ReactiveFormsModule,
-        TooltipModule,
-        FormsModule,
-        RouterModule,
-    ],
+    CommonModule,
+    MenuModule,
+    TieredMenuModule,
+    TableModule,
+    FormsModule,
+    TooltipModule,
+    ButtonModule,
+    CheckboxModule,
+    // AppMenuitem,
+    PanelMenuModule,
+    RippleModule,
+    ToastModule,
+    ToolbarModule,
+    RatingModule,
+    InputTextModule,
+    TextareaModule,
+    SelectModule,
+    RadioButtonModule,
+    InputNumberModule,
+    DialogModule,
+    TagModule,
+    InputIconModule,
+    IconFieldModule,
+    ConfirmDialogModule,
+    ReactiveFormsModule,
+    FormsModule,
+    RouterModule,
+],
     templateUrl: './ml.student.component.html',
     providers: [MessageService, ConfirmationService],
-    styleUrl: './css/masterlist.css'
+    styleUrl: './css/masterlist.scss'
 })
 export class Student implements OnInit {
 
@@ -104,7 +104,7 @@ export class Student implements OnInit {
     cols!: Column[];
     schools: any[] = [];
 
-    model: MenuItem[] = [];
+    // model: MenuItem[] = [];
     filter: string = '';
     tokenPayload: any | null;
 
@@ -139,54 +139,41 @@ export class Student implements OnInit {
 
     ngOnInit() {
         this.loadData();
+        this.buildSubComponent();
 
-        this.model = [
-            {
-                items: [
-                    { label: 'Users', icon: 'fas fa-table-columns' },
+    }
 
-                ]
-            }
-        ];
-
+    buildSubComponent() {
         this.subcomponent = [
             ...(this.tokenPayload.role === 'UGR0001'
                 ? [
                     { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
-                    {
-                        id: 's',
-                        label: 'Re-assign Coordinator',
-                        icon: 'pi pi-user-edit',
-                        command: () => this.reAssignDialog()
-                    },]
+                ]
                 : [
                     { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
                 ]),
+            {
+                id: 's',
+                label: 'Status',
+                icon: 'fas fa-layer-group',
+                disabled: !this.selectUsers || this.selectUsers.length === 0,
+                items: [
+                    ...(this.tokenPayload.role === 'UGR0001' ?
+                        [
+                            { label: 'Unverified', icon: 'fas fa-clock', command: () => this.changeStatus('U') },
+                            { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus('P') },
+                            { label: 'Approve', icon: 'fas fa-check', command: () => this.changeStatus('A') },
+                            { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus('S') },
+                            { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus('I') },
+                        ] : [
+                            { label: 'Approve', icon: 'fas fa-check', command: () => this.changeStatus('A') },
+                            { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus('I') },
+                        ]
+                    ),
 
-            ...(this.tokenPayload.role === 'UGR0001' ? [
-                {
-                    id: 's',
-                    label: 'Status',
-                    icon: 'fas fa-layer-group',
-                    items: [
-                        ...(this.tokenPayload.role === 'UGR0001' ?
-                            [
-                                { label: 'Unverified', icon: 'fas fa-clock', command: () => this.changeStatus('U') },
-                                { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus('P') },
-                                { label: 'Approve', icon: 'fas fa-check', command: () => this.changeStatus('A') },
-                                { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus('S') },
-                                { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus('I') },
-                            ] : [
-                            ]
-                        ),
-
-                    ]
-                },
-            ] : [
-
-            ]),
+                ]
+            },
         ];
-
     }
 
     loadData() {
@@ -209,7 +196,6 @@ export class Student implements OnInit {
             { field: 'role', header: 'Role' },
             { field: 'status', header: 'Status' },
         ];
-
     }
 
     exportCSV() {
@@ -234,6 +220,13 @@ export class Student implements OnInit {
         link.click();
         document.body.removeChild(link);
     }
+
+    onStudentSelectionChange(selected: any[]) {
+        this.logger.printLogs('i', "Select users : ", selected)
+        this.selectUsers = selected;
+        this.buildSubComponent()
+    }
+
 
     onGlobalFilter(table: Table) {
         table.filterGlobal(this.filter, 'contains');
@@ -346,6 +339,12 @@ export class Student implements OnInit {
             message: `Do you really want to resend email verification to ${user.email}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.logger.printLogs('i', `Resending Email verification to ${user.email}`, user);
 
@@ -375,6 +374,12 @@ export class Student implements OnInit {
             message: `Do you really want to approve <br> Mr./Ms. ${user.fullname}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.logger.printLogs('i', `Approving Account of Mr./Ms. ${user.fullname}`, user);
 
@@ -454,22 +459,6 @@ export class Student implements OnInit {
                 error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
             });
         }
-    }
-
-    reAssignDialog() {
-        if (!this.selectUsers || this.selectUsers.length === 0) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'No Selected School',
-                detail: 'Please select at least one school first!',
-                life: 3000
-            });
-            return;
-        }
-
-        this.assignDialog = true;
-        this.schoolID = null;
-        this.loadStudents();
     }
 
 

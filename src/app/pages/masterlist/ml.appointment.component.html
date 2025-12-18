@@ -1,9 +1,9 @@
 <p-toast></p-toast>
 <div class="flex flex-col md:flex-row gap-8">
 
-    <div class="md:w-5/6">
+    <div class="md:w-4/5">
         <div class="card">
-            <p-table #dt [value]="appointments()" [rows]="10" [columns]="cols" [paginator]="true"
+            <p-table #dt [value]="appointments()" [rows]="10" [columns]="cols" [paginator]="true" [showGridlines]="true"
                 [globalFilterFields]="['dateSlot','schoolName', 'hospitalName', 'sectionName', 'shiftName', 'status', 'date_Created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectAppointments"
                 [rowHover]="true" dataKey="appointmentID"
@@ -89,20 +89,32 @@
                         <td style="min-width: 10rem">{{ appointment.sectionName }}</td>
                         <td style="min-width: 3rem">{{ appointment.shiftName }}</td>
                         <td style="min-width: 3rem">
-                            {{appointment.status}}
                             <p-tag [value]="getStatus(appointment.status,'value')"
                                 [severity]="getStatus(appointment.status,'severirty')"
                                 styleClass="dark:bg-surface-900!" />
+                            @if (getStatus(appointment.status,'value').toLowerCase() == 'unverified') {
+                            <button class="ml-2" (click)="resendVerification(appointment)" pTooltip=" Resend Verification?"
+                                tooltipPosition="top"> <i
+                                    class="fa-solid fa-paper-plane text-blue-500 hover:animate-bounce transition-colors"></i>
+                            </button>
+                            }@else if (getStatus(appointment.status,'value').toLowerCase() == 'pending') {
+                            <button class="ml-2" (click)="changeStatus(1, appointment)" pTooltip=" Approve Account?"
+                                tooltipPosition="top"> <i
+                                    class="fa-solid fa-thumbs-up text-blue-500 hover:animate-bounce transition-colors"></i>
+                            </button>
+                            }
                         </td>
                         <td style="min-width: 3rem">{{ dateFormat(appointment.date_Created) }}</td>
                         <td>
                             <div class="flex flex-row gap-2">
                                 @if(appointment.status === 0){
                                 <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                                    (click)="delete(appointment)" />
+                                pTooltip="Delete"  (click)="delete(appointment)" />
                                 }
                                 <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
-                                    (click)="show(appointment)" />
+                                pTooltip="Show" tooltipPosition="top" (click)="show(appointment)" />
+                                <p-button icon="pi pi-times" severity="warn" [rounded]="true" [outlined]="true"
+                                pTooltip="Request to Cancel" tooltipPosition="top" (click)="changeStatus(3, appointment)" />
                             </div>
                         </td>
                     </tr>
@@ -113,7 +125,7 @@
 
 
     <!-- SUBMENU -->
-    <div class="md:w-1/6">
+    <div class="md:w-1/5">
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
             <div class="">
                 <h5 class="m-0">Sub Component</h5>
@@ -582,7 +594,8 @@
     <!-- Footer -->
     <ng-template pTemplate="footer">
         <div class="flex flex-row justify-between">
-            <p-button *ngIf="selectedAppointment.status == 1" label="Request to Cancel" class="mr-2" severity="warn" (click)="changeStatus(3, selectedAppointment)">
+            <p-button *ngIf="selectedAppointment.status == 1" label="Request to Cancel" class="mr-2" severity="warn"
+                (click)="changeStatus(3, selectedAppointment)">
             </p-button>
             <p-button label="Close" severity="secondary" (click)="closeDialog()">
             </p-button>
@@ -599,7 +612,6 @@
 
             <div class="card filter w-sm">
 
-                <!-- School -->
                 <div class="flex flex-col gap-2">
                     <label for="schools" class="font-bold">Schools</label>
                     <p-select styleClass="w-full" id="schools" [options]="schools" optionLabel="schoolName"
@@ -607,20 +619,17 @@
                         [showClear]="true"></p-select>
                 </div>
 
-                <!-- Date Range -->
                 <div class="flex flex-col gap-2 mt-3">
                     <label class="font-semibold">Date Range</label>
                     <p-datepicker [(ngModel)]="dialogDateRange" class="w-full" [inline]="true" selectionMode="range"
                         dateFormat="yyyy-MM-dd" showIcon="true" placeholder="Select date range"></p-datepicker>
                 </div>
 
-                <!-- Buttons -->
                 <div class="flex justify-end gap-2 mt-3">
                     <p-button label="Generate" icon="pi pi-check" (onClick)="previewSchedule()"></p-button>
                 </div>
 
             </div>
-            <!-- PDF Preview -->
             <div class="card pdfviewer w-full">
 
                 @if(filteredAppointments.length === 0){

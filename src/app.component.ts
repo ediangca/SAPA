@@ -11,6 +11,8 @@ import AOS from 'aos';
   standalone: true,
   imports: [RouterModule, ProgressSpinnerModule, AsyncPipe, NgToastModule],
   template: `
+    <!-- <ng-toast [width]="400"[position]="ToasterPosition.TOP_RIGHT" /> configure width with position   -->
+    <router-outlet></router-outlet>
     @if (isLoading | async) {
       <div class="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm">
         <!-- 🔥 Custom Loading GIF -->
@@ -31,8 +33,6 @@ import AOS from 'aos';
         </div>
       </div>
     }
-    <router-outlet></router-outlet>
-    <ng-toast [width]="400"[position]="ToasterPosition.TOP_RIGHT" /> <!-- configure width with position   -->
     <!-- Fullscreen Loading Overlay -->
   `,
   styles: [`

@@ -1,9 +1,9 @@
 <p-toast></p-toast>
 <div class="flex flex-col md:flex-row gap-8">
     <!-- HOSPITAL TABLE -->
-    <div class="md:w-5/6">
+    <div class="md:w-4/5">
         <div class="card">
-            <p-table #dt [value]="hospitals()" [rows]="10" [columns]="cols" [paginator]="true"
+            <p-table #dt [value]="hospitals()" [rows]="10" [columns]="cols" [paginator]="true" [showGridlines]="true"
                 [globalFilterFields]="['hospitalID', 'hospitalName', 'address', 'sections.sectionName']"
                 [tableStyle]="{ 'min-width': '75rem' }" [(selection)]="selectHospitals" [rowHover]="true"
                 dataKey="hospitalID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} hospitals"
@@ -138,7 +138,7 @@
         </div>
     </div>
     <!-- SUBMENU -->
-    <div class="md:w-1/6">
+    <div class="md:w-1/5">
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
             <ml-hospital-properties [hospitals]="hospitals()"></ml-hospital-properties>
         </div>
@@ -155,14 +155,14 @@
                     <label for="hospitalName" class="block font-bold mb-3">Hospital Name</label>
                     <input type="text" pInputText id="hospitalName" name="hospitalName" formControlName="hospitalName"
                         required autofocus fluid />
-                    <small class="text-red-500" *ngIf="submitted && !form.value['hospitalName']"> Name is
+                    <small class="flex flex-row w-full justify-end text-red-500" *ngIf="submitted && !form.value['hospitalName']"> Name is
                         required.</small>
                 </div>
                 <div>
                     <label for="address" class="block font-bold mb-3">Hospital Address</label>
                     <textarea id="address" pTextarea name="address" formControlName="address" required rows="3"
                         cols="20" fluid></textarea>
-                    <small class="text-red-500" *ngIf="submitted && !form.value['address']"> Name is required.</small>
+                    <small class="flex flex-row w-full justify-end text-red-500" *ngIf="submitted && !form.value['address']"> Name is required.</small>
                     <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
                 </div>
 
@@ -190,7 +190,7 @@
                             </div>
                         </ng-template>
                     </p-multiSelect>
-                    <small class="text-red-500" *ngIf="submitted && form.controls['sections'].errors?.['required']">
+                    <small class="flex flex-row w-full justify-end text-red-500" *ngIf="submitted && form.controls['sections'].errors?.['required']">
                         At least one section must be selected.
                     </small>
                 </div>

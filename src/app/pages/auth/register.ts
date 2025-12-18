@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, RouterModule } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -22,6 +22,7 @@ import { NgToastService } from 'ng-angular-popup';
 import { StepperModule } from 'primeng/stepper';
 import { Tooltip } from "primeng/tooltip";
 import { Badge, BadgeModule } from "primeng/badge";
+import { TextareaModule } from 'primeng/textarea';
 
 @Component({
     selector: 'app-register',
@@ -35,6 +36,7 @@ import { Badge, BadgeModule } from "primeng/badge";
         InputTextModule,
         PasswordModule,
         FormsModule,
+        TextareaModule,
         RouterModule,
         RippleModule,
         ToastModule,
@@ -50,7 +52,7 @@ import { Badge, BadgeModule } from "primeng/badge";
     providers: [MessageService]
 })
 
-export class Register {
+export class Register implements OnInit {
 
     isStudent: boolean = false;
 
@@ -97,7 +99,9 @@ export class Register {
             confirmPassword: ['', Validators.required],
             autoUsername: [false],
             isStudent: [false],
-            schoolCode: ['']
+            schoolCode: [null],
+            schoolName: ['', Validators.required],
+            address: ['', Validators.required],
         }, { validators: validatePasswordMatch('password', 'confirmPassword') });
 
         this.errorMessage = '';
@@ -107,16 +111,44 @@ export class Register {
         }
     }
 
+    ngOnInit(): void {
+        this.form.get('isStudent')!.valueChanges.subscribe(isStudent => {
+            const schoolCode = this.form.get('schoolCode');
+            const schoolName = this.form.get('schoolName');
+            const address = this.form.get('address');
+
+            if (isStudent === false) {
+                schoolName?.setValidators([Validators.required]);
+                address?.setValidators([Validators.required]);
+                schoolCode?.clearValidators();
+            } else {
+                schoolCode?.setValidators([Validators.required]);
+                schoolName?.clearValidators();
+                address?.clearValidators();
+            }
+
+            schoolCode?.updateValueAndValidity();
+            schoolName?.updateValueAndValidity();
+            address?.updateValueAndValidity();
+        });
+    }
+
     onRoleToggle() {
         this.isStudent = this.form.get('isStudent')?.value || false;
         if (this.isStudent) {
             this.form.get('schoolCode')?.setValidators([Validators.required]);
+            this.form.get('schoolName')?.clearValidators();
+            this.form.get('address')?.clearValidators();
         } else {
-            this.form.get('schoolCode')?.clearValidators();
-            this.form.get('schoolCode')?.setValue('');
+            this.form.get('schoolCode')?.clearValidators
+            this.form.get('schoolName')?.setValidators([Validators.required]);
+            this.form.get('address')?.setValidators([Validators.required]);
         }
 
         this.form.get('schoolCode')?.updateValueAndValidity();
+        this.form.get('isStudent')!.updateValueAndValidity({ emitEvent: true });
+
+        this.form.markAsUntouched();
     }
 
     goToStep(step: number) {
@@ -273,8 +305,13 @@ export class Register {
                 "username": this.form.value['username'],
                 "password": this.form.value['password'],
                 "roleId": roleId,
-                "schoolId": this.isStudent ? this.form.value['schoolCode'] : null
+                "schoolId": this.isStudent ? this.form.value['schoolCode'] : null,
+
+                "schoolName": !this.isStudent ? this.form.value['schoolName'] : null,
+                "address": !this.isStudent ? this.form.value['address'] : null,
             }
+
+
 
             setTimeout(() => {
                 this.auth.register(userAccount)

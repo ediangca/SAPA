@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { Reports } from './reports';
-import { Account } from './account';
+import { Account } from './set.account';
 import { Settings } from './settings';
 import { Users } from './set.user';
 import { Roles } from './set.role';

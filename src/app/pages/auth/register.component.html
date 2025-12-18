@@ -1,4 +1,3 @@
-
 <app-floating-configurator />
 <div
     class="bg-[url('https://shs-components.infopark.io/siemens-healthcare/countries/us/services/cs-workforce-honeycomb/assets/workforce-people-illustration.png')] 
@@ -56,14 +55,16 @@
                             </p-selectButton>
                         </div>
 
-
-                        @if (form.get('isStudent')?.value === true) {
                         <div class="mb-4 fadeIn">
-                            <label for="schoolCode"
-                                class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
-                                [class.error]="form.controls['schoolCode'].dirty && form.hasError('required', 'schoolCode')">
-                                School Code
-                                @if (form.controls['schoolCode'].dirty && form.hasError('required', 'schoolCode'))
+                            @if (form.get('isStudent')?.value === true) {
+
+
+                            <label for="schoolCode" class="block font-bold mb-3">School Code
+                                @if (form.controls['schoolCode'].invalid &&
+                                form.hasError('required', 'schoolCode') &&
+                                form.get('schoolCode')?.touched ||
+                                (form.controls['schoolCode'].dirty &&
+                                form.hasError('required', 'schoolCode')))
                                 {
                                 <small class="text-red-600">* is required</small>
                                 }
@@ -71,9 +72,41 @@
 
                             <input pInputText id="schoolCode" placeholder="Enter school code"
                                 formControlName="schoolCode" class="w-full md:w-120" (blur)="onCheckSchoolCode()" />
-                        </div>
 
-                        }
+
+                            }@else {
+                            <label for="schoolName" class="block font-bold mb-3">School Name
+                                @if (form.controls['schoolName'].invalid &&
+                                form.hasError('required', 'schoolName') &&
+                                form.get('schoolName')?.touched ||
+                                (form.controls['schoolName'].dirty &&
+                                form.hasError('required', 'schoolName')))
+                                {
+                                <small class="text-red-600">* is required</small>
+                                }
+                            </label>
+
+                            <input class="mb-4" type="text" pInputText id="schoolName" name="schoolName"
+                                formControlName="schoolName" required autofocus fluid />
+
+
+                            <label for="address" class="block font-bold mb-3">School Address
+
+                                @if (form.controls['schoolName'].invalid &&
+                                form.hasError('required', 'schoolName') &&
+                                form.get('schoolName')?.touched ||
+                                (form.controls['schoolName'].dirty &&
+                                form.hasError('required', 'schoolName')))
+                                {
+                                <small class="text-red-600">* is required</small>
+                                }
+                            </label>
+                            <textarea pTextarea id="address" class="w-full" name="address"
+                                formControlName="address" required rows="3" fluid></textarea>
+
+
+                            }
+                        </div>
 
                         <p-stepper [(value)]="currentStep">
                             <p-step-list>
@@ -101,7 +134,7 @@
                             {
                             <div class="fadeIn">
                                 <label for="lastname"
-                                    class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
+                                    class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                                     [class.error]="form.controls['lastname'].dirty && form.hasError('required', 'lastname')">
                                     Lastname
                                     @if (form.controls['lastname'].invalid &&
@@ -118,7 +151,7 @@
                                     formControlName="lastname" class="w-full md:w-120 mb-4" />
 
                                 <label for="firstname"
-                                    class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
+                                    class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                                     [class.error]="form.controls['firstname'].dirty && form.hasError('required', 'firstname')">
                                     Firstname
                                     @if (form.controls['firstname'].invalid &&
@@ -135,7 +168,7 @@
                                     formControlName="firstname" class="w-full md:w-120 mb-4" />
 
                                 <label for="middlename"
-                                    class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
+                                    class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                                     [class.error]="form.controls['middlename'].dirty && form.hasError('required', 'middlename')">
                                     Middlename
                                     @if (form.controls['middlename'].invalid &&
@@ -155,8 +188,7 @@
                             }@else{
 
                             <div class="fadeIn">
-                                <label for="email"
-                                    class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
+                                <label for="email" class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                                     [class.error]="form.controls['email'].dirty && form.hasError('required', 'email')">
                                     Email
 
@@ -190,7 +222,7 @@
                                 </div>
 
                                 <label for="username"
-                                    class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
+                                    class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                                     [class.error]="form.controls['username'].dirty && form.hasError('required', 'username')">
                                     Username
                                     @if (form.controls['username'].invalid &&
@@ -210,7 +242,7 @@
 
 
                                 <label for="password"
-                                    class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2"
+                                    class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                                     [class.error]="form.controls['password'].dirty && form.hasError('required', 'password')">
                                     Password
                                     @if (form.controls['password'].invalid &&
@@ -233,7 +265,7 @@
                                     [feedback]="false"></p-password>
 
                                 <label for="confirmPassword"
-                                    class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2"
+                                    class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                                     [class.error]="form.controls['confirmPassword'].dirty && form.hasError('required', 'confirmPassword')">
                                     Confirm Password
 

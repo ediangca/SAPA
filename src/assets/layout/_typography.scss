@@ -1,3 +1,4 @@
+
 h1,
 h2,
 h3,
@@ -68,8 +69,9 @@ p {
 }
 
 .text-danger {
-  color: #dc2626; // Tailwind red-600
+  color: #dc2626;
 }
+
 
 .text-danger {
   @apply text-red-600;

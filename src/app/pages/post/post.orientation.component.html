@@ -24,8 +24,8 @@
                         <div class="flex row">
                             <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
                                 (onClick)="openNew()" />
-                            <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
-                            (onClick)="deleteSelected()" [disabled]="!selectSchools || !selectSchools.length" /> -->
+                            <p-button label="Form" icon="pi pi-file" severity="secondary" class="mr-2"
+                                (onClick)="openForm()" />
                         </div>
                         <p-iconfield>
                             <p-inputicon styleClass="pi pi-search" />
@@ -162,7 +162,7 @@
     </ng-template>
 
     <ng-template #footer>
-        <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="closeDialog()" />
         <p-button label="Save" icon="pi pi-check" (click)="save()" />
     </ng-template>
 </p-dialog>
@@ -196,7 +196,7 @@
     <!-- Footer -->
     <ng-template pTemplate="footer">
         <div class="flex justify-end gap-3 w-full">
-            <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="closeDialog()" />
             <p-button label="Assign" icon="pi pi-check" (click)="saveAssignCoor()" />
         </div>
     </ng-template>
@@ -224,8 +224,26 @@
 
     <ng-template pTemplate="footer">
         <div class="flex justify-end gap-3 w-full">
-            <p-button label="Close" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Close" severity="secondary" icon="pi pi-times" text (click)="closeDialog()" />
             <p-button label="Download" icon="pi pi-download" (click)="saveAsImage()" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+
+
+<p-dialog [(visible)]="formDialog" header="Form" [modal]="true" [style]="{width: '100vw', height: '100vw'}"
+    [closable]="true">
+
+    <div class="flex flex-col items-center my-3 mx-3">
+        <iframe
+            src="https://docs.google.com/forms/d/e/1FAIpQLSdrJ9fGHVCQ3ETVjSYyIhPBf_mZ4_WcYthSTnMno9_-_M9o1A/viewform?embedded=true"
+            [style]="{width: '100vw', height: '100vw'}">Loading…</iframe>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-3 w-full">
+            <p-button label="Close" severity="secondary" icon="pi pi-times" text (click)="closeDialog()" />
         </div>
     </ng-template>
 </p-dialog>

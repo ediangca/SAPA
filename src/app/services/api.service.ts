@@ -290,6 +290,10 @@ export class ApiService {
     return this.handleRequest<any[]>('get', 'Users', { logAction: 'Fetching Users' });
   }
 
+  getUserAccount(id: string) {
+    return this.handleRequest<any[]>('get', 'Users', { id: id,logAction: 'Fetching Users' });
+  }
+
   GetUserbyUsername(userame: string): Observable<any> {
     return this.handleRequest<any[]>('get', 'Users/GetUserbyUsername', { id: userame, logAction: `Fetching User By Username ${userame}` });
   }
@@ -403,6 +407,10 @@ export class ApiService {
   createBulkSlots(slots: any) {
     return this.handleRequest('post', 'Slots/bulk', { body: slots, logAction: 'Creating Bulk Slots' });
   }
+  createBulkSchedules(slots: any, force = false) {
+    return this.handleRequest('post', `Slots/bulk/${force}`, { body: slots, logAction: 'Creating Bulk Slots' });
+  }
+
 
   updateSlotStatus(status: number, slotIDs: string[]) {
     return this.handleRequest('put', `Slots/status/${status}`, {

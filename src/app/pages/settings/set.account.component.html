@@ -1,0 +1,237 @@
+<p-toast></p-toast>
+
+<div *ngIf="user; else skeleton">
+    <div class="max-w-4xl mx-auto p-6">
+        <div class="bg-white dark:bg-gray-900 shadow-lg rounded-2xl p-6">
+
+            <!-- Header -->
+            <div class="mb-6 border-b pb-4">
+                <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                    Account
+                </h2>
+                <p class="text-sm text-gray-500">
+                    Manage your account information
+                </p>
+            </div>
+
+            <!-- Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- User ID -->
+                <div>
+                    <label class="text-sm font-medium text-gray-600">User ID</label>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-semibold">
+                        {{ user.userID }}
+                    </div>
+                </div>
+
+                <!-- Username -->
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Username</label>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                        {{ user.username }}
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Email</label>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                        {{ user.email }}
+                    </div>
+                </div>
+
+                <!-- Email Verified -->
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Email Verified</label>
+                    <div class="mt-1">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium" [ngClass]="user.email_Verified_At 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-red-100 text-red-700'">
+                            {{ user.email_Verified_At ? 'Verified' : 'Not Verified' }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Full Name -->
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Full Name</label>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                        {{ user.fullname }}
+                    </div>
+                </div>
+
+                <!-- Individual Name Fields -->
+                <div>
+                    <label class="text-sm font-medium text-gray-600">First Name</label>
+                    <div class="mt-1">{{ user.firstname || '-' }}</div>
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Middle Name</label>
+                    <div class="mt-1">{{ user.middlename || '-' }}</div>
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Last Name</label>
+                    <div class="mt-1">{{ user.lastname || '-' }}</div>
+                </div>
+
+                <!-- Role -->
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Role</label>
+                    <div class="mt-1 font-medium">
+                        {{ user.rolename }}
+                    </div>
+                </div>
+
+                <!-- School -->
+                <div>
+                    <label class="text-sm font-medium text-gray-600">School</label>
+                    <div class="mt-1">
+                        {{ user.schoolName || 'N/A' }}
+                    </div>
+                </div>
+
+                <!-- Password (masked) -->
+                <div>
+                    <label class="text-sm font-medium text-gray-600">Password</label>
+                    <div class="mt-1 tracking-widest">
+                        ••••••••
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-8 flex justify-end gap-3">
+
+                <p-button class="mr-2" label="Change Password" icon="pi pi-pencil" severity="secondary"
+                    [rounded]="false" [outlined]="false" (click)="changePassword()" />
+
+                <p-button icon="pi pi-pencil" class="mr-2" label="Edit Account" [rounded]="false" [outlined]="false"
+                    (click)="onEditAccount()" />
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<ng-template #skeleton>
+    <!-- Skeleton Wrapper -->
+    <div class="max-w-4xl mx-auto p-6 animate-pulse">
+        <div class="bg-white dark:bg-gray-900 shadow-lg rounded-2xl p-6">
+
+            <!-- Header Skeleton -->
+            <div class="mb-6 border-b pb-4">
+                <div class="h-6 w-32 bg-gray-300 dark:bg-gray-700 rounded mb-2"></div>
+                <div class="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            </div>
+
+            <!-- Grid Skeleton -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Reusable field skeleton -->
+                <ng-container *ngFor="let i of [].constructor(11)">
+                    <div>
+                        <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                        <div class="h-5 w-full bg-gray-300 dark:bg-gray-600 rounded"></div>
+                    </div>
+                </ng-container>
+
+            </div>
+
+            <!-- Actions Skeleton -->
+            <div class="mt-8 flex justify-end gap-3">
+                <div class="h-10 w-36 bg-gray-300 dark:bg-gray-700 rounded"></div>
+                <div class="h-10 w-32 bg-gray-300 dark:bg-gray-700 rounded"></div>
+            </div>
+
+        </div>
+    </div>
+
+</ng-template>
+
+
+<p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="User Details" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-6">
+            <form [formGroup]="form" ng-reflect-form="[object Object]">
+                <div>
+
+                    <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
+
+                    <label for="lastname" class="block font-bold mb-3">Lastname</label>
+                    <input type="text" pInputText id="lastname" name="lastname" formControlName="lastname" required
+                        autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['lastname']"> Lastname is
+                        required.</small>
+                    <label for="firstname" class="block font-bold mb-3">Firstname</label>
+                    <input type="text" pInputText id="firstname" name="firstname" formControlName="firstname" required
+                        autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['firstname']"> Firstname is
+                        required.</small>
+                    <label for="middlename" class="block font-bold mb-3">Middlename</label>
+                    <input type="text" pInputText id="middlename" name="middlename" formControlName="middlename"
+                        required autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['middlename']"> Middlename is
+                        required.</small>
+
+                    <label for="email" class="block font-bold mb-3">Email</label>
+                    <input type="text" pInputText id="email" name="email" formControlName="email" required autofocus
+                        fluid />
+                    <small class="text-red-500" *ngIf="submitted && (!form.value['email'] || isEmailInvalid())"> Valid
+                        Email is
+                        required.</small>
+                    <div class="flex flex-row gap-2 item-center justify-end mt-2">
+                        <p-check-box id="autoUsername" formControlName="autoUsername"
+                            (onChange)="toggleAutoUsername($event)" binary="true" label="Auto-generate username"
+                            binary="true" />
+
+                        <small class="text-cyan-500">Copy Email ID to Username</small>
+                    </div>
+
+                    <label for="username" class="block font-bold mb-3">Username</label>
+                    <input type="text" pInputText id="username" name="username" formControlName="username"
+                        (keyup)="filterSpace()" required autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !form.value['username']"> Username is
+                        required.</small>
+
+                </div>
+            </form>
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="save()" />
+    </ng-template>
+</p-dialog>
+
+
+
+<p-dialog [(visible)]="changePassDialog" [style]="{ width: '450px' }" header="Change Password" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-4 p-3">
+            <div class="flex flex-col gap-3">
+                <label>New Password</label>
+                <input pInputText [(ngModel)]="newPassword" placeholder="Enter new password" [ngClass]="{
+               'border !border-red-500 rounded px-2 py-2': isPasswordInvalid()
+             }" />
+                <small class="text-red-500 mt-1" *ngIf="isPasswordInvalid()">
+                    Password is required.
+                </small>
+            </div>
+
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="updatePassword()" />
+    </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }" acceptIcon="pi pi-check text-white" rejectIcon="pi pi-times text-white"
+    acceptButtonStyleClass="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg transition "
+    rejectButtonStyleClass="bg-red-600 hover:bg-red-700 text-white font-medium px-4 py-2 rounded-lg transition">
+</p-confirmDialog>

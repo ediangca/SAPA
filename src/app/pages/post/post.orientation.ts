@@ -83,6 +83,7 @@ export class Orientation implements OnInit {
     properties: MenuItem[] = [];
 
     itemDialog: boolean = false;
+    formDialog: boolean = false;
 
     schools = signal<any[]>([]);
     school!: any;
@@ -253,6 +254,10 @@ export class Orientation implements OnInit {
         this.itemDialog = true;
     }
 
+    openForm() {
+        this.formDialog = true;
+    }
+
     openNewDialog() {
         this.form.reset();
         this.itemDialog = true;
@@ -308,7 +313,7 @@ export class Orientation implements OnInit {
     }
 
 
-    hideDialog() {
+    closeDialog() {
         this.form.reset({
             schoolName: '',
             userID: this.tokenPayload.nameid
@@ -317,6 +322,7 @@ export class Orientation implements OnInit {
         this.itemDialog = false;
         this.assignDialog = false;
         this.qrDialog = false;
+        this.formDialog = false;
         this.submitted = false;
     }
 
@@ -355,7 +361,7 @@ export class Orientation implements OnInit {
 
                         this.logger.printLogs('s', 'Status updated successfully', res);
                         this.loadSchools();
-                        this.showErrorAlert('Successful', 'School status updated', false, 'success', );
+                        this.showErrorAlert('Successful', 'School status updated', false, 'success',);
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Successful',
@@ -460,7 +466,7 @@ export class Orientation implements OnInit {
                 next: (res) => {
                     this.logger.printLogs('i', 'School updated successfully', res,);
                     this.loadSchools(); // reload list
-                    this.hideDialog();
+                    this.closeDialog();
                     this.showErrorAlert('Successful', 'School updated successfully', false, 'success');
                 },
                 error: (err) => {
@@ -477,7 +483,7 @@ export class Orientation implements OnInit {
                 next: (res) => {
                     this.logger.printLogs('i', 'School created successfully', res);
                     this.loadSchools(); // reload list
-                    this.hideDialog();
+                    this.closeDialog();
                     this.showErrorAlert('Successful', 'School created successfully', false, 'success');
                     // this.showErrorAlert('Created Successfully', "School created successfully", false);
                 },

@@ -45,6 +45,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SafeUrlPipe } from '@/helper/handler/safe-url-pipe';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TooltipModule } from 'primeng/tooltip';
 
 
 interface Column {
@@ -97,10 +98,11 @@ interface ExportColumn {
         SkeletonModule,
         CheckboxModule,
         ProgressSpinnerModule,
-        SafeUrlPipe
+        SafeUrlPipe,
+        TooltipModule,
     ],
     templateUrl: './ml.appointment.component.html',
-    styleUrl: './css/masterlist.css',
+    styleUrl: './css/masterlist.scss',
     providers: [MessageService, ProductService, ConfirmationService]
 })
 export class Appointment implements OnInit {
@@ -259,7 +261,7 @@ export class Appointment implements OnInit {
             .subscribe(res => {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
-                this.initSubComponent();
+                this.buildSubComponent();
                 this.loadAppointments();
                 this.loadSchools();
             });
@@ -276,7 +278,7 @@ export class Appointment implements OnInit {
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
     }
 
-    initSubComponent() {
+    buildSubComponent() {
         this.subcomponent = [
             ...(this.tokenPayload.role === 'UGR0001'
                 ? [
@@ -285,18 +287,24 @@ export class Appointment implements OnInit {
                         id: 's',
                         label: 'Status',
                         icon: 'fas fa-layer-group',
+                        disabled: !this.selectAppointments || this.selectAppointments.length === 0,
                         items: [
-                            { label: 'Pending', icon: 'fas fa-pause-circle', command: () => this.changeStatus(0) },
-                            { label: 'Confirm', icon: 'fas fa-pause-circle', command: () => this.changeStatus(1) },
-                            { label: 'Request Cancel', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
-                            { label: 'Confirm Cancelation', icon: 'pi pi-fw pi-list', command: () => this.changeStatus(4) },
-                            { label: 'Declined', icon: 'fas fa-ban', command: () => this.changeStatus(2) }
+                            { label: 'Pending', severity: 'warning', icon: 'fas fa-file-powerpoint', command: () => this.changeStatus(0) },
+                            { label: 'Confirm',  severity: 'primary', icon: 'fas fa-clipboard-check', command: () => this.changeStatus(1) },
+                            { label: 'Request Cancel', severity: 'warning', icon: 'fas fa-file-arrow-up', command: () => this.changeStatus(3) },
+                            { label: 'Confirm Cancelation', severity: 'info', icon: 'fas fa-file-circle-xmark', command: () => this.changeStatus(4) },
+                            { label: 'Declined', severity: 'danger', icon: 'fas fa-file-excel', command: () => this.changeStatus(2) }
                         ]
                     }
                 ]
                 : [
                     { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
-                    { label: 'Request Cancel', icon: 'fas fa-pause-circle', command: () => this.changeStatus(3) },
+                    {
+                        label: 'Request Cancel',
+                        icon: 'fas fa-file-arrow-up',
+                        disabled: !this.selectAppointments || this.selectAppointments.length === 0,
+                        command: () => this.changeStatus(3)
+                    },
                 ]),
         ]
 
@@ -568,7 +576,7 @@ export class Appointment implements OnInit {
             case 2:
                 return (type == 'value' ? 'Declined' : 'contrast')
             case 3:
-                return (type == 'value' ? 'Cancel Request' : 'warn')
+                return (type == 'value' ? 'Request to Cancel' : 'warn')
             case 4:
                 return (type == 'value' ? 'Cancel/ed' : 'danger')
 
@@ -581,6 +589,7 @@ export class Appointment implements OnInit {
     onAppointmentSelectionChange(selected: any[]) {
         this.logger.printLogs('i', "Select appointments : ", selected)
         this.selectAppointments = selected;
+        this.buildSubComponent();
     }
 
     onGlobalFilter(table: Table) {
@@ -758,14 +767,15 @@ export class Appointment implements OnInit {
     }
 
     changeStatus(status: number, appointment: any | null = null) {
+        this.logger.printLogs('i', `Update appointment to ${this.getStatus(status, 'value')}`, appointment);
 
         const appointmentIDs = appointment ? [appointment.appointmentID] :
             (this.selectAppointments?.map((appointment: any) => appointment.appointmentID) ?? []);
         const appointments =
-            appointment ? [`${appointment.hospitalName}(${appointment.sectionName}) - (${this.dateFormat(appointment.dateSlot)} ${this.formatTime(appointment.startTime)} - ${this.formatTime(appointment.endTime)})`] :
+            appointment ? [`${appointment.hospitalName}(${appointment.sectionName}) <br> (${this.dateFormat(appointment.dateSlot)} ${this.formatTime(appointment.startTime)} - ${this.formatTime(appointment.endTime)})`] :
                 (this.selectAppointments?.map(
                     (appointment: any) =>
-                        `${appointment.hospitalName}(${appointment.sectionName}) - (${this.dateFormat(appointment.dateSlot)} ${this.formatTime(appointment.startTime)} - ${this.formatTime(appointment.endTime)})`
+                        `- ${appointment.hospitalName}(${appointment.sectionName}) <br> (${this.dateFormat(appointment.dateSlot)} ${this.formatTime(appointment.startTime)} - ${this.formatTime(appointment.endTime)})`
                 ) ?? []);
 
         if (!appointmentIDs.length) {
@@ -778,81 +788,54 @@ export class Appointment implements OnInit {
             return;
         }
 
+        const rules: Record<number, { allowed: number[]; message: string }> = {
+            3: {
+                allowed: [1],
+                message: 'Please select only those Confirmed Appointments!'
+            },
+            0: {
+                allowed: [1, 4, 2],
+                message: 'Please select only those Confirmed Appointments!'
+            },
+            1: {
+                allowed: [0],
+                message: 'Please select only those Pending Appointments!'
+            },
+            4: {
+                allowed: [3],
+                message: 'Please select only those requested to Cancel Appointments!'
+            },
+            2: {
+                allowed: [0],
+                message: 'Please select only those Pending Appointments!'
+            }
+        };
 
-        if (status === 3) {
-            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
-                return s.status !== 1;
-            });
-            if (validateOnlyConfirmAppointments.length > 0) {
+        const rule = rules[status];
+
+        if (rule) {
+            const hasInvalid = appointment ?
+                !rule.allowed.includes(appointment.status)
+                :
+                this.selectAppointments.some(
+                    (a: any) => !rule.allowed.includes(a.status)
+                );
+
+            if (hasInvalid) {
                 this.messageService.add({
                     severity: 'warn',
-                    summary: 'Invalid Apppointment(s) Selection',
-                    detail: 'Please select only those confirmed Appoinments!',
+                    summary: 'Invalid Appointment(s) Selection',
+                    detail: rule.message,
                     life: 3000
                 });
                 return;
             }
         }
-        if (status === 0) {
-            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
-                return s.status !== 1 && s.status !== 4  && s.status !== 2;
-            });
-            if (validateOnlyConfirmAppointments.length > 0) {
-                this.messageService.add({
-                    severity: 'warn',
-                    summary: 'Invalid Apppointment(s) Selection',
-                    detail: 'Please select only those Confirmed Appoinments!',
-                    life: 3000
-                });
-                return;
-            }
-        }
-        if (status === 1) {
-            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
-                return s.status !== 0;
-            });
-            if (validateOnlyConfirmAppointments.length > 0) {
-                this.messageService.add({
-                    severity: 'warn',
-                    summary: 'Invalid Apppointment(s) Selection',
-                    detail: 'Please select only those Pending Appoinments!',
-                    life: 3000
-                });
-                return;
-            }
-        }
-        if (status === 4) {
-            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
-                return s.status !== 3;
-            });
-            if (validateOnlyConfirmAppointments.length > 0) {
-                this.messageService.add({
-                    severity: 'warn',
-                    summary: 'Invalid Apppointment(s) Selection',
-                    detail: 'Please select only those requested to Cancel Appoinments!',
-                    life: 3000
-                });
-                return;
-            }
-        }
-        if (status === 2) {
-            const validateOnlyConfirmAppointments = this.selectAppointments.filter((s: any) => {
-                return s.status !== 0;
-            });
-            if (validateOnlyConfirmAppointments.length > 0) {
-                this.messageService.add({
-                    severity: 'warn',
-                    summary: 'Invalid Apppointment(s) Selection',
-                    detail: 'Please select only those Pending Appoinments!',
-                    life: 3000
-                });
-                return;
-            }
-        }
+
 
         this.confirmationService.confirm({
-            message: `Are you sure you want to <b>${this.getStatus(status, 'value')}</b> the selected appointment(s)? <br><br>${appointments.join('<br>')}`,
-            header: 'Confirm Status Update',
+            message: `Are you sure you want to <b>${this.getStatus(status, 'value')}</b> the selected appointment(s)? <br><br>${appointments.join('<br')}`,
+            header: `${this.getStatus(status, 'value')} Confirmation`,
             icon: 'pi pi-exclamation-circle',
             acceptLabel: "Yes! I'm Sure",
             rejectLabel: 'Cancel',
@@ -961,6 +944,41 @@ export class Appointment implements OnInit {
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to delete appointment', err);
                         this.showErrorAlert('Deleting Failed', err, false, 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    resendVerification(appointment: any) {
+        this.confirmationService.confirm({
+            message: `Are you sure you really want to resend appointment confirmation to <b>${appointment.coordinator}</b> with the appointment details below: <br>
+            <b>${appointment.hospitalName} (${appointment.sectionName}) <br> 
+            ${this.dateFormat(appointment.dateSlot)} - ${appointment.shiftName} shift </b>?`,
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            acceptButtonStyleClass: 'p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+            accept: () => {
+                this.logger.printLogs('i', `Resending Email verification to ${appointment.coordinatorID}`, appointment);
+
+                this.api.resendVerification(appointment.coordinatorID).subscribe({
+                    next: (res) => {
+                        this.logger.printLogs('i', 'Verification sent', res);
+                        this.loadAppointments();
+                        this.showErrorAlert('Confirmation Email Sent', 'Confirmation Successfully sent!', false, 'success');
+                    },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed to resend confirmation', err);
+                        this.showErrorAlert('Failed to resend confirmation', err, false, 'error');
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to resend confirmation',
+                            life: 3000
+                        });
                     }
                 });
             }

@@ -67,16 +67,16 @@ export class AppTopbar implements OnInit {
 
     buildMenuItems() {
         this.nestedMenuItems = [
-            {
-                label: 'Schedule',
-                icon: 'pi pi-fw pi-calendar'
-                // routerLink: ['']
-            },
-            {
-                label: 'Inbox',
-                icon: 'pi pi-fw pi-inbox'
-                // routerLink: ['']
-            },
+            // {
+            //     label: 'Schedule',
+            //     icon: 'pi pi-fw pi-calendar'
+            //     // routerLink: ['']
+            // },
+            // {
+            //     label: 'Inbox',
+            //     icon: 'pi pi-fw pi-inbox'
+            //     // routerLink: ['']
+            // },
             {
                 label: 'Account',
                 icon: 'pi pi-fw pi-user',
@@ -86,11 +86,11 @@ export class AppTopbar implements OnInit {
                         icon: 'pi pi-fw pi-user',
                         routerLink: '/dashboard/settings/account'
                     },
-                    {
-                        label: 'Settings',
-                        icon: 'pi pi-fw pi-cog',
-                        routerLink: '/dashboard/settings'
-                    },
+                    // {
+                    //     label: 'Settings',
+                    //     icon: 'pi pi-fw pi-cog',
+                    //     routerLink: '/dashboard/settings'
+                    // },
                     // {
                     //     label: 'Mode',
                     //     icon: this.layoutService.isDarkTheme() ? 'pi pi-moon' : 'pi pi-sun',

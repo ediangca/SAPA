@@ -57,7 +57,7 @@ interface ExportColumn {
 }
 
 @Component({
-    selector: 'post-schedule',
+    selector: 'post-slot',
     standalone: true,
     imports: [
         CommonModule,
@@ -92,11 +92,11 @@ interface ExportColumn {
         ChipModule,
         Tooltip
     ],
-    templateUrl: './post.schedule.component.html',
+    templateUrl: './post.slot.component.html',
     styleUrl: './css/post.css',
     providers: [MessageService, ProductService, ConfirmationService]
 })
-export class Schedule implements OnInit {
+export class Slot implements OnInit {
 
     subcomponent: MenuItem[] = [];
     properties: MenuItem[] = [];
@@ -237,7 +237,7 @@ export class Schedule implements OnInit {
     initForm() {
         this.form = this.fb.group({
             slotID: [null],
-            date: [[], Validators.required],
+            date: [new Date(), Validators.required],
             hospitalID: ['', Validators.required],
             shiftID: [[], Validators.required],
             allocationID: [[], Validators.required],
@@ -247,8 +247,9 @@ export class Schedule implements OnInit {
 
     initDate() {
         const today = new Date();
-        this.minDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7);
+        this.minDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
         return this.minDate;
+
     }
 
     buildSubComponent() {
@@ -726,10 +727,7 @@ export class Schedule implements OnInit {
         }
 
         const request = {
-            // dateSlot: this.toLocalDateString(this.form.value.date),
-            dateSlots: this.form.value.date.map((d: Date) =>
-                this.toLocalDateString(d)
-            ),
+            dateSlot: this.toLocalDateString(this.form.value.date),
             shiftIDs: this.form.value.shiftID ?? [],
             hospitalID: this.form.value.hospitalID,
             allocationIDs: this.form.value.allocationID ?? [],
@@ -737,80 +735,37 @@ export class Schedule implements OnInit {
         };
 
         this.logger.printLogs('i', 'Create Slot Request : ', request);
-        this.createSchedule(request);
 
-        // if (this.slot?.slotID) {
-        // } else {
-        //     this.createSchedule(request);
-        // }
+        this.itemDialog = false;
+
+
+        if (this.slot?.slotID) {
+        } else {
+            this.createSchedule(request);
+        }
 
     }
-
-    // createSchedule(request: any) {
-    //     this.itemDialog = false;
-    //     this.api.createBulkSlots(request).subscribe({
-    //         next: () => {
-    //             this.messageService.add({
-    //                 severity: 'success',
-    //                 summary: 'Created',
-    //                 detail: 'Slots successfully created!'
-    //             });
-    //             this.itemDialog = false;
-    //             this.loadSlots();
-    //         },
-    //         error: (err) => {
-    //             this.messageService.add({
-    //                 severity: 'error',
-    //                 summary: 'Error: ' + err,
-    //                 detail: 'Failed to save slots.'
-    //             });
-    //             this.logger.printLogs('e', 'Failed to create slots', err);
-    //         }
-    //     });
-    // }
-
-    createSchedule(request: any, force: boolean = false) {
-        this.api.createBulkSchedules(request, force).subscribe({
-            next: (res: any) => {
-
-                if (res.totalCreated > 0) {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Slots Created',
-                        detail: `${res.totalCreated} slot(s) created successfully.`
-                    });
-                }
-
-                if (res.blockedSlots?.length) {
-                    this.messageService.add({
-                        severity: 'warn',
-                        summary: 'Blocked Slots',
-                        detail: `${res.blockedSlots.length} slot(s) already confirmed and cannot be overridden.`
-                    });
-                }
-
-                if (res.skippedSlots?.length) {
-                    this.messageService.add({
-                        severity: 'info',
-                        summary: 'Skipped Slots',
-                        detail: `${res.skippedSlots.length} slot(s) already exist. Enable force to override.`
-                    });
-                }
-
+    createSchedule(request: any) {
+        this.api.createBulkSlots(request).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Created',
+                    detail: 'Slots successfully created!'
+                });
                 this.itemDialog = false;
                 this.loadSlots();
             },
-
             error: (err) => {
                 this.messageService.add({
                     severity: 'error',
-                    summary: 'Error',
-                    detail: err?.error?.message ?? 'Failed to save slots.'
+                    summary: 'Error: ' + err,
+                    detail: 'Failed to save slots.'
                 });
+                this.logger.printLogs('e', 'Failed to create slots', err);
             }
         });
     }
-
 
     delete(school: any) {
         this.confirmationService.confirm({

@@ -31,15 +31,15 @@
 
                     <div class="flex row justify-center">
 
-                        <h5 class="m-0">Manage Schedules</h5>
+                        <h5 class="m-0">Manage Slot</h5>
                     </div>
 
                     <div class="flex items-center justify-between">
                         <div class="flex row">
                             <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
                                 (onClick)="openNew(null)" />
-                            <p-button label="Clear" class="p-button-outlined mr-2" severity="secondary"
-                                icon="pi pi-filter-slash" (click)="clear(dt)" />
+                            <p-button label="Clear" class="p-button-outlined mr-2" severity="secondary" icon="pi pi-filter-slash"
+                                (click)="clear(dt)" />
 
                         </div>
                         <p-iconfield>
@@ -233,7 +233,7 @@
 
 </div>
 
-<p-dialog header="Post Schedule" [(visible)]="itemDialog" [style]="{ width: '450px' }" [modal]="true">
+<p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="Post Schedule" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
 
@@ -241,16 +241,42 @@
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-2 w-full">
                         <label for="Date" class="font-bold w-full">Date</label>
-                        <p-datepicker id="Date" selectionMode="multiple" formControlName="date" [showIcon]="true"
-                            [showTime]="false" [showButtonBar]="false" [inline]="true" placeholder="Select Date"
-                            [minDate]="minDate" (onSelect)="onDateSelect($event)"
-                            (ngModelChange)="onModelChange($event)" />
+                        <p-datepicker id="Date" formControlName="date" [showIcon]="true" [showTime]="false"
+                            [showButtonBar]="false" appendTo="body" placeholder="Select Date" [minDate]="minDate"
+                            (onSelect)="onDateSelect($event)" (ngModelChange)="onModelChange($event)" />
 
                         @if (form.get('date')?.invalid && (form.get('date')?.touched || submitted)) {
                         <small class="text-red-500">Date is required.</small>
                         }
                     </div>
                     <div>
+                        <label for="shifts" class="block font-bold mb-3">Shifts</label>
+                        <p-multiSelect styleClass="w-full" formControlName="shiftID" [options]="shiftOption"
+                            optionLabel="shiftName" optionValue="shiftID" placeholder="Select Shift(s)" display="chip"
+                            [filter]="true" appendTo="body" fluid>
+
+                            <ng-template pTemplate="selectedItems" let-selected>
+                                <div class="flex flex-wrap gap-2">
+                                    <div *ngFor="let shift of selected"
+                                        class="inline-flex items-center py-1 px-2 bg-primary text-white rounded-lg">
+                                        {{ shift.shiftName }} ({{ formatTime(shift.startTime)}} - {{
+                                        formatTime(shift.endTime) }})
+                                    </div>
+                                </div>
+                            </ng-template>
+
+                            <ng-template pTemplate="item" let-shift>
+                                <div class="flex items-center gap-2">
+                                    <span>{{ shift.shiftName }}</span>
+                                    <small class="text-gray-500">({{ formatTime(shift.startTime)}} - {{
+                                        formatTime(shift.endTime) }})</small>
+                                </div>
+                            </ng-template>
+
+                        </p-multiSelect>
+                    </div>
+                    <div>
+
                         <label for="hospitals" class="block font-bold mb-3">Hospitals</label>
                         <p-select styleClass="w-full" id="hospitals" [options]="hospitals" optionLabel="hospitalName"
                             optionValue="hospitalID" appendTo="body" formControlName="hospitalID"
@@ -277,33 +303,6 @@
                                 <div class="flex items-center gap-2">
                                     <span>{{ allocation.sectionName }}</span>
                                     <small class="text-gray-500">({{ allocation.allocation }})</small>
-                                </div>
-                            </ng-template>
-
-                        </p-multiSelect>
-                    </div>
-
-                    <div>
-                        <label for="shifts" class="block font-bold mb-3">Shifts</label>
-                        <p-multiSelect styleClass="w-full" formControlName="shiftID" [options]="shiftOption"
-                            optionLabel="shiftName" optionValue="shiftID" placeholder="Select Shift(s)" display="chip"
-                            [filter]="true" appendTo="body" fluid>
-
-                            <ng-template pTemplate="selectedItems" let-selected>
-                                <div class="flex flex-wrap gap-2">
-                                    <div *ngFor="let shift of selected"
-                                        class="inline-flex items-center py-1 px-2 bg-primary text-white rounded-lg">
-                                        {{ shift.shiftName }} ({{ formatTime(shift.startTime)}} - {{
-                                        formatTime(shift.endTime) }})
-                                    </div>
-                                </div>
-                            </ng-template>
-
-                            <ng-template pTemplate="item" let-shift>
-                                <div class="flex items-center gap-2">
-                                    <span>{{ shift.shiftName }}</span>
-                                    <small class="text-gray-500">({{ formatTime(shift.startTime)}} - {{
-                                        formatTime(shift.endTime) }})</small>
                                 </div>
                             </ng-template>
 
@@ -422,9 +421,3 @@
 
 
 <p-confirmdialog [style]="{ width: '450px' }">
-
-
-
-
-
-    

@@ -1,22 +1,22 @@
 <p-toast></p-toast>
 <div class="flex flex-col md:flex-row gap-8">
     <!-- SECTION TABLE -->
-    <div class="md:w-5/6">
+    <div class="md:w-4/5">
         <div class="card">
-            <p-table #dt [value]="users()" [rows]="10" [columns]="cols" [paginator]="true"
+            <p-table #dt [value]="users()" [rows]="10" [columns]="cols" [paginator]="true" [showGridlines]="true"
                 [globalFilterFields]="['userID', 'email']" [tableStyle]="{ 'min-width': '75rem'}"
                 [(selection)]="selectUsers" [rowHover]="true" dataKey="userID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
-                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true"
-                scrollHeight="flex">
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
+                (selectionChange)="onStudentSelectionChange($event)">
 
                 <ng-template pTemplate="caption">
                     <div class="flex row justify-center">
-                        <h5 class="m-0">Manage Students</h5>
+                        <h5 class="m-0 text-primary-900">Manage Students</h5>
                     </div>
                     <div class="flex items-center justify-between">
                         <div class="flex row">
-                            <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2"
+                            <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
                                 (onClick)="openNew()" />
                             <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
                                 (onClick)="deleteSelected()" [disabled]="!selectUsers || !selectUsers.length" /> -->
@@ -80,7 +80,7 @@
                         <td style="min-width: 10rem">
                             <p-tag [value]="getStatus(user.status,'value')"
                                 [severity]="getStatus(user.status,'severity')" styleClass="dark:bg-surface-900!" />
-                            @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
+                            <!-- @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
                             <button class="ml-2" (click)="resendVerification(user)" pTooltip=" Resend Verification?"
                                 tooltipPosition="top"> <i
                                     class="fa-solid fa-paper-plane text-blue-500 hover:animate-bounce transition-colors"></i>
@@ -90,16 +90,22 @@
                                 tooltipPosition="top"> <i
                                     class="fa-solid fa-thumbs-up text-blue-500 hover:animate-bounce transition-colors"></i>
                             </button>
-                            }
+                            } -->
                         </td>
                         <td style="min-width: 10rem">{{dateFormat(user.date_Created)}}</td>
                         <td>
-                            <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                            <p-button class="mr-2 hover:animate-bounce transition-colors" icon="pi pi-pencil" 
+                            pTooltip="Edit" tooltipPosition="top" [rounded]="true" [outlined]="true"
                                 (click)="edit(user)" />
 
-                            @if (user.status == 'U') {
-                            <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                                (click)="delete(user)" />
+                            @if (user.status === 'U') {
+                            <p-button class="mr-2" icon="pi pi-trash" severity="danger" pTooltip="Delete" tooltipPosition="top"
+                                [rounded]="true" [outlined]="true" (click)="delete(user)" />
+                            <p-button class="mr-2" icon="fa fa-paper-plane" severity="info" pTooltip="Resend Account"
+                                tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="resendVerification(user)" />
+                            }@else if(user.status === 'P'){
+                            <p-button class="mr-2" icon="fa fa-thumbs-up" severity="info" pTooltip="Approve Account"
+                                tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="approve(user)" />
                             }
                         </td>
                     </tr>
@@ -108,7 +114,7 @@
         </div>
     </div>
     <!-- SUBMENU -->
-    <div class="md:w-1/6">
+    <div class="md:w-1/5">
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
             <div class="">
                 <h5 class="m-0">Sub Component</h5>
@@ -149,23 +155,27 @@
                     <label for="lastname" class="block font-bold mb-3">Lastname</label>
                     <input type="text" pInputText id="lastname" name="lastname" formControlName="lastname" required
                         autofocus fluid />
-                    <small class="text-red-500" *ngIf="submitted && !form.value['lastname']"> Lastname is
+                    <small class="flex flex-row w-full justify-end text-red-500"
+                        *ngIf="submitted && !form.value['lastname']"> Lastname is
                         required.</small>
                     <label for="firstname" class="block font-bold mb-3">Firstname</label>
                     <input type="text" pInputText id="firstname" name="firstname" formControlName="firstname" required
                         autofocus fluid />
-                    <small class="text-red-500" *ngIf="submitted && !form.value['firstname']"> Firstname is
+                    <small class="flex flex-row w-full justify-end text-red-500"
+                        *ngIf="submitted && !form.value['firstname']"> Firstname is
                         required.</small>
                     <label for="middlename" class="block font-bold mb-3">Middlename</label>
                     <input type="text" pInputText id="middlename" name="middlename" formControlName="middlename"
                         required autofocus fluid />
-                    <small class="text-red-500" *ngIf="submitted && !form.value['middlename']"> Middlename is
+                    <small class="flex flex-row w-full justify-end text-red-500"
+                        *ngIf="submitted && !form.value['middlename']"> Middlename is
                         required.</small>
 
                     <label for="email" class="block font-bold mb-3">Email</label>
                     <input type="text" pInputText id="email" name="email" formControlName="email" required autofocus
                         fluid />
-                    <small class="text-red-500" *ngIf="submitted && (!form.value['email'] || isEmailInvalid())"> Valid
+                    <small class="flex flex-row w-full justify-end text-red-500"
+                        *ngIf="submitted && (!form.value['email'] || isEmailInvalid())"> Valid
                         Email is
                         required.</small>
 
@@ -174,13 +184,14 @@
                             (onChange)="toggleAutoUsername($event)" binary="true" label="Auto-generate username"
                             binary="true" />
 
-                        <small class="text-cyan-500">Copy Email ID to Username</small>
+                        <small class="flex flex-row w-full justify-end text-red-500">Copy Email ID to Username</small>
                     </div>
 
                     <label for="username" class="block font-bold mb-3">Username</label>
                     <input type="text" pInputText id="username" name="username" formControlName="username"
                         (keyup)="filterSpace()" required autofocus fluid />
-                    <small class="text-red-500" *ngIf="submitted && !form.value['username']"> Username is
+                    <small class="flex flex-row w-full justify-end text-red-500"
+                        *ngIf="submitted && !form.value['username']"> Username is
                         required.</small>
 
                     <input type="text" pInputText id="roleID" name="roleID" formControlName="roleID" hidden />

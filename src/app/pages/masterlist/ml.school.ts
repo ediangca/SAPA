@@ -32,6 +32,7 @@ import { MenuModule } from 'primeng/menu';
 import { TieredMenuModule } from 'primeng/tieredmenu';
 import { PdfService } from '@/services/pdf.service';
 import { combineLatest, filter, take } from 'rxjs';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface Column {
     field: string;
@@ -53,6 +54,7 @@ interface ExportColumn {
         TieredMenuModule,
         TableModule,
         FormsModule,
+        TooltipModule,
         ButtonModule,
         // AppMenuitem,
         RippleModule,
@@ -75,7 +77,7 @@ interface ExportColumn {
         RouterModule,
     ],
     templateUrl: './ml.school.component.html',
-    styleUrl: './css/masterlist.css',
+    styleUrl: './css/masterlist.scss',
     providers: [MessageService, ProductService, ConfirmationService]
 })
 export class School implements OnInit {
@@ -165,12 +167,28 @@ export class School implements OnInit {
 
     initSubComponent() {
 
+        this.buildSubComponent();
+
+        this.store.getPrivileges()
+            .pipe(
+                filter(priv => priv.length > 0),
+                take(1)
+            )
+            .subscribe(priv => {
+                if (priv.length > 0) {
+                    this.logger.printLogs('i', 'Accessability Loaded:', priv);
+                    this.validateAccessability();
+                }
+            });
+    }
+
+    buildSubComponent() {
         this.subcomponent = [
             ...(this.tokenPayload.role === 'UGR0001'
                 ? [
                     { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
                     {
-                        id: 's',
+                        id: 'print',
                         label: 'Re-assign Coordinator',
                         icon: 'pi pi-user-edit',
                         command: () => this.reAssignDialog()
@@ -181,9 +199,10 @@ export class School implements OnInit {
 
             ...(this.tokenPayload.role === 'UGR0001' ? [
                 {
-                    id: 's',
+                    id: 'status',
                     label: 'Status',
                     icon: 'fas fa-layer-group',
+                    disabled: !this.selectSchools || this.selectSchools.length === 0,
                     items: [
                         ...(this.tokenPayload.role === 'UGR0001' ?
                             [
@@ -200,20 +219,7 @@ export class School implements OnInit {
             ] : []),
 
         ];
-
-        this.store.getPrivileges()
-            .pipe(
-                filter(priv => priv.length > 0),
-                take(1)
-            )
-            .subscribe(priv => {
-                if (priv.length > 0) {
-                    this.logger.printLogs('i', 'Accessability Loaded:', priv);
-                    this.validateAccessability();
-                }
-            });
     }
-
 
     validateAccessability() {
         const moduleID = 'MOD0005';
@@ -312,7 +318,8 @@ export class School implements OnInit {
 
     onSchoolSelectionChange(selected: any[]) {
         this.logger.printLogs('i', "Select schools : ", selected)
-        this.selectSchools = selected; // optional, if you want to keep it synced manually
+        this.selectSchools = selected;
+        this.buildSubComponent()
     }
 
     onGlobalFilter(table: Table) {
@@ -401,9 +408,16 @@ export class School implements OnInit {
         this.submitted = false;
     }
 
-    changeStatus(status: number) {
-        const schoolIDs = this.selectSchools?.map((school: any) => school.schoolID) ?? [];
-        const schools = this.selectSchools?.map((school: any) => school.schoolName) ?? [];
+    changeStatus(status: number, school: any | null = null) {
+        this.logger.printLogs('i', `Update school to ${this.getStatus(status, 'value')}`, school);
+
+        const schoolIDs = school ? [school.schoolID] :
+            (this.selectSchools?.map((school: any) => school.schoolID) ?? []);
+        const schools = school ? [school.schoolName] :
+            (this.selectSchools?.map((school: any) => `- ${school.schoolName}`) ?? []);
+
+        // const schoolIDs = this.selectSchools?.map((school: any) => school.schoolID) ?? [];
+        // const schools = this.selectSchools?.map((school: any) => school.schoolName) ?? [];
 
         if (!schoolIDs.length) {
             this.messageService.add({
@@ -418,7 +432,7 @@ export class School implements OnInit {
         this.logger.printLogs('s', 'Updating Status...', schoolIDs);
 
         this.confirmationService.confirm({
-            message: `Are you sure you want to change the status of selected schools <br><br>${schools.join('<br>')}<br><br>to<b>${this.getStatus(status, 'value')}</b>?`,
+            message: `Are you sure you want to <b>${this.getStatus(status, 'value')}</b> the selected school(s)? <br><br>${schools.join('<br>')}`,
             header: 'Confirm Status Update',
             icon: 'pi pi-exclamation-triangle',
             acceptLabel: "Yes! I'm Sure",
@@ -512,7 +526,8 @@ export class School implements OnInit {
                 severity: 'warning',
                 summary: 'Incomplete Fields',
                 detail: 'Please complete all required fields before proceeding!',
-                life: 3000
+                life: 3000,
+                styleClass: "z-[1100]"
             });
             this.vf.validateFormFields(this.form);
             return;

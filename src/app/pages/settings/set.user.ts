@@ -25,7 +25,7 @@ import Swal from 'sweetalert2';
 import { StoreService } from '@/services/store.service';
 import { ToastModule } from 'primeng/toast';
 import { UsersProperties } from "./set.user.sidebar";
-import { Tooltip } from "primeng/tooltip";
+import { TooltipModule } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { CheckboxModule } from "primeng/checkbox";
 
@@ -66,14 +66,14 @@ interface ExportColumn {
         ConfirmDialogModule,
         PanelMenuModule,
         ReactiveFormsModule,
-        FormsModule,
         UsersProperties,
-        Tooltip
+        TooltipModule
     ],
     templateUrl: './set.user.component.html',
     providers: [MessageService, ConfirmationService],
     styleUrl: './css/set.css'
 })
+
 export class Users implements OnInit {
 
     itemDialog: boolean = false;
@@ -112,7 +112,6 @@ export class Users implements OnInit {
         private logger: LogsService,
         private vf: ValidateForm,
     ) {
-
         this.form = this.fb.group({
             userID: [null],
             username: ['', Validators.required],
@@ -126,6 +125,16 @@ export class Users implements OnInit {
     }
 
     ngOnInit() {
+        this.form = this.fb.group({
+            userID: [null],
+            username: ['', Validators.required],
+            lastname: ['', Validators.required],
+            firstname: ['', Validators.required],
+            middlename: ['', Validators.required],
+            roleID: ['', Validators.required],
+            email: ['', Validators.required],
+            autoUsername: [false]
+        });
         this.loadData();
 
         this.model = [
@@ -273,6 +282,7 @@ export class Users implements OnInit {
             }
         }
     }
+    
     isEmailInvalid(): boolean {
         const emailControl = this.form.get('email');
         if (emailControl) {
@@ -300,7 +310,7 @@ export class Users implements OnInit {
 
     resendVerification(user: any) {
         this.confirmationService.confirm({
-            message: `Are you sur you really want to resend email verification to <b>${user.email}</b>?`,
+            message: `Are you sure you really want to resend email verification to <b>${user.email}</b>?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             rejectLabel: 'Cancel',
@@ -458,7 +468,7 @@ export class Users implements OnInit {
                     this.showErrorAlert('User Updated', 'User has been Successfully updated!', false, 'success');
                 },
                 error: (err) => {
-                    this.showErrorAlert('Updating Failed', err, true, 'error');
+                    this.showErrorAlert('Updating Failed', err, false, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -474,7 +484,7 @@ export class Users implements OnInit {
                     this.closeDialog();
                 },
                 error: (err) => {
-                    this.showErrorAlert('Saving Failed', err, true, 'error');
+                    this.showErrorAlert('Saving Failed', err, false, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -505,7 +515,7 @@ export class Users implements OnInit {
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to delete user', err);
-                        this.showErrorAlert('Deleting Failed', err, true, 'error');
+                        this.showErrorAlert('Deleting Failed', err, false, 'error');
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Error',

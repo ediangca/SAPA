@@ -198,7 +198,7 @@ export class PdfService {
 
     pdfMakeLib.createPdf(docDefinition).open();
   }
-  
+
   async generateRoleReport(roles: any[], title: string) {
     // Ensure logos are loaded before generating
     if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
@@ -403,7 +403,7 @@ export class PdfService {
       default: return 'Pending';
     }
   }
-  
+
   /** ✅ Map status IDs to readable labels */
   private mapUserStatus(status: String): string {
     switch (status) {
@@ -601,13 +601,14 @@ export class PdfService {
             content.push({
               table: {
                 headerRows: 1,
-                widths: [25, '25%', '25%', '25%', '10%'],
+                widths: [25, '25%', '25%', '15%', '10%', '10%'],
                 body: [
                   [
                     { text: '#', bold: true, alignment: 'center', fontSize: 9 },
                     { text: 'Full Name', bold: true, fontSize: 9 },
                     { text: 'Hospital', bold: true, fontSize: 9 },
                     { text: 'Section', bold: true, fontSize: 9 },
+                    { text: 'Shift', bold: true, fontSize: 9 },
                     { text: 'Status', bold: true, alignment: 'center', fontSize: 9 }
                   ],
                   ...dayAppointments.map((item: any, idx: number) => [
@@ -615,6 +616,7 @@ export class PdfService {
                     { text: item.fullname, fontSize: 9, noWrap: false },
                     { text: item.hospitalName, fontSize: 9 },
                     { text: item.sectionName, fontSize: 9 },
+                    { text: item.shiftName, fontSize: 9 },
                     {
                       text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'OPEN' : 'CLOSED',
                       alignment: 'center',
@@ -724,13 +726,14 @@ export class PdfService {
               content.push({
                 table: {
                   headerRows: 1,
-                  widths: [25, '25%', '25%', '25%', '10%'],
+                  widths: [25, '25%', '25%', '20%', '10%', '15%'],
                   body: [
                     [
                       { text: '#', bold: true, alignment: 'center', fontSize: 9 },
                       { text: 'Full Name', bold: true, fontSize: 9 },
                       { text: 'Hospital', bold: true, fontSize: 9 },
                       { text: 'Section', bold: true, fontSize: 9 },
+                      { text: 'Shift', bold: true, fontSize: 9 },
                       { text: 'Status', bold: true, alignment: 'center', fontSize: 9 }
                     ],
                     ...dayAppointments.map((item: any, idx: number) => [
@@ -738,6 +741,7 @@ export class PdfService {
                       { text: item.fullname, fontSize: 9, noWrap: false },
                       { text: item.hospitalName, fontSize: 9 },
                       { text: item.sectionName, fontSize: 9 },
+                      { text: item.shiftName, fontSize: 9 },
                       {
                         text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'CONFIRMED' : 'CLOSED',
                         alignment: 'center',
@@ -861,13 +865,14 @@ export class PdfService {
             content.push({
               table: {
                 headerRows: 1,
-                widths: [25, '25%', '25%', '25%', '10%'],
+                widths: [25, '25%', '25%', '20%', '10%', '15%'],
                 body: [
                   [
                     { text: '#', bold: true, alignment: 'center', fontSize: 9 },
                     { text: 'Full Name', bold: true, fontSize: 9 },
                     { text: 'Hospital', bold: true, fontSize: 9 },
                     { text: 'Section', bold: true, fontSize: 9 },
+                    { text: 'Shift', bold: true, fontSize: 9 },
                     { text: 'Status', bold: true, alignment: 'center', fontSize: 9 }
                   ],
                   ...dayAppointments.map((item: any, idx: number) => [
@@ -875,6 +880,7 @@ export class PdfService {
                     { text: item.fullname, fontSize: 9, noWrap: false },
                     { text: item.hospitalName, fontSize: 9 },
                     { text: item.sectionName, fontSize: 9 },
+                    { text: item.shiftName, fontSize: 9 },
                     {
                       text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'CONFIRMED' : 'CLOSED',
                       alignment: 'center',
