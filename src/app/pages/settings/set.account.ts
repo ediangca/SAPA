@@ -19,6 +19,8 @@ import Swal from 'sweetalert2';
 import { StoreService } from '@/services/store.service';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from "primeng/tooltip";
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
 
 
 
@@ -29,7 +31,9 @@ import { TooltipModule } from "primeng/tooltip";
         CommonModule,
         FormsModule,
         ButtonModule,
+        CheckboxModule,
         ToastModule,
+        InputTextModule,
         SelectModule,
         RadioButtonModule,
         InputNumberModule,
@@ -80,6 +84,15 @@ export class Account implements OnInit {
     }
 
     ngOnInit() {
+        this.form = this.fb.group({
+            userID: [null],
+            username: ['', Validators.required],
+            lastname: ['', Validators.required],
+            firstname: ['', Validators.required],
+            middlename: ['', Validators.required],
+            email: ['', Validators.required],
+            autoUsername: [false]
+        });
         this.store.getUserPayload()
             .subscribe(res => {
                 this.tokenPayload = res;

@@ -145,7 +145,6 @@ export class AuthService {
     );
   }
 
-
   register(userAccount: any): Observable<any> {
     this.loading.setLoadingVisible(true);
     this.logger.printLogs('i', 'Processing Registration...', userAccount);
@@ -257,30 +256,17 @@ export class AuthService {
     }
   }
 
-  // getTokenPayloadFromToken(): Observable<string | null> {
-  //   const token = localStorage.getItem('token');
-  //   if (token && !this.jwtHelper.isTokenExpired(token)) {
-  //     const decodedToken = this.jwtHelper.decodeToken(token);
-  //     this.tokenPayload = decodedToken;
-  //     this.store.setTokenPayload(this.tokenPayload);
-  //     // this.logger.printLogs('i', "Decoded Token: ", decodedToken);
-  //     return of(decodedToken?.unique_name || null); // Adjust according to your token's structure
-  //   } else {
-  //     return of(null);
-  //   }
-  // }
-  // getTokenPayloadFromToken(): Observable<any | null> {
-  //   const token = localStorage.getItem('token');
+  forgotPassword(data: { emailOrUsername: string }) {
+    return this.http.post(`${this.apiUrl}/forgot-password`, data);
+  }
 
-  //   if (token && !this.jwtHelper.isTokenExpired(token)) {
-  //     const payload = this.jwtHelper.decodeToken(token);
-  //     this.store.setTokenPayload(payload);
-  //     return of(payload);  // return full payload
-  //   }
-
-  //   return of(null);
-  // }
-
+  resetPassword(data: {
+    userId: string;
+    token: string;
+    newPassword: string;
+  }) {
+    return this.http.post(`${this.apiUrl}/reset-password`, data);
+  }
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Unknown error!';
