@@ -89,7 +89,7 @@
                 <div>
                     <label class="text-sm font-medium text-gray-600">School</label>
                     <div class="mt-1">
-                        {{ user.schoolName || 'N/A' }}
+                        {{ (user.roleID === 'UGR0003'? user.coorSchoolName : user.schoolName) || 'N/A' }}
                     </div>
                 </div>
 
@@ -159,6 +159,8 @@
                 <div>
 
                     <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
+                    <input type="text" pInputText id="roleID" name="roleID" formControlName="roleID" hidden />
+
 
                     <label for="lastname" class="block font-bold mb-3">Lastname</label>
                     <input type="text" pInputText id="lastname" name="lastname" formControlName="lastname" required

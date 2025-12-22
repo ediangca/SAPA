@@ -279,12 +279,12 @@ export class Schedule implements OnInit {
             .subscribe(res => {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
-            });
 
-        this.loadSlots();
-        this.loadHospitals();
-        this.loadSections();
-        this.loadShifts();
+                this.loadSlots();
+                this.loadHospitals();
+                this.loadSections();
+                this.loadShifts();
+            });
     }
 
     initCols() {
@@ -309,6 +309,33 @@ export class Schedule implements OnInit {
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
 
     }
+
+
+    loadSlots() {
+        this.api.getSlots().subscribe({
+            next: (slots) => {
+                this.logger.printLogs('i', 'Slots loaded', slots)
+                if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
+                    // Admin roles see all slots
+                    this.slots.set(slots)
+                } else {
+                    // Other users see only their slots
+                    this.slots.set(slots.filter((slot: any) => slot.userID === this.tokenPayload.nameid));
+                }
+
+                const mappedEvents = mapSlotsToEvents(slots, this.tokenPayload.role);
+
+                this.calendarOptions.update(opts => ({
+                    ...opts,
+                    events: mappedEvents  // <<-- Use `events`, not `initialEvents`
+                }));
+
+                this.logger.printLogs('i', 'Events mapped', mappedEvents);
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch slots', err)
+        });
+    }
+
 
     formatDate(date: Date): string {
         return date.toISOString().substring(0, 10);
@@ -421,26 +448,6 @@ export class Schedule implements OnInit {
         }).format(date);
     }
 
-
-    loadSlots() {
-        this.api.getSlots().subscribe({
-            next: (slots) => {
-                this.slots.set(slots)
-                this.logger.printLogs('i', 'Slots loaded', this.slots())
-
-                const mappedEvents = mapSlotsToEvents(slots);
-
-                this.calendarOptions.update(opts => ({
-                    ...opts,
-                    events: mappedEvents  // <<-- Use `events`, not `initialEvents`
-                }));
-
-                this.logger.printLogs('i', 'Events mapped', mappedEvents);
-            },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch slots', err)
-        });
-    }
-
     toggleWeekends() {
         this.calendarOptions().weekends = !this.calendarOptions().weekends // toggle the boolean!
     }
@@ -471,8 +478,7 @@ export class Schedule implements OnInit {
     }
 
     getShiftSeverity(shift: any): any {
-        this.logger.printLogs('i', 'Shift:', shift);
-
+        // this.logger.printLogs('i', 'Shift:', shift);
         switch (shift.toLowerCase()) {
             case 'morning':
                 return 'success'
@@ -737,6 +743,8 @@ export class Schedule implements OnInit {
         };
 
         this.logger.printLogs('i', 'Create Slot Request : ', request);
+
+        this.itemDialog = false;
         this.createSchedule(request);
 
         // if (this.slot?.slotID) {
@@ -769,6 +777,7 @@ export class Schedule implements OnInit {
     //     });
     // }
 
+
     createSchedule(request: any, force: boolean = false) {
         this.api.createBulkSchedules(request, force).subscribe({
             next: (res: any) => {
@@ -796,8 +805,7 @@ export class Schedule implements OnInit {
                         detail: `${res.skippedSlots.length} slot(s) already exist. Enable force to override.`
                     });
                 }
-
-                this.itemDialog = false;
+                this.showErrorAlert('Slots Created', `${res.totalCreated} slot(s) created successfully.`, false, 'success');
                 this.loadSlots();
             },
 

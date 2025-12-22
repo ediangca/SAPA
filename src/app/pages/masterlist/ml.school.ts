@@ -265,7 +265,7 @@ export class School implements OnInit {
     loadCoordinators() {
         this.api.getUsers().subscribe({
             next: (users) => {
-                this.coordinators = users.filter((user: any) => user.roleId === 'UGR0003' && user.status === 'A') || []; //Role ID - Coordinators
+                this.coordinators = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A') || []; //Role ID - Coordinators
                 this.logger.printLogs('i', 'Users loaded', this.coordinators)
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)

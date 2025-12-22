@@ -74,6 +74,7 @@ export class Account implements OnInit {
         ) {
         this.form = this.fb.group({
             userID: [null],
+            roleID: ['', Validators.required],
             username: ['', Validators.required],
             lastname: ['', Validators.required],
             firstname: ['', Validators.required],
@@ -86,6 +87,7 @@ export class Account implements OnInit {
     ngOnInit() {
         this.form = this.fb.group({
             userID: [null],
+            roleID: ['', Validators.required],
             username: ['', Validators.required],
             lastname: ['', Validators.required],
             firstname: ['', Validators.required],

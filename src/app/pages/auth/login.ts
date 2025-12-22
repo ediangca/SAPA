@@ -14,14 +14,25 @@ import ValidateForm from '@/helper/validator/validateForm';
 import Swal from 'sweetalert2';
 import { ProgressSpinnerModule } from 'primeng/progressspinner'
 import { StoreService } from '@/services/store.service';
+import { DialogModule } from 'primeng/dialog';
 
 declare var bootstrap: any;
 
 @Component({
     selector: 'app-login',
     standalone: true,
-    imports: [RouterLink, ReactiveFormsModule, ButtonModule, CheckboxModule, InputTextModule, PasswordModule, FormsModule,
-        RouterModule, RippleModule, AppFloatingConfigurator, ProgressSpinnerModule],
+    imports: [RouterLink,
+        ReactiveFormsModule,
+        ButtonModule,
+        CheckboxModule,
+        InputTextModule,
+        PasswordModule,
+        FormsModule,
+        RouterModule,
+        RippleModule,
+        DialogModule,
+        AppFloatingConfigurator,
+        ProgressSpinnerModule],
     templateUrl: './login.component.html'
 
 })
@@ -32,8 +43,11 @@ export class Login {
     @ViewChild('usernameInput') usernameInput!: ElementRef;
 
     checked: boolean = false;
+    isForgotSubmit: boolean = false;
 
     isLoading = false;
+    emailOrUsername: string = '';
+    ForgotPasswordDialog: boolean = false;
 
     userPayload: any | null = null
 
@@ -64,6 +78,9 @@ export class Login {
         }
     }
 
+    openForgotPassword() {
+        this.ForgotPasswordDialog = true;
+    }
 
     onSubmit() {
 
@@ -113,5 +130,30 @@ export class Login {
         this.vf.validateFormFields(this.form);
     }
 
+    onSubmitForgotPassword() {
+        this.isLoading = true;
+        this.isForgotSubmit = true;
+        this.logger.printLogs('i', 'Submitting Forgot Password for', this.emailOrUsername);
+
+        setTimeout(() => {
+            this.auth.forgotPassword(this.emailOrUsername)
+                .subscribe({
+                    next: (res: any) => {
+                        this.isLoading = false;
+                        Swal.fire('Success!', res.message, 'success');
+                        this.logger.printLogs('i', 'Forgot Password Success', res.message);
+                        this.ForgotPasswordDialog = false;
+                        this.isForgotSubmit = false;
+                        this.emailOrUsername = '';
+                    },
+                    error: (err: any) => {
+                        this.isLoading = false;
+                        this.logger.printLogs('e', 'Forgot Password Error', err);
+                        Swal.fire('Error!', err, 'error');
+                    }
+                });
+        }, 2000);
+
+    }
 
 }

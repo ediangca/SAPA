@@ -169,14 +169,14 @@
                         <td style="min-width: 3rem">{{ dateFormat(slot.date_Created) }}</td>
                         <td>
                             <div class="flex flex-row gap-2">
-                                @if (slot.status == 0) {
+                                @if (slot.slotStatus == 0) {
                                 <!-- <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (click)="edit(slot)" /> -->
                                 <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
                                     (click)="delete(slot)" />
-                                }@else{
+                                }
                                 <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
                                     (click)="onEventClick(slot)" />
-                                }
+                                
                             </div>
                         </td>
                     </tr>

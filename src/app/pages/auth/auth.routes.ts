@@ -3,7 +3,7 @@ import { Access } from './access';
 import { Login } from './login';
 import { Register } from './register';
 import { Error } from './error';
-import { VerifySuccess } from './verify-success';
+import { VerifySuccess } from './verify.success';
 import { loginGuard } from '@/helper/guard/login.guard';
 import { registerGuard } from '@/helper/guard/register.guard';
 

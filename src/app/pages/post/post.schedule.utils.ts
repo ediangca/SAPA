@@ -4,10 +4,10 @@ let eventGuid = 0;
 const TODAY_STR = new Date().toISOString().replace(/T.*$/, ''); // YYYY-MM-DD of today
 
 
-export function mapSlotsToEvents(slots: any[]) {
+export function mapSlotsToEvents(slots: any[], roleID: string | null = null) {
   return slots.map(slot => ({
     id: slot.slotID,
-    title: `${slot.hospitalName}(${slot.sectionName}) - ${slot.shiftName}`,
+    title: (roleID === 'UGR0001' || roleID === 'UGR0002' )? `${slot.schoolName}` :`${slot.hospitalName}(${slot.sectionName}) - ${slot.shiftName}`,
     shift: slot.shiftName,
     // `${slot.shiftName} - ${slot.sectionName}`,
     // describedAs: slot.shiftName,
@@ -16,14 +16,16 @@ export function mapSlotsToEvents(slots: any[]) {
     end: computeEnd(slot.dateSlot, slot.endTime),
     extendedProps: {
       slotStatus: slot.slotStatus,
-      shiftID: slot.shiftID,
-      shiftName: slot.shiftName,
-      startTime: `${formatTimeString(slot.dateSlot+'T'+slot.startTime)}`,
-      endTime: `${formatTimeString(computeEnd(slot.dateSlot, slot.endTime))}`,
+      schoolID: slot.schoolID,
+      schoolName: slot.schoolName,
       hospitalID: slot.hospitalID,
       hospitalName: slot.hospitalName,
       sectionID: slot.sectionID,
       sectionName: slot.sectionName,
+      shiftID: slot.shiftID,
+      shiftName: slot.shiftName,
+      startTime: `${formatTimeString(slot.dateSlot + 'T' + slot.startTime)}`,
+      endTime: `${formatTimeString(computeEnd(slot.dateSlot, slot.endTime))}`,
       allocation: slot.allocation,
       allocationStatus: slot.allocationStatus,
       userID: slot.userID,

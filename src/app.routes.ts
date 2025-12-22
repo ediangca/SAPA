@@ -8,6 +8,9 @@ import { authGuard } from '@/helper/guard/auth.guard';
 import { UserResolver } from '@/helper/resolver/user.resolver';
 import { authRoutes } from './app/pages/auth/auth.routes';
 import { ConfirmAppointmentSuccess } from '@/pages/masterlist/confirm-success';
+import { ResetPassword } from '@/pages/auth/reset.password';
+import { ResetPasswordResolver } from '@/helper/resolver/reset-resolver';
+import { ResetExpired } from '@/pages/auth/reset-expired.component';
 
 
 export const appRoutes: Routes = [
@@ -27,6 +30,12 @@ export const appRoutes: Routes = [
             { path: 'pages', loadChildren: () => import('./app/pages/pages.routes') }
         ]
     },
+    {
+        path: 'reset-password',
+        component: ResetPassword,
+        resolve: { valid: ResetPasswordResolver }
+    },
+    { path: 'reset-expired', component: ResetExpired },
 
     ...authRoutes,
     { path: 'confirm-success', component: ConfirmAppointmentSuccess },

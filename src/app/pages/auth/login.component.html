@@ -40,7 +40,7 @@
                     </div>
 
                     <div>
-                        <label for="email1" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2"
+                        <label for="email1" class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                             [class.error]="form.controls['username'].dirty && form.hasError('required', 'username')">
                             Username/Email
                             @if (form.controls['username'].dirty && form.hasError('required', 'username'))
@@ -55,7 +55,7 @@
 
 
                         <label for="password"
-                            class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2"
+                            class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                             [class.error]="form.controls['password'].dirty && form.hasError('required', 'password')">
                             Password
                             @if (form.controls['password'].dirty && form.hasError('required', 'password'))
@@ -66,19 +66,26 @@
                         <p-password id="password" placeholder="Password" formControlName="password" name="password"
                             [toggleMask]="true" styleClass="mb-4" [fluid]="true" [feedback]="false"></p-password>
 
-                        <div class="flex items-center justify-between mt-2 mb-8 gap-8">
-                            <!-- <div class="flex items-center">
-                                <p-checkbox formControlName="rememberMe" binary  id="rememberme1" binary class="mr-2"></p-checkbox>
+                        <small class="flex flex-row w-full justify-end text-red-500 font-medium  mb-5"
+                            (click)="openForgotPassword()">
+                            Fotgot Password?
+                        </small>
+
+                        <!-- <div class="flex items-center justify-between mt-2 mb-8 gap-8">
+                            <div class="flex items-center">
+                                <p-checkbox formControlName="rememberMe" binary id="rememberme1" binary
+                                    class="mr-2"></p-checkbox>
                                 <label for="rememberme1">Remember me</label>
                             </div>
                             <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary">Forgot
-                                password?</span> -->
-                        </div>
-                        
-                        <p-button type="button" label="Sign In" styleClass="w-full" [loading]="isLoading" (click)="onSubmit()" />
+                                password?</span>
+                        </div> -->
+
+                        <p-button type="button" label="Sign In" styleClass="w-full" [loading]="isLoading"
+                            (click)="onSubmit()" />
 
                         <div class="mt-4">
-                            <p class="text-muted-color font-medium text-center"> Don't have Account?
+                            <p class="text-muted-color font-bold text-center"> Don't have Account?
                                 <em class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"
                                     routerLink="/register">Register here!</em>
                             </p>
@@ -88,4 +95,23 @@
             </div>
         </div>
     </div>
+
 </div>
+
+<!-- Forgot Password Dialog -->
+<p-dialog header="Forgot Password" [(visible)]="ForgotPasswordDialog" [modal]="true" [closable]="true"
+    [style]="{ width: '400px' }">
+
+    <label for="email1" class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
+        [class.error]="form.controls['username'].dirty && form.hasError('required', 'username')">
+        Please enter your Email or Username to send a password reset link.
+        @if (isForgotSubmit && emailOrUsername.trim() === '')
+        {
+        is required.
+        }
+    </label>
+    <input pInputText class="w-full mb-3" placeholder="Email or Username" [(ngModel)]="emailOrUsername" />
+
+    <button pButton label="Forgot" class="w-full" [loading]="isLoading" (click)="onSubmitForgotPassword()">
+    </button>
+</p-dialog>

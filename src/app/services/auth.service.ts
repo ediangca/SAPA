@@ -256,16 +256,29 @@ export class AuthService {
     }
   }
 
-  forgotPassword(data: { emailOrUsername: string }) {
-    return this.http.post(`${this.apiUrl}/forgot-password`, data);
+  forgotPassword(emailOrUsername: string) {
+    return this.http.post(
+      `${this.apiUrl}Auth/forgot-password`,
+      JSON.stringify(emailOrUsername),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
   }
+
+
+  validateResetToken(userId: string, token: string) {
+    return this.http.get<{ valid: boolean }>(
+      `${this.apiUrl}Auth/validate-reset-token`,
+      { params: { userId, token } }
+    );
+  }
+
 
   resetPassword(data: {
     userId: string;
     token: string;
     newPassword: string;
   }) {
-    return this.http.post(`${this.apiUrl}/reset-password`, data);
+    return this.http.post(`${this.apiUrl}Auth/reset-password`, data);
   }
 
   private handleError(error: HttpErrorResponse) {
