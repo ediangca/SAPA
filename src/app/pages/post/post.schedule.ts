@@ -40,9 +40,11 @@ import listPlugin from '@fullcalendar/list';
 import { CalendarOptions, DateSelectArg } from '@fullcalendar/core/index.js';
 import { DatePickerModule } from 'primeng/datepicker';
 import { MultiSelectModule } from 'primeng/multiselect';
-import { mapSlotsToEvents, formatTimeString, computeEnd } from './post.schedule.utils';
+import { mapSlotsToEvents, formatTimeString, computeEnd, aggregateSlotsByDay } from './post.schedule.utils';
 import { Tooltip } from "primeng/tooltip";
 import { ChipModule } from 'primeng/chip';
+import { BehaviorSubject, combineLatest, filter, switchMap, take, tap } from 'rxjs';
+import { SkeletonModule } from 'primeng/skeleton';
 
 
 interface Column {
@@ -89,6 +91,7 @@ interface ExportColumn {
         FullCalendarModule,
         DatePickerModule,
         MultiSelectModule,
+        SkeletonModule,
         ChipModule,
         Tooltip
     ],
@@ -112,6 +115,7 @@ export class Schedule implements OnInit {
     slots = signal<any[]>([]);
     slot!: any;
     selectSlots!: any[] | [];
+    public loading: boolean = false;
 
     form!: FormGroup;
 
@@ -155,63 +159,83 @@ export class Schedule implements OnInit {
 
     INITIAL_EVENTS: any[] = [];
 
-    calendarOptions = signal<CalendarOptions>({
-        // validRange: {
-        //     start: this.initDate()   // Disable today and past days
-        // },
-        plugins: [
-            interactionPlugin,
-            dayGridPlugin,
-            timeGridPlugin,
-            listPlugin,
-        ],
-        headerToolbar: {
-            //today
-            left: 'prev,next,myCustomButton',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-            //   listWeek
-        },
-        customButtons: {
-            myCustomButton: {
-                text: 'New Schedule',
-                click: () => {
-                    // This function runs when the button is clicked
-                    console.log('Custom button clicked!');
-                    // You can open a modal, add an event, etc.
-                    this.openNew(null);
-                }
-            }
-        },
-        initialView: 'dayGridMonth',
-        // initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
-        // initialEvents: this.INITIAL_EVENTS,
-        events: [],
-        weekends: true,
-        editable: true,
-        selectable: true,
-        selectMirror: true,
-        dayMaxEvents: true,
-        eventClick: (clickInfo: any) => this.onEventClick(clickInfo),
-        select: this.openNew.bind(this),
-        // eventClick: this.handleEventClick.bind(this),
-        // eventsSet: this.handleEvents.bind(this)
-        /* you can update a remote database when these fire:
-        eventAdd:
-        eventChange:
-        eventRemove:
-        */
-
-        // height: 'calc(100vh - 12rem)', 
-        // contentHeight: 'auto'
-    });
-
+    // calendarOptions = signal<CalendarOptions>({
+    //     // validRange: {
+    //     //     start: this.initDate()   // Disable today and past days
+    //     // },
+    //     height: '100%',       // fill parent div height
+    //     plugins: [
+    //         interactionPlugin,
+    //         dayGridPlugin,
+    //         timeGridPlugin,
+    //         listPlugin,
+    //     ],
+    //     headerToolbar: {
+    //         //today
+    //         left: 'prev,next,myCustomButton',
+    //         center: 'title',
+    //         right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    //         //   listWeek
+    //     },
+    //     customButtons: {
+    //         myCustomButton: {
+    //             text: 'New Schedule',
+    //             click: () => {
+    //                 // This function runs when the button is clicked
+    //                 console.log('Custom button clicked!');
+    //                 // You can open a modal, add an event, etc.
+    //                 this.openNew(null);
+    //             }
+    //         }
+    //     },
+    //     initialView: 'dayGridMonth',
+    //     // initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
+    //     // initialEvents: this.INITIAL_EVENTS,
+    //     events: [],
+    //     weekends: true,
+    //     editable: true,
+    //     selectable: true,
+    //     selectMirror: true,
+    //     dayMaxEvents: true,
+    //     eventClick: (clickInfo: any) => this.onEventClick(clickInfo),
+    //     select: this.openNew.bind(this),
+    //     // eventClick: this.handleEventClick.bind(this),
+    //     // eventsSet: this.handleEvents.bind(this)
+    //     //  you can update a remote database when these fire:
+    //     // eventAdd:
+    //     // eventChange:
+    //     // eventRemove:
+    //     // height: 'calc(100vh - 12rem)', 
+    //     // contentHeight: 'auto'
+    // });
     selectedEvent: any = null;
     dateRange: any;
     selectedDateFrom: string | null = null;
     selectedDateTo: string | null = null;
     dialogDateRange: Date[] = [];
 
+    showForceDialog: boolean = false;
+    availableSlots: any[] = [];
+    existingSlots: any[] = [];
+    blockedSlots: any[] = [];
+    forceRequest: any;
+
+
+    calendarOptions: CalendarOptions = {};
+    selectedDay: string = '';
+    daySlots: any[] = [];
+    dayDialog: boolean = false;
+
+
+    private privilegesLoadedSubject = new BehaviorSubject<boolean>(false);
+    privilegesLoaded$ = this.privilegesLoadedSubject.asObservable();
+
+    c: boolean = false;
+    r: boolean = false;
+    u: boolean = false;
+    d: boolean = false;
+    s: boolean = false;
+    p: boolean = false;
 
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
@@ -223,16 +247,15 @@ export class Schedule implements OnInit {
         private pdfService: PdfService
 
     ) {
-
-        this.initForm()
     }
 
     ngOnInit() {
+        this.initForm()
         this.initDate();
-        this.buildSubComponent()
         this.initData();
         this.initCols();
     }
+
 
     initForm() {
         this.form = this.fb.group({
@@ -251,40 +274,82 @@ export class Schedule implements OnInit {
         return this.minDate;
     }
 
-    buildSubComponent() {
-
-        this.subcomponent = [
-            {
-                label: 'Print All',
-                icon: 'fas fa-print',
-                command: () => this.openPrintDialog()
-            },
-            {
-                label: 'Status',
-                icon: 'fas fa-layer-group',
-                disabled: !this.selectSlots || this.selectSlots.length === 0,
-                items: [
-                    { label: 'UNPOST', icon: 'pi pi-refresh', command: () => this.changeStatus(0) },
-                    { label: 'POST', icon: 'pi pi-thumbtack', command: () => this.changeStatus(1) },
-                    { label: 'CLOSED', icon: 'pi pi-lock', command: () => this.changeStatus(2) }
-                ]
-            }
-        ];
-
-    }
-
     initData() {
-
         this.store.getUserPayload()
-            .subscribe(res => {
-                this.tokenPayload = res;
-                this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
-
+            .pipe(
+                filter(Boolean),
+                tap(p => this.tokenPayload = p),
+                switchMap(() => this.store.getPrivilegesLoaded())
+            )
+            .subscribe(() => {
+                this.initPrivileges();
+                this.buildSubComponent();
                 this.loadSlots();
                 this.loadHospitals();
                 this.loadSections();
                 this.loadShifts();
             });
+    }
+
+    buildSubComponent() {
+
+        this.subcomponent = [...(this.tokenPayload.role === 'UGR0001'
+            ? [
+                { label: 'Print All', icon: 'fas fa-print', command: () => this.openPrintDialog() },
+                {
+                    id: 's',
+                    label: 'Status',
+                    icon: 'fas fa-layer-group',
+                    disabled: !this.selectSlots || this.selectSlots.length === 0,
+                    items: [
+                        { label: 'Pending', severity: 'warning', icon: 'fas fa-file-powerpoint', command: () => this.changeStatus(0) },
+                        { label: 'Confirm', severity: 'primary', icon: 'fas fa-clipboard-check', command: () => this.changeStatus(1) },
+                        { label: 'Request Cancel', severity: 'warning', icon: 'fas fa-file-arrow-up', command: () => this.changeStatus(3) },
+                        { label: 'Confirm Cancelation', severity: 'info', icon: 'fas fa-file-circle-xmark', command: () => this.changeStatus(4) },
+                        { label: 'Declined', severity: 'danger', icon: 'fas fa-file-excel', command: () => this.changeStatus(2) }
+                    ]
+                }
+            ]
+            :
+            [
+                { label: 'Print All', icon: 'fas fa-print', command: () => this.openPrintDialog() },
+                ...(this.c ?
+                    [
+                        {
+                            label: 'Request Cancel',
+                            icon: 'fas fa-file-arrow-up',
+                            disabled: !this.selectSlots || this.selectSlots.length === 0,
+                            command: () => this.changeStatus(3)
+                        },
+                    ]
+                    :
+                    []
+                ),
+            ]),
+        ];
+
+    }
+
+    initPrivileges() {
+        const moduleID = 'MOD0008';
+        this.c = this.store.isAllowedAction(moduleID, 'create');
+        this.r = this.store.isAllowedAction(moduleID, 'retrieve');
+        this.u = this.store.isAllowedAction(moduleID, 'update');
+        this.d = this.store.isAllowedAction(moduleID, 'delete');
+        this.s = this.store.isAllowedAction(moduleID, 'status');
+        this.p = this.store.isAllowedAction(moduleID, 'printall');
+
+
+        this.subcomponent = this.subcomponent.filter((item: any) => {
+            this.logger.printLogs('i', `Component Accessability: s${this.s}, p${this.p}`, item);
+            switch (item.id) {
+                case 's': return this.s;
+                case 'p': return this.p;
+                default: return true;
+            }
+        });
+
+        this.buildSubComponent()
     }
 
     initCols() {
@@ -310,31 +375,180 @@ export class Schedule implements OnInit {
 
     }
 
+    // this.calendarOptions = signal<CalendarOptions>({
+    //     height: '100%',       // fill parent div height
+    //     plugins: [
+    //         interactionPlugin,
+    //         dayGridPlugin,
+    //         timeGridPlugin,
+    //         listPlugin,
+    //     ],
+    //     headerToolbar: {
+    //         //today
+    //         left: 'prev,next,myCustomButton',
+    //         center: 'title',
+    //         right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    //         //   listWeek
+    //     },
+    //     customButtons: {
+    //         myCustomButton: {
+    //             text: 'New Schedule',
+    //             click: () => {
+    //                 // This function runs when the button is clicked
+    //                 console.log('Custom button clicked!');
+    //                 // You can open a modal, add an event, etc.
+    //                 this.openNew(null);
+    //             }
+    //         }
+    //     },
+    //     initialView: 'dayGridMonth',
+    //     // initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
+    //     // initialEvents: this.INITIAL_EVENTS,
+    //     events: [],
+    //     weekends: true,
+    //     editable: true,
+    //     selectable: true,
+    //     selectMirror: true,
+    //     dayMaxEvents: true,
+    //     eventClick: (clickInfo: any) => this.onEventClick(clickInfo),
+    //     select: this.openNew.bind(this),
+    //     // eventClick: this.handleEventClick.bind(this),
+    //     // eventsSet: this.handleEvents.bind(this)
+    //     //  you can update a remote database when these fire:
+    //     // eventAdd:
+    //     // eventChange:
+    //     // eventRemove:
+
+
+    //     // height: 'calc(100vh - 12rem)', 
+    //     // contentHeight: 'auto'
+    // });
+
+    // buildCalendarEvents() {
+
+    //     this.calendarOptions = {
+    //         initialView: 'dayGridMonth',
+    //         height: '100%',
+    //         plugins: [dayGridPlugin, interactionPlugin],
+    //         headerToolbar: {
+    //             left: 'prev,next today',
+    //             center: 'title',
+    //             right: ''
+    //         },
+
+    //         dayMaxEvents: true,        // "+X more"
+    //         fixedWeekCount: false,
+    //         eventDisplay: 'block',
+    //         lazyFetching: true,
+
+    //         selectable: true,
+
+    //         events: this.loadMonthEvents.bind(this),
+
+    //         eventClick: (info) => this.onMonthEventClick(info),
+    //     };
+    // }
+
+    buildCalendarEvents() {
+        this.calendarOptions = {
+            initialView: 'dayGridMonth',
+            height: '100%',
+            plugins: [dayGridPlugin, interactionPlugin],
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: ''
+            },
+
+            dayMaxEvents: true,        // "+X more"
+            fixedWeekCount: false,
+            eventDisplay: 'block',
+            lazyFetching: true,
+
+            selectable: true,
+
+            // bind to the new loadMonthEvents
+            events: this.loadMonthEvents.bind(this),
+
+            eventClick: (info) => this.onMonthEventClick(info),
+        };
+    }
+
+    loadMonthEvents(info: any, success: any, failure: any) {
+        const startDate = this.dateFormat(info.startStr) || '';
+        const endDate = this.dateFormat(info.endStr) || '';
+
+        // call API and aggregate with role-based logic
+        this.api.getSlotsByRange(startDate, endDate).subscribe({
+            next: slots => {
+                const aggregated = aggregateSlotsByDay(
+                    slots,
+                    this.tokenPayload.role,      // role of current user
+                    this.tokenPayload.nameid     // userID for filtering
+                );
+                success(aggregated);
+            },
+            error: err => failure(err)
+        });
+
+    }
+
+    // loadMonthEvents(info: any, success: any, failure: any) {
+    //     const startDate = this.dateFormat(info.startStr) || '';
+    //     const endDate = this.dateFormat(info.endStr) || '';
+
+    //     this.api.getSlotsByRange(startDate, endDate).subscribe({
+    //         next: slots => {
+    //             const aggregated = aggregateSlotsByDay(slots);
+    //             success(aggregated);
+    //         },
+    //         error: err => failure(err)
+    //     });
+    // }
 
     loadSlots() {
+        this.loading = true;
         this.api.getSlots().subscribe({
             next: (slots) => {
-                this.logger.printLogs('i', 'Slots loaded', slots)
+                this.logger.printLogs('i', 'Slots loaded', slots);
+
+                let filteredSlots;
                 if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
-                    // Admin roles see all slots
-                    this.slots.set(slots)
+                    this.slots.set(slots);
+                    filteredSlots = slots;
                 } else {
-                    // Other users see only their slots
-                    this.slots.set(slots.filter((slot: any) => slot.userID === this.tokenPayload.nameid));
+                    filteredSlots = slots.filter((slot: any) => slot.userID === this.tokenPayload.nameid);
+                    this.slots.set(filteredSlots);
                 }
+                
+                this.buildCalendarEvents();
+                this.loading = false;
 
-                const mappedEvents = mapSlotsToEvents(slots, this.tokenPayload.role);
+                // const mappedEvents = mapSlotsToEvents(filteredSlots, this.tokenPayload.role);
 
-                this.calendarOptions.update(opts => ({
-                    ...opts,
-                    events: mappedEvents  // <<-- Use `events`, not `initialEvents`
-                }));
+                // this.calendarOptions.update(opts => ({
+                //     ...opts,
+                //     events: mappedEvents
+                // }));
 
-                this.logger.printLogs('i', 'Events mapped', mappedEvents);
+                // this.logger.printLogs('i', 'Events mapped', mappedEvents);
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch slots', err)
         });
     }
+
+    onMonthEventClick(info: any) {
+        const slots = info.event.extendedProps.slots;
+
+        this.selectedDay = info.event.startStr;
+        this.daySlots = slots;
+
+        this.logger.printLogs('i', 'Day slots', this.daySlots)
+
+        this.dayDialog = true; // open p-dialog
+    }
+
+
 
 
     formatDate(date: Date): string {
@@ -378,8 +592,11 @@ export class Schedule implements OnInit {
         this.logger.printLogs('i', 'Selected date from onSelect:', event);
     }
 
-    onModelChange(newDate: Date) {
+    onModelChange(newDate: Date[]) {
         this.logger.printLogs('i', 'Selected date from ngModelChange:', newDate);
+
+        this.dialogDateRange = newDate;
+
     }
 
     exportCSV() {
@@ -388,15 +605,18 @@ export class Schedule implements OnInit {
 
 
     getAllocationsByHospitalID(hospitalID: any) {
+        this.itemDialog = false;
         this.allocations = []; // Clear previous allocations
         this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);
         this.api.getAllocationsByHospitalID(hospitalID).subscribe({
             next: (res) => {
                 this.allocations = res || [];
                 this.logger.printLogs('i', 'Allocations loaded by Hospital ID', this.allocations)
+                this.itemDialog = true;
             },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch allocations by Hospital ID', err)
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch allocations by Hospital ID', err),
         });
+        this.itemDialog = true;
     }
 
     loadHospitals() {
@@ -404,11 +624,6 @@ export class Schedule implements OnInit {
             next: (hospitals) => {
                 this.hospitals = hospitals || [];
                 this.logger.printLogs('i', 'Hospitals loaded', this.hospitals)
-                // this.headHospitals = Array.from(
-                //     new Map(
-                //         this.hospitals.map(h => [h.hospitalID, h])
-                //     ).values()
-                // );
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch hospitals', err)
         });
@@ -419,11 +634,6 @@ export class Schedule implements OnInit {
             next: (sections) => {
                 this.sections = sections || [];
                 this.logger.printLogs('i', 'Sections loaded', sections)
-                // this.headSections = Array.from(
-                //     new Map(
-                //         this.sections.map(s => [s.sectionID, s])
-                //     ).values()
-                // );
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch Sections', err)
         });
@@ -448,19 +658,19 @@ export class Schedule implements OnInit {
         }).format(date);
     }
 
-    toggleWeekends() {
-        this.calendarOptions().weekends = !this.calendarOptions().weekends // toggle the boolean!
-    }
+    // toggleWeekends() {
+    //     this.calendarOptions().weekends = !this.calendarOptions().weekends // toggle the boolean!
+    // }
 
-    filterByHospital(hospitalId: string) {
-        const filtered = this.slots().filter(s => s.hospitalID === hospitalId);
-        const mapped = mapSlotsToEvents(filtered);
+    // filterByHospital(hospitalId: string) {
+    //     const filtered = this.slots().filter(s => s.hospitalID === hospitalId);
+    //     const mapped = mapSlotsToEvents(filtered);
 
-        this.calendarOptions.update(opts => ({
-            ...opts,
-            events: mapped
-        }));
-    }
+    //     this.calendarOptions.update(opts => ({
+    //         ...opts,
+    //         events: mapped
+    //     }));
+    // }
 
     getStatus(status: any, type: string): any {
         // this.logger.printLogs('i', 'Status: ', status)
@@ -468,7 +678,7 @@ export class Schedule implements OnInit {
             case 0:
                 return (type == 'value' ? 'Unposted' : 'contrast')
             case 1:
-                return (type == 'value' ? 'Posted | Open' : 'info')
+                return (type == 'value' ? 'Post | Confirm' : 'info')
             case 2:
                 return (type == 'value' ? 'Inactive' : 'secondary')
 
@@ -555,17 +765,20 @@ export class Schedule implements OnInit {
                     end: computeEnd(slot.dateSlot!, slot.endTime!),
                     extendedProps: {
                         slotStatus: slot.slotStatus,
-                        shiftID: slot.shiftID,
-                        shiftName: slot.shiftName,
-                        startTime: `${formatTimeString(slot.dateSlot + 'T' + slot.startTime)}`,
-                        endTime: `${formatTimeString(computeEnd(slot.dateSlot!, slot.endTime!))}`,
+                        schoolID: slot.schoolID,
+                        schoolName: slot.schoolName,
                         hospitalID: slot.hospitalID,
                         hospitalName: slot.hospitalName,
                         sectionID: slot.sectionID,
                         sectionName: slot.sectionName,
+                        shiftID: slot.shiftID,
+                        shiftName: slot.shiftName,
+                        startTime: `${formatTimeString(slot.dateSlot + 'T' + slot.startTime)}`,
+                        endTime: `${formatTimeString(computeEnd(slot.dateSlot, slot.endTime))}`,
                         allocation: slot.allocation,
                         allocationStatus: slot.allocationStatus,
                         userID: slot.userID,
+                        fullname: slot.fullname,
                     }
                 })
         }
@@ -575,26 +788,46 @@ export class Schedule implements OnInit {
 
 
     openNew(selectInfo: DateSelectArg | null) {
-        const selectedDate = selectInfo?.startStr
-            ? new Date(selectInfo.startStr)  // Convert string to Date
-            : null;
 
-        const minAllowedDate = this.initDate(); // tomorrow
+        this.dialogDateRange = [];
 
-        if (selectedDate && selectedDate < minAllowedDate) {
-            // Trap: Prevent opening dialog
-            this.showErrorAlert('Invalid Date', 'You can only create a schedule starting tomorrow.', false, 'warning');
+        if (selectInfo) {
+            const start = new Date(selectInfo.start);
+            const end = new Date(selectInfo.end); // exclusive
+
+            const current = new Date(start);
+            while (current < end) {
+                this.dialogDateRange.push(new Date(current));
+                current.setDate(current.getDate() + 1);
+            }
+        }
+
+        const minAllowedDate = this.initDate();
+
+        if (this.dialogDateRange.length && this.dialogDateRange.some(d => d < minAllowedDate)) {
+            this.showErrorAlert(
+                'Invalid Date',
+                'You can only create a schedule 1 week from today.',
+                false,
+                'warning'
+            );
             return;
         }
 
         this.form.reset({
-            date: selectedDate,
+            slotID: null,
+            date: this.dialogDateRange,   // ✅ ARRAY for multiple mode
+            hospitalID: null,
+            shiftID: [],
+            allocationID: [],
             userID: this.tokenPayload.nameid
         });
-        this.slot = {};
+
+        this.allocations = [];
         this.submitted = false;
         this.itemDialog = true;
     }
+
 
     openNewDialog() {
         this.form.reset();
@@ -609,31 +842,6 @@ export class Schedule implements OnInit {
         this.itemDialog = true;
     }
 
-    deleteSelected() {
-        this.confirmationService.confirm({
-            message: 'Are you sure you want to delete the selected slot?',
-            header: 'Confirm',
-            icon: 'pi pi-exclamation-triangle',
-            rejectLabel: 'Cancel',
-            acceptLabel: "Yes! I'm Sure",
-            rejectIcon: 'pi pi-times',
-            acceptIcon: 'pi pi-check',
-            acceptButtonStyleClass: 'p-button-outlined p-button-success',
-            rejectButtonStyleClass: 'p-button-danger',
-
-            accept: () => {
-
-                this.selectSlots = [];
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Slot Deleted',
-                    life: 3000
-                });
-            }
-        });
-    }
-
     hideDialog() {
         this.form.reset({
             schoolName: '',
@@ -646,31 +854,70 @@ export class Schedule implements OnInit {
         this.submitted = false;
     }
 
-    changeStatus(status: number) {
-        const slotIDs = this.selectSlots?.map((slot: any) => slot.slotID) ?? [];
-        const slots = this.selectSlots?.map(
-            (slot: any) =>
-                `${slot.hospitalName} (${this.dateFormat(slot.dateSlot)} ${this.formatTime(slot.startTime)} - ${this.formatTime(slot.endTime)})`
-        ) ?? [];
-        this.logger.printLogs('i', 'Selected status', slotIDs);
+    changeStatus(status: number, slot: any | null = null) {
+        this.logger.printLogs('i', `Selected Slots to ${this.getStatus(status, 'value')}`, slot);
+
+        const slotIDs = slot ? [slot.slotID] :
+            (this.selectSlots?.map((slot: any) => slot.slotID) ?? []);
+        const slots =
+            slot ? [`${slot.hospitalName}(${slot.sectionName}) <br> (${this.dateFormat(slot.dateSlot)} ${this.formatTime(slot.startTime)} - ${this.formatTime(slot.endTime)})`] :
+                (this.selectSlots?.map(
+                    (slot: any) =>
+                        `- ${slot.hospitalName}(${slot.sectionName}) <br> (${this.dateFormat(slot.dateSlot)} ${this.formatTime(slot.startTime)} - ${this.formatTime(slot.endTime)})`
+                ) ?? []);
 
         if (!slotIDs.length) {
             this.messageService.add({
                 severity: 'warn',
-                summary: 'No Selected Slot',
+                summary: 'No Selected Slot(s)',
                 detail: 'Please select at least one slot first!',
                 life: 3000
             });
             return;
         }
-        if (slotIDs.length > 10) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'No Selected Slot',
-                detail: 'Please select not more than 10!',
-                life: 3000
-            });
-            return;
+
+        const rules: Record<number, { allowed: number[]; message: string }> = {
+            3: {
+                allowed: [1],
+                message: 'Please select only those Confirmed Slot(s)!'
+            },
+            0: {
+                allowed: [1, 4, 2],
+                message: 'Please select only those Confirmed  Slot(s)!'
+            },
+            1: {
+                allowed: [0],
+                message: 'Please select only those Pending  Slot(s)!'
+            },
+            4: {
+                allowed: [3],
+                message: 'Please select only those requested to Cancel  Slot(s)!'
+            },
+            2: {
+                allowed: [0],
+                message: 'Please select only those Pending  Slot(s)!'
+            }
+        };
+
+        const rule = rules[status];
+
+        if (rule) {
+            const hasInvalid = slot ?
+                !rule.allowed.includes(slot.status)
+                :
+                this.selectSlots.some(
+                    (a: any) => !rule.allowed.includes(a.status)
+                );
+
+            if (hasInvalid) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Invalid Slot(s) Selection',
+                    detail: rule.message,
+                    life: 3000
+                });
+                return;
+            }
         }
 
         this.confirmationService.confirm({
@@ -746,77 +993,164 @@ export class Schedule implements OnInit {
 
         this.itemDialog = false;
         this.createSchedule(request);
-
-        // if (this.slot?.slotID) {
-        // } else {
-        //     this.createSchedule(request);
-        // }
-
     }
 
-    // createSchedule(request: any) {
-    //     this.itemDialog = false;
-    //     this.api.createBulkSlots(request).subscribe({
-    //         next: () => {
-    //             this.messageService.add({
-    //                 severity: 'success',
-    //                 summary: 'Created',
-    //                 detail: 'Slots successfully created!'
-    //             });
-    //             this.itemDialog = false;
-    //             this.loadSlots();
+    // createSchedule(request: any, force: boolean = false) {
+    //     this.forceRequest = request;
+
+    //     this.api.createBulkSchedules(request, force).subscribe({
+    //         next: (res: any) => {
+    //             this.logger.printLogs('i', 'Create Slot Response : ', res);
+
+    //             // Blocked slots
+    //             if (res.blocked?.length > 0) {
+    //                 this.messageService.add({
+    //                     severity: 'warn',
+    //                     summary: 'Blocked Slots',
+    //                     detail: `${res.blocked.length} slot(s) already confirmed and cannot be overridden.`,
+    //                     life: 5000
+    //                 });
+    //             }
+
+    //             // Existing unconfirmed slots → ask user
+    //             if ((res.skipped?.length > 0 || (res.blocked?.length > 0 && res.added?.length > 0)) && !force) {
+    //                 this.messageService.add({
+    //                     severity: 'warn',
+    //                     summary: 'Existing Slots',
+    //                     detail: `${res.skipped.length} slot(s) already exist as unconfirmed. Choose an action to proceed.`,
+    //                     life: 5000
+    //                 });
+    //                 this.availableSlots = res.added || [];
+    //                 this.blockedSlots = res.blocked || [];
+    //                 this.existingSlots = res.skipped; // skipped represents existing unconfirmed
+    //                 this.showForceDialog = true;
+    //             }
+
+    //             // Slots newly created
+    //             if (res.added?.length > 0 && res.blocked?.length < 1) {
+    //                 this.showErrorAlert('Successful', 'Slots created successfully', false, 'success',);
+    //                 this.loadSlots();
+    //             }
+    //             if (res.added?.length > 0 && (res.skipped?.length > 0 || res.blockedSlots?.length > 0) && force) {
+    //                 this.showErrorAlert('Successful', 'Slots created successfully', false, 'success',);
+    //                 this.loadSlots();
+    //             }
+    //             if (res.added?.length > 0 && res.skipped?.length < 1  && !force) {
+    //                 this.showErrorAlert('Successful', 'Slots created successfully', false, 'success',);
+    //                 this.loadSlots();
+    //             }
     //         },
     //         error: (err) => {
     //             this.messageService.add({
     //                 severity: 'error',
-    //                 summary: 'Error: ' + err,
-    //                 detail: 'Failed to save slots.'
+    //                 summary: 'Error',
+    //                 detail: err?.error?.message || 'Failed to save slots.',
+    //                 life: 5000
     //             });
-    //             this.logger.printLogs('e', 'Failed to create slots', err);
     //         }
     //     });
     // }
 
-
     createSchedule(request: any, force: boolean = false) {
+        this.forceRequest = request;
+
         this.api.createBulkSchedules(request, force).subscribe({
             next: (res: any) => {
+                this.logger.printLogs('i', 'Create Slot Response:', res);
 
-                if (res.totalCreated > 0) {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Slots Created',
-                        detail: `${res.totalCreated} slot(s) created successfully.`
-                    });
-                }
+                const blockedCount = res.blocked?.length || 0;
+                const skippedCount = res.skipped?.length || 0;
+                const addedCount = res.added?.length || 0;
 
-                if (res.blockedSlots?.length) {
+
+                // Show dialog if there are skipped/unconfirmed slots and not forcing
+                if (((skippedCount > 0 || blockedCount > 0)) && !force) {
                     this.messageService.add({
                         severity: 'warn',
-                        summary: 'Blocked Slots',
-                        detail: `${res.blockedSlots.length} slot(s) already confirmed and cannot be overridden.`
+                        summary: `Existing Slots`,
+                        // detail: `${skippedCount + blockedCount} slot(s) already exist as unconfirmed & confirmed. Choose an action to proceed.`,
+                        detail: res.message || `${skippedCount + blockedCount} slot(s) already exist as unconfirmed & confirmed. Choose an action to proceed.`,
+                        life: 5000
                     });
+
+                    this.availableSlots = res.added || [];
+                    this.blockedSlots = res.blocked || [];
+                    this.existingSlots = res.skipped || [];
+                    this.showForceDialog = true;
                 }
 
-                if (res.skippedSlots?.length) {
-                    this.messageService.add({
-                        severity: 'info',
-                        summary: 'Skipped Slots',
-                        detail: `${res.skippedSlots.length} slot(s) already exist. Enable force to override.`
-                    });
+                this.logger.printLogs('i', 'Count >>> ', `Added: ${addedCount}, Skipped: ${skippedCount}, Blocked: ${blockedCount}`);
+
+                this.logger.printLogs('i', 'Condition 1 >>> ', `${(addedCount > 0 && skippedCount > 0 && force)}`);
+
+                this.logger.printLogs('i', 'Condition 2 >>> ', `${(skippedCount < 1 && blockedCount < 1 && addedCount > 0 && !force)}`);
+
+                // Show success if any slots were created
+                if ((addedCount > 0 && skippedCount > 0 && force) ||
+                    (skippedCount < 1 && blockedCount < 1 && addedCount > 0 && !force)) {
+                    this.showErrorAlert('Successful', res.message, false, 'success');
+                    this.loadSlots();
                 }
-                this.showErrorAlert('Slots Created', `${res.totalCreated} slot(s) created successfully.`, false, 'success');
-                this.loadSlots();
             },
-
-            error: (err) => {
+            error: (err: any) => {
                 this.messageService.add({
                     severity: 'error',
                     summary: 'Error',
-                    detail: err?.error?.message ?? 'Failed to save slots.'
+                    detail: err.message || 'Failed to save slots.',
+                    life: 5000
                 });
             }
         });
+    }
+
+
+    getMaxLengthIndices(): number[] {
+        const maxLength = Math.max(
+            this.availableSlots.length,
+            this.existingSlots.length,
+            this.blockedSlots.length
+        );
+        return Array.from({ length: maxLength }, (_, i) => i);
+    }
+
+
+    forceAddSlots() {
+        this.showForceDialog = false;
+        if (!this.forceRequest) return;
+        this.createSchedule(this.forceRequest, true);
+    }
+
+    addAvailableOnly() {
+        this.showForceDialog = false;
+        if (!this.forceRequest) return;
+
+        this.logger.printLogs('i', 'Available Slots to Add:', this.availableSlots);
+
+        // Make a copy of the request containing only available slots
+        const availableRequest = {
+            ...this.forceRequest,
+            DateSlots: this.availableSlots.map(s => s.dateSlot),
+            ShiftIDs: this.availableSlots.map(s => s.shiftID),
+            HospitalID: this.availableSlots[0].hospitalID,
+            AllocationIDs: this.availableSlots.map(s => s.allocationID),
+            UserID: this.tokenPayload.nameid
+
+        };
+
+        // public List<DateTime> DateSlots { get; set; } = new();
+        // public List<string> ShiftIDs { get; set; } = new();
+        // public string HospitalID { get; set; } = string.Empty;
+        // public List<string> AllocationIDs { get; set; } = new();
+        // public string UserID { get; set; } = string.Empty;
+
+        this.createSchedule(availableRequest, false); // force = false
+    }
+
+    forceAddAll() {
+        this.showForceDialog = false;
+        if (!this.forceRequest) return;
+
+        this.createSchedule(this.forceRequest, true); // force = true, adds available + existing
     }
 
 
@@ -835,13 +1169,13 @@ export class Schedule implements OnInit {
             accept: () => {
                 this.logger.printLogs('i', `Deleting School ${school.schoolName}`, school);
 
-                this.api.deleteSchool(school.schoolID).subscribe({
-                    next: (res) => {
+                this.api.deleteSlot(school.schoolID).subscribe({
+                    next: (res: any) => {
                         this.logger.printLogs('i', 'School deleted successfully', res);
                         this.loadSlots();
                         this.showErrorAlert('Successful', 'School deleted successfully', false, 'success');
                     },
-                    error: (err) => {
+                    error: (err: any) => {
                         this.logger.printLogs('e', 'Failed to delete school', err);
                         this.showErrorAlert('Deleting Failed', err, false, 'error');
                     }
@@ -850,12 +1184,51 @@ export class Schedule implements OnInit {
         });
     }
 
+    deleteSelected() {
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to delete the selected slot?',
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+
+            accept: () => {
+
+                const slotIDs = this.selectSlots?.map((slot: any) => slot.slotID);
+                this.api.deleteSlots(slotIDs).subscribe({
+                    next: (res: any) => {
+
+                        this.logger.printLogs('i', 'Slots deleted successfully', res);
+                        this.showErrorAlert('Successful', 'Selected slots deleted', false, 'success',);
+                        this.loadSlots();
+                    },
+                    error: (err: any) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: err,
+                            detail: 'Failed to delete selected slots.',
+                            life: 3000
+                        });
+                        this.logger.printLogs('e', 'Failed to delete slots', err);
+                    }
+                });
+
+                this.selectSlots = [];
+            }
+        });
+    }
+
+
     printAll() {
         this.pdfService.generateSchoolsReport(this.schools());
     }
 
-    private showErrorAlert(title: string, message: string, dialogOpen: boolean, severity: 'error' | 'warning' | 'success' = 'success') {
-        this.logger.printLogs('e', 'Failed to create school', message);
+    private showErrorAlert(title: string, message: string, dialogOpen: boolean, severity: 'error' | 'info' | 'warning' | 'success' = 'success') {
+
         this.messageService.add({
             severity: severity,
             summary: title,
@@ -876,6 +1249,7 @@ export class Schedule implements OnInit {
     }
 
     openPrintDialog() {
+        this.dialogDateRange = [];
         this.printDialogVisible = true;
     }
 

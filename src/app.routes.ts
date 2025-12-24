@@ -9,8 +9,10 @@ import { UserResolver } from '@/helper/resolver/user.resolver';
 import { authRoutes } from './app/pages/auth/auth.routes';
 import { ConfirmAppointmentSuccess } from '@/pages/masterlist/confirm-success';
 import { ResetPassword } from '@/pages/auth/reset.password';
-import { ResetPasswordResolver } from '@/helper/resolver/reset-resolver';
+import { ResetPasswordResolver } from '@/helper/resolver/reset.resolver';
 import { ResetExpired } from '@/pages/auth/reset-expired.component';
+import { ConfirmSlots } from '@/pages/post/confirm-slot';
+import { ScheduleTokenConfrimationResolver } from '@/helper/resolver/schedule.token.confirmation.resolver';
 
 
 export const appRoutes: Routes = [
@@ -34,6 +36,11 @@ export const appRoutes: Routes = [
         path: 'reset-password',
         component: ResetPassword,
         resolve: { valid: ResetPasswordResolver }
+    },
+    {
+        path: 'confirm-slots',
+        component: ConfirmSlots,
+        resolve: { valid: ScheduleTokenConfrimationResolver }
     },
     { path: 'reset-expired', component: ResetExpired },
 

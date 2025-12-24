@@ -7,7 +7,7 @@ const TODAY_STR = new Date().toISOString().replace(/T.*$/, ''); // YYYY-MM-DD of
 export function mapSlotsToEvents(slots: any[], roleID: string | null = null) {
   return slots.map(slot => ({
     id: slot.slotID,
-    title: (roleID === 'UGR0001' || roleID === 'UGR0002' )? `${slot.schoolName}` :`${slot.hospitalName}(${slot.sectionName}) - ${slot.shiftName}`,
+    title: (roleID === 'UGR0001' || roleID === 'UGR0002') ? `${slot.schoolName}` : `${slot.hospitalName}(${slot.sectionName}) - ${slot.shiftName}`,
     shift: slot.shiftName,
     // `${slot.shiftName} - ${slot.sectionName}`,
     // describedAs: slot.shiftName,
@@ -29,9 +29,97 @@ export function mapSlotsToEvents(slots: any[], roleID: string | null = null) {
       allocation: slot.allocation,
       allocationStatus: slot.allocationStatus,
       userID: slot.userID,
+      fullname: slot.fullname,
     }
   }));
 }
+
+// export function aggregateSlotsByDay(slots: any[]) {
+//   const map = new Map<string, any[]>();
+
+//   slots.forEach(slot => {
+//     const day = slot.dateSlot;
+//     if (!map.has(day)) map.set(day, []);
+//     map.get(day)!.push(slot);
+//   });
+
+//   return Array.from(map.entries()).map(([day, daySlots]) => ({
+//     id: day,
+//     start: day,
+//     allDay: true,
+
+//     title: `Schedules (${daySlots.length})`,
+//     extendedProps: {
+//       slots: daySlots
+//     }
+//   }));
+// }
+
+export function aggregateSlotsByDay(
+  slots: any[],
+  roleID: string | null = null,
+  currentUserID: string | null = null
+): EventInput[] {
+  // 1️⃣ Filter slots based on role
+  let filteredSlots = slots;
+  if (roleID !== 'UGR0001' && roleID !== 'UGR0002' && currentUserID) {
+    filteredSlots = slots.filter(slot => slot.userID === currentUserID);
+  }
+
+  // 2️⃣ Aggregate by date
+  const dateMap = new Map<string, any[]>();
+  filteredSlots.forEach(slot => {
+    const day = slot.dateSlot;
+    if (!dateMap.has(day)) dateMap.set(day, []);
+    dateMap.get(day)!.push(slot);
+  });
+
+  // 3️⃣ For each day, group slots by school (admin) or hospital (coordinator)
+  const events: EventInput[] = [];
+
+  dateMap.forEach((daySlots, day) => {
+    if (roleID === 'UGR0001' || roleID === 'UGR0002') {
+      // Admin → group by schoolID
+      const schoolMap = new Map<string, any[]>();
+      daySlots.forEach(slot => {
+        if (!schoolMap.has(slot.schoolID)) schoolMap.set(slot.schoolID, []);
+        schoolMap.get(slot.schoolID)!.push(slot);
+      });
+
+      schoolMap.forEach((schoolSlots, schoolID) => {
+        const schoolName = schoolSlots[0].schoolName;
+        events.push({
+          id: `${day}-${schoolID}`,
+          start: day,
+          allDay: true,
+          title: schoolName, // Show school name
+          extendedProps: { slots: schoolSlots }
+        });
+      });
+    } else {
+      // Coordinator → group by hospitalID
+      const hospitalMap = new Map<string, any[]>();
+      daySlots.forEach(slot => {
+        if (!hospitalMap.has(slot.hospitalID)) hospitalMap.set(slot.hospitalID, []);
+        hospitalMap.get(slot.hospitalID)!.push(slot);
+      });
+
+      hospitalMap.forEach((hospitalSlots, hospitalID) => {
+        const hospitalName = hospitalSlots[0].hospitalName;
+        events.push({
+          id: `${day}-${hospitalID}`,
+          start: day,
+          allDay: true,
+          title: hospitalName, // Show hospital name
+          extendedProps: { slots: hospitalSlots }
+        });
+      });
+    }
+  });
+
+  return events;
+}
+
 
 export function computeEnd(date: string, time: string) {
   // If time is 07:00 but start is 23:00, adjust date +1

@@ -47,31 +47,121 @@ export class ApiService {
 
   }
 
+  // private handleRequest<T>(
+  //   method: 'get' | 'post' | 'put' | 'delete',
+  //   endpoint: string,
+  //   options?: { id?: any; body?: any; logAction?: string; minDuration?: number }
+  // ): Observable<T> {
+  //   this.loading.setLoadingVisible(true);
+
+  //   const { id, body, logAction, minDuration = 500 } = options || {};
+  //   const url = id ? `${this.apiUrl}${endpoint}/${id}` : `${this.apiUrl}${endpoint}/`;
+
+  //   this.logger.printLogs('i', logAction || `${method.toUpperCase()} request`, body || id || '');
+
+  //   let request$: Observable<any>;
+  //   switch (method) {
+  //     case 'get':
+  //       request$ = this.http.get<any>(url);
+  //       break;
+  //     case 'post':
+  //       request$ = this.http.post<any>(url, body);
+  //       break;
+  //     case 'put':
+  //       request$ = this.http.put<any>(url, body);
+  //       break;
+  //     case 'delete':
+  //       request$ = this.http.delete<any>(url, body ? {
+  //         body: body,
+  //         headers: { 'Content-Type': 'application/json' }
+  //       } : undefined);
+  //       break;
+  //   }
+
+  //   const startTime = Date.now();
+
+  //   return request$.pipe(
+  //     map((res: any) => {
+  //       // normalize array-like responses
+  //       if (Array.isArray(res)) return res;
+  //       if (res && Array.isArray(res.items)) return res.items;
+  //       return res;
+  //     }),
+  //     catchError((err) =>
+  //       throwError(() => err)),
+  //     // this.handleError(err)),
+  //     // this.errorHandler.handle(err)),
+  //     finalize(() => {
+  //       const elapsed = Date.now() - startTime;
+  //       const remaining = minDuration - elapsed;
+
+  //       if (remaining > 0) {
+  //         // wait until minimum duration is reached
+  //         setTimeout(() => {
+  //           this.loading.setLoadingVisible(false);
+  //           this.logger.printLogs('i', `Finished ${logAction || method}`, endpoint);
+  //         }, remaining);
+  //       } else {
+  //         this.loading.setLoadingVisible(false);
+  //         this.logger.printLogs('i', `Finished ${logAction || method}`, endpoint);
+  //       }
+  //     })
+  //   );
+  // }
+
   private handleRequest<T>(
     method: 'get' | 'post' | 'put' | 'delete',
     endpoint: string,
-    options?: { id?: any; body?: any; logAction?: string; minDuration?: number }
+    options?: {
+      id?: any;
+      body?: any;
+      params?: Record<string, any>;   // 🔥 NEW
+      logAction?: string;
+      minDuration?: number;
+    }
   ): Observable<T> {
+
     this.loading.setLoadingVisible(true);
 
-    const { id, body, logAction, minDuration = 500 } = options || {};
-    const url = id ? `${this.apiUrl}${endpoint}/${id}` : `${this.apiUrl}${endpoint}/`;
+    const {
+      id,
+      body,
+      params,
+      logAction,
+      minDuration = 500
+    } = options || {};
 
-    this.logger.printLogs('i', logAction || `${method.toUpperCase()} request`, body || id || '');
+    const url = id
+      ? `${this.apiUrl}${endpoint}/${id}`
+      : `${this.apiUrl}${endpoint}`;
+
+    this.logger.printLogs(
+      'i',
+      logAction || `${method.toUpperCase()} request`,
+      body || params || id || ''
+    );
 
     let request$: Observable<any>;
+
     switch (method) {
       case 'get':
-        request$ = this.http.get<any>(url);
+        request$ = this.http.get<any>(url, { params });
         break;
+
       case 'post':
-        request$ = this.http.post<any>(url, body);
+        request$ = this.http.post<any>(url, body, { params });
         break;
+
       case 'put':
-        request$ = this.http.put<any>(url, body);
+        request$ = this.http.put<any>(url, body, { params });
         break;
+
       case 'delete':
-        request$ = this.http.delete<any>(url);
+        request$ = this.http.delete<any>(url, {
+          body,
+          params,
+          headers: { 'Content-Type': 'application/json' }
+        });
         break;
     }
 
@@ -79,33 +169,34 @@ export class ApiService {
 
     return request$.pipe(
       map((res: any) => {
-        // normalize array-like responses
+        // normalize common API response shapes
         if (Array.isArray(res)) return res;
-        if (res && Array.isArray(res.items)) return res.items;
+        if (res?.items && Array.isArray(res.items)) return res.items;
         return res;
       }),
-      catchError((err) =>
-        throwError(() => err)),
-      // this.handleError(err)),
-      // this.errorHandler.handle(err)),
+
+      catchError(err => {
+        this.logger.printLogs('e', 'API Error', err);
+        return throwError(() => err);
+      }),
+
       finalize(() => {
         const elapsed = Date.now() - startTime;
         const remaining = minDuration - elapsed;
 
-        if (remaining > 0) {
-          // wait until minimum duration is reached
-          setTimeout(() => {
-            this.loading.setLoadingVisible(false);
-            this.logger.printLogs('i', `Finished ${logAction || method}`, endpoint);
-          }, remaining);
-        } else {
+        const finish = () => {
           this.loading.setLoadingVisible(false);
-          this.logger.printLogs('i', `Finished ${logAction || method}`, endpoint);
-        }
+          this.logger.printLogs(
+            'i',
+            `Finished ${logAction || method.toUpperCase()}`,
+            endpoint
+          );
+        };
+
+        remaining > 0 ? setTimeout(finish, remaining) : finish();
       })
     );
   }
-
 
   private handleStringRequest<T>(
     method: 'post' | 'put', // only makes sense for methods with a body
@@ -291,7 +382,7 @@ export class ApiService {
   }
 
   getUserAccount(id: string) {
-    return this.handleRequest<any[]>('get', 'Users', { id: id,logAction: 'Fetching Users' });
+    return this.handleRequest<any[]>('get', 'Users', { id: id, logAction: 'Fetching Users' });
   }
 
   GetUserbyUsername(userame: string): Observable<any> {
@@ -389,11 +480,14 @@ export class ApiService {
     return this.handleRequest('delete', 'Schools', { id, logAction: 'Deleting Schools' });
   }
 
-
   /*----------------------- SLOTS -----------------------*/
 
   getSlots() {
     return this.handleRequest<any[]>('get', 'Slots', { logAction: 'Fetching Slots' });
+  }
+
+  getSlotsByRange(start: string, end: string) {
+    return this.handleRequest<any[]>('get', 'Slots/range', { params: { start, end }, logAction: 'Fetch Slots By Range' });
   }
 
   getSlotsByAllocationIDs(payload: { AllocationID: string[] }) {
@@ -411,12 +505,28 @@ export class ApiService {
     return this.handleRequest('post', `Slots/bulk/${force}`, { body: slots, logAction: 'Creating Bulk Slots' });
   }
 
-
   updateSlotStatus(status: number, slotIDs: string[]) {
     return this.handleRequest('put', `Slots/status/${status}`, {
       body: slotIDs,
       logAction: 'Update Slot Status'
     });
+  }
+
+  validateBookingToken(bookID: string, token: string) {
+    return this.handleRequest<any>(
+      'get',
+      `Slots/validate-booking/${bookID}?token=${token}`,
+      { logAction: 'Validating Booking Token' }
+    );
+  }
+
+
+  deleteSlot(id: any) {
+    return this.handleRequest('delete', 'Slots', { id, logAction: 'Deleting Slot' });
+  }
+
+  deleteSlots(ids: string[]) {
+    return this.handleRequest('delete', 'Slots/bulk', { body: ids, logAction: 'Deleting Slots' });
   }
 
   /*----------------------- APPOINTMENTS -----------------------*/

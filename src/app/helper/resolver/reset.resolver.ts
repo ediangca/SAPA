@@ -10,7 +10,6 @@ export class ResetPasswordResolver implements Resolve<boolean> {
     constructor(
         private auth: AuthService,
         private router: Router,
-        private logger: LogsService
     ) { }
 
     resolve(route: ActivatedRouteSnapshot): Observable<boolean> {

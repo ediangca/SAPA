@@ -767,7 +767,8 @@ export class Appointment implements OnInit {
     }
 
     changeStatus(status: number, appointment: any | null = null) {
-        this.logger.printLogs('i', `Update appointment to ${this.getStatus(status, 'value')}`, appointment);
+        
+        this.logger.printLogs('i', `Selected appointment to ${this.getStatus(status, 'value')}`, appointment);
 
         const appointmentIDs = appointment ? [appointment.appointmentID] :
             (this.selectAppointments?.map((appointment: any) => appointment.appointmentID) ?? []);

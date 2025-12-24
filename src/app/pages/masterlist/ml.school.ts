@@ -109,14 +109,12 @@ export class School implements OnInit {
     qrDialog: boolean = false;
     coordinatorID: any | null;
 
-
     c: boolean = false;
     r: boolean = false;
     u: boolean = false;
     d: boolean = false;
     s: boolean = false;
     p: boolean = false;
-
 
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
@@ -148,7 +146,8 @@ export class School implements OnInit {
             .subscribe(res => {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
-                this.initSubComponent();
+                this.initPriveleges();
+                this.buildSubComponent();
                 this.loadSchools();
             });
 
@@ -162,24 +161,6 @@ export class School implements OnInit {
         ];
 
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
-    }
-
-
-    initSubComponent() {
-
-        this.buildSubComponent();
-
-        this.store.getPrivileges()
-            .pipe(
-                filter(priv => priv.length > 0),
-                take(1)
-            )
-            .subscribe(priv => {
-                if (priv.length > 0) {
-                    this.logger.printLogs('i', 'Accessability Loaded:', priv);
-                    this.validateAccessability();
-                }
-            });
     }
 
     buildSubComponent() {
@@ -221,7 +202,7 @@ export class School implements OnInit {
         ];
     }
 
-    validateAccessability() {
+    initPriveleges() {
         const moduleID = 'MOD0005';
         this.c = this.store.isAllowedAction(moduleID, 'create');
         this.r = this.store.isAllowedAction(moduleID, 'retrieve');
@@ -711,7 +692,6 @@ export class School implements OnInit {
 
 
     private showErrorAlert(title: string, message: string, dialogOpen: boolean, severity: 'error' | 'warning' | 'success' = 'success') {
-        this.logger.printLogs('e', 'Failed to create school', message);
         this.messageService.add({
             severity: severity,
             summary: title,

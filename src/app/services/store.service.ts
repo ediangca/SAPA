@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, map, Observable, of, switchMap } from 'rxjs';
+import { BehaviorSubject, filter, map, Observable, of, switchMap, take } from 'rxjs';
 import { ApiService } from './api.service';
 import { LogsService } from './logs.service';
 
@@ -113,6 +113,14 @@ export class StoreService {
       });
     return null;
   }
+  
+  getPrivilegesLoaded(): Observable<any[]> {
+    return this.privileges$.pipe(
+        filter(privs => privs.length > 0),
+        take(1)
+    );
+}
+
 
   isModuleActive(moduleID: string): boolean {
     const privileges = this.privileges$.getValue();

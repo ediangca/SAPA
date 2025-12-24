@@ -70,6 +70,7 @@ export class ResetPassword implements OnInit {
       this.userId = params['userId'];
       this.token = params['token'];
     });
+
   }
 
 

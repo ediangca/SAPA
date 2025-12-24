@@ -1,9 +1,7 @@
 <p-toast></p-toast>
-<div class="flex flex-col md:flex-row gap-8">
-
-    <div class="md:w-5/6">
+<div class="flex flex-col md:flex-row gap-8" [style]="{ height: 'calc(100vh - 12rem)'}">
+    <div class="md:w-4/5">
         <div class="card">
-
             <div class="flex row justify-end mb-2">
                 <p-selectButton class="float-right" [options]="viewOptions" optionLabel="label" optionValue="value"
                     [(ngModel)]="tableOption" (onChange)="onChangeView($event)"
@@ -18,12 +16,13 @@
             </div>
 
             @if (tableOption) {
-            <p-table #dt [value]="slots()" [rows]="10" [columns]="cols" [paginator]="true" [scrollable]="true"
-                scrollHeight="400px" [rowHover]="true" [showGridlines]="true"
+            <p-table #dt [value]="slots()" [rows]="20" [columns]="cols" [paginator]="true" [rowHover]="true"
+                [showGridlines]="true" [loading]="loading"
                 [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionname', 'status', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
                 dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
-                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[20, 50, 100, 500, 1000]"
+                paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="61vh"
                 (selectionChange)="onScheduleSelectionChange($event)">
 
 
@@ -34,27 +33,32 @@
                         <h5 class="m-0">Manage Schedules</h5>
                     </div>
 
-                    <div class="flex items-center justify-between">
-                        <div class="flex row">
-                            <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
+                    <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
+                        <div class="md:w-6/7 flex row gap-2">
+                            <p-button *ngIf="c" label="New" icon="pi pi-plus" severity="primary" class="mr-2"
                                 (onClick)="openNew(null)" />
-                            <p-button label="Clear" class="p-button-outlined mr-2" severity="secondary"
-                                icon="pi pi-filter-slash" (click)="clear(dt)" />
+                            <p-button *ngIf="d" severity="secondary" label="Delete" icon="pi pi-trash" outlined
+                                (onClick)="deleteSelected()" [disabled]="!selectSlots || !selectSlots.length" />
 
                         </div>
-                        <p-iconfield>
-                            <p-inputicon styleClass="pi pi-search" />
-                            <input pInputText type="text" [(ngModel)]="filter" (input)="onGlobalFilter(dt)"
-                                placeholder="Search..." />
-                            @if (filter && filter.length > 0) {
-                            <p-inputicon styleClass="pi pi-times cursor-pointer" style="margin-left: -1.5rem;"
-                                (click)="clear(dt)" />
-                            }
-                            <p-button label="Export" class="mx-2" icon="pi pi-upload" severity="info" rounded="true"
-                                pTooltip="Export" (onClick)="exportCSV()" />
+                        <div class="md:w-1/7 flex row gap-2 justify-end">
+                            <p-iconfield>
+                                <p-inputicon styleClass="pi pi-search" />
+                                <input pInputText type="text" [(ngModel)]="filter" (input)="onGlobalFilter(dt)"
+                                    placeholder="Search..." />
+                                @if (filter && filter.length > 0) {
+                                <p-inputicon styleClass="pi pi-times cursor-pointer" class="mx-1" (click)="clear(dt)" />
+                                }
+
+                            </p-iconfield>
+                            <p-button severity="contrast" rounded="true" pTooltip="Clear Filters" tooltipPosition="top"
+                                icon="pi pi-filter-slash" (click)="clear(dt)" />
                             <p-button icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
-                                (click)="loadSlots()" />
-                        </p-iconfield>
+                                tooltipPosition="top" (click)="loadSlots()" />
+                            <p-button class="" icon="pi pi-upload" severity="info" rounded="true" pTooltip="Export"
+                                tooltipPosition="top" (onClick)="exportCSV()" />
+
+                        </div>
 
                     </div>
                 </ng-template>
@@ -149,12 +153,12 @@
                         <th style="min-width: 5rem">Action</th>
                     </tr>
                 </ng-template>
-                <ng-template #body let-slot>
+
+                <!-- <ng-template #body let-slot>
                     <tr>
                         <td pFrozenColumn style="width: 3rem">
                             <p-tableCheckbox [value]="slot" />
                         </td>
-                        <!-- <td style="max-width: 1rem">{{ slot.slotID }}</td> -->
                         <td style="min-width: 3rem">{{ slot.dateSlot }}</td>
                         <td style="min-width: 10rem">{{ slot.shiftName}}
                             <small class="block text-gray-500">({{ formatTime(slot.startTime)}} - {{
@@ -170,35 +174,115 @@
                         <td>
                             <div class="flex flex-row gap-2">
                                 @if (slot.slotStatus == 0) {
-                                <!-- <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" (click)="edit(slot)" /> -->
-                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                                    (click)="delete(slot)" />
+                                <p-button *ngIf="d" icon="pi pi-trash" severity="danger" [rounded]="true"
+                                    [outlined]="true" (click)="delete(slot)" />
                                 }
                                 <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
                                     (click)="onEventClick(slot)" />
-                                
+
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template> -->
+
+                <ng-template pTemplate="body" let-slot>
+                    <tr>
+                        <td pFrozenColumn style="width: 3rem">
+                            <p-tableCheckbox [value]="slot" />
+                        </td>
+                        <td>{{ slot.dateSlot }}</td>
+                        <td>
+                            {{ slot.shiftName }}
+                            <small class="block text-gray-500">
+                                ({{ formatTime(slot.startTime)}} - {{ formatTime(slot.endTime) }})
+                            </small>
+                        </td>
+                        <td>{{ slot.hospitalName }}</td>
+                        <td>{{ slot.sectionName }}</td>
+                        <td>
+                            <p-tag [value]="getStatus(slot.slotStatus,'value')"
+                                [severity]="getStatus(slot.slotStatus,'severirty')" />
+                        </td>
+                        <td>{{ dateFormat(slot.date_Created) }}</td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-button *ngIf="slot.slotStatus==0 && d" icon="pi pi-trash" severity="danger"
+                                    [rounded]="true" [outlined]="true" (click)="delete(slot)" />
+                                <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
+                                    (click)="onEventClick(slot)" />
                             </div>
                         </td>
                     </tr>
                 </ng-template>
+
+                <!-- LOADING BODY: skeleton rows -->
+                <ng-template pTemplate="loadingbody">
+                    <tr *ngFor="let _ of [1,2,3,4,5,6,7,8,9,10]">
+                        <td pFrozenColumn style="width: 3rem"><p-skeleton shape="circle" size="1.2rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
+                        <td>
+                            <p-skeleton width="8rem" height="1rem" />
+                            <p-skeleton width="5rem" height="0.8rem" class="mt-1" />
+                        </td>
+                        <td><p-skeleton width="7rem" height="1rem" /></td>
+                        <td><p-skeleton width="7rem" height="1rem" /></td>
+                        <td><p-skeleton width="5rem" height="1.4rem" borderRadius="1rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-skeleton shape="circle" size="2rem" />
+                                <p-skeleton shape="circle" size="2rem" />
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+
             </p-table>
+
             }@else{
+            <div class="flex flex-col md:flex-col " [style]="{ height: 'calc(100vh - 18rem)'}">
+                <div class="flex justify-end gap-4 pl-4 py-3">
+                    <!-- Morning -->
+                    <div class="flex items-center gap-2">
+                        <p-tag severity="success" class="p-5" value="Morning" [rounded]="true" />
+                    </div>
 
-            <full-calendar [options]='calendarOptions()'>
-                <ng-template #eventContent let-arg>
-                    <p-tag [value]="arg.event.title"
-                        [severity]="getShiftSeverity(arg.event.extendedProps.slotStatus === 1 ? arg.event.extendedProps.shift : (arg.event.extendedProps.slotStatus === 3 ? 'closed' : 'unposted'))"
-                        class="p-1 text-xs" [pTooltip]="arg.event.title" tooltipPosition="top">
+                    <!-- Afternoon -->
+                    <div class="flex items-center gap-2">
+                        <p-tag severity="warn" class="p-5" value="Afternoon" [rounded]="true" />
+                    </div>
 
-                        <span class="px-2 py-0.5 text-xs rounded-full 
+                    <!-- Evening -->
+                    <div class="flex items-center gap-2">
+                        <p-tag severity="secondary" class="p-5" value="Evening" [rounded]="true" />
+                    </div>
+                </div>
+                <!-- <full-calendar [options]='calendarOptions()'>
+                    <ng-template #eventContent let-arg>
+                        <p-tag [value]="arg.event.title"
+                            [severity]="getShiftSeverity(arg.event.extendedProps.slotStatus === 1 ? arg.event.extendedProps.shift : (arg.event.extendedProps.slotStatus === 3 ? 'closed' : 'unposted'))"
+                            class="p-1 text-xs" [pTooltip]="arg.event.title" tooltipPosition="top">
+
+                            <span class="px-2 py-0.5 text-xs rounded-full 
                             {{arg.event.extendedProps.slotStatus === 0 ? 'pi pi-refresh' : 
                             arg.event.extendedProps.slotStatus === 1 ? 'pi pi-thumbtack' : 'pi pi-lock'}}">
-                            <!-- [pTooltip]="arg.event.extendedProps.slotStatus === 0 ? 'Unposted' : 
+                            </span>
+                        </p-tag>
+                    </ng-template>
+                </full-calendar> -->
+                <!-- [pTooltip]="arg.event.extendedProps.slotStatus === 0 ? 'Unposted' : 
                             arg.event.extendedProps.slotStatus === 1 ? 'Open' : 'Closed'" tooltipPosition="top" -->
-                        </span>
-                    </p-tag>
-                </ng-template>
-            </full-calendar>
+
+                <full-calendar [options]="calendarOptions">
+                    <ng-template #eventContent let-arg>
+                        <div class="text-[10px] px-1 py-[2px] rounded bg-blue-500 text-white text-center cursor-pointer"
+                            title="Click to view schedules">
+                            {{ arg.event.title }}
+                        </div>
+                    </ng-template>
+                </full-calendar>
+
+            </div>
             }
 
         </div>
@@ -206,8 +290,8 @@
 
 
     <!-- SUBMENU -->
-    <div class="md:w-1/6">
-        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
+    <div class="md:w-1/5">
+        <div class="card">
             <div class="">
                 <h5 class="m-0">Sub Component</h5>
                 <!-- 
@@ -250,12 +334,14 @@
                         <small class="text-red-500">Date is required.</small>
                         }
                     </div>
+                    @if(dialogDateRange.length > 0){
                     <div>
                         <label for="hospitals" class="block font-bold mb-3">Hospitals</label>
                         <p-select styleClass="w-full" id="hospitals" [options]="hospitals" optionLabel="hospitalName"
                             optionValue="hospitalID" appendTo="body" formControlName="hospitalID"
                             (onChange)="getAllocationsByHospitalID($event.value)" placeholder="Select Hospital" />
                     </div>
+                    }
                     @if(allocations.length > 0)
                     {
                     <div *ngIf="allocations.length > 0">
@@ -335,43 +421,34 @@
         <!-- Animated Card -->
         <div class="bg-white rounded-lg shadow px-5 pb-10 space-y-3">
 
-            <!-- Title -->
+            <!-- School -->
             <div class="flex items-center border-b pb-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
-                <i class="fas fa-hospital mr-2 text-blue-500"></i>
+                <i class="fas fa-school mr-2 text-secondary-500"></i>
+                <span class="font-semibold text-gray-700 flex-1">School</span>
+                <span class="text-gray-800 font-bold">{{ `${selectedEvent.extendedProps.schoolName}` }}</span>
+            </div>
+
+            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
+                <i class="fas fa-user mr-2 text-secondary-500"></i>
+                <span class="font-semibold text-gray-700 flex-1">Coordinator</span>
+                <span class="text-gray-800 font-bold">{{ `${selectedEvent.extendedProps.fullname}` }}</span>
+            </div>
+
+            <!-- Title -->
+            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
+                <i class="fas fa-hospital mr-2 text-secondary-500"></i>
                 <span class="font-semibold text-gray-700 flex-1">Hospital & Section</span>
-                <span class="text-gray-800">{{ `${selectedEvent.extendedProps.hospitalName} -
+                <span class="text-gray-800 font-bold">{{ `${selectedEvent.extendedProps.hospitalName} -
                     ${selectedEvent.extendedProps.sectionName}` }}</span>
             </div>
 
             <!-- Shift -->
             <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-200">
-                <i class="pi pi-clock mr-2 text-green-500"></i>
+                <i class="pi pi-clock mr-2 text-secondary-500"></i>
                 <span class="font-semibold text-gray-700 flex-1">Shift</span>
-                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                    {{ selectedEvent.extendedProps.shiftName }}
-                </span>
-            </div>
-
-            <!-- Start Time -->
-            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-300">
-                <i class="pi pi-play mr-2 text-indigo-500"></i>
-                <span class="font-semibold text-gray-700 flex-1">Start Time</span>
-                <span class="text-gray-800">{{ selectedEvent.extendedProps.startTime }}</span>
-            </div>
-
-            <!-- End Time -->
-            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-400">
-                <i class="pi pi-stop mr-2 text-red-500"></i>
-                <span class="font-semibold text-gray-700 flex-1">End Time</span>
-                <span class="text-gray-800">{{ selectedEvent.extendedProps.endTime }}</span>
-            </div>
-
-            <!-- Allocation -->
-            <div class="flex items-center pt-2 opacity-0 translate-y-4 animate-fadeIn delay-500">
-                <i class="pi pi-user mr-2 text-purple-500"></i>
-                <span class="font-semibold text-gray-700 flex-1">Allocation</span>
-                <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-                    {{ selectedEvent.extendedProps.allocation }}
+                <span class="p-3 bg-green-100 text-green-800 rounded-full text-sm font-bold">
+                    {{ selectedEvent.extendedProps.shiftName }} ({{ selectedEvent.extendedProps.startTime }} -
+                    {{ selectedEvent.extendedProps.endTime }})
                 </span>
             </div>
 
@@ -420,11 +497,98 @@
 
 </p-dialog>
 
+<p-dialog header="Schedules" [(visible)]="dayDialog" modal>
+    <ul class="space-y-2 text-sm">
+        <li *ngFor="let s of daySlots">
+            {{ s.hospitalName }} – {{ s.shiftName }}
+        </li>
+    </ul>
+</p-dialog>
+
+
+<p-dialog header="Slot Conflict Detected" [(visible)]="showForceDialog" [modal]="true" [closable]="false"
+    [style]="{ width: '90%', maxWidth: '1024px' }">
+
+    <p> <span class="text-red-500 font-bold">Note:</span> Some slots you requested already exist but are unconfirmed and
+        others is not avaliable.</p>
+
+    <div class="overflow-auto" style="max-height: 60vh;">
+        <table class="w-full ">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th *ngIf="availableSlots.length > 0" class="border px-4 py-2 text-lg font-bold">Available Slots
+                    </th>
+                    <th *ngIf="existingSlots.length > 0" class="border px-4 py-2  text-lg font-bold">Existing
+                        Unconfirmed Slots</th>
+                    <th *ngIf="blockedSlots.length > 0" class="border px-4 py-2 text-lg font-bold">Unavailable Slots
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let i of getMaxLengthIndices()">
+                    <!-- Available -->
+                    <td *ngIf="availableSlots.length > 0" [ngClass]="{'bg-green-100': availableSlots[i]}">
+                        <ng-container *ngIf="availableSlots[i]">
+
+                            <div class="flex flex-row justify-between">
+                                <span class="w-1/2 border border px-4 py-2">{{ availableSlots[i].dateSlot |
+                                    date:'mediumDate' }} - {{ availableSlots[i].shiftName }} </span>
+                                <span class="w-1/2 border border px-4 py-2"> {{ availableSlots[i].hospitalName }} ({{
+                                    availableSlots[i].sectionName }})</span>
+                            </div>
+                            <!-- {{ availableSlots[i].dateSlot | date:'mediumDate' }} - {{ availableSlots[i].shiftName }}<br>
+                            {{ availableSlots[i].hospitalName }} ({{ availableSlots[i].sectionName }}) -->
+                        </ng-container>
+                    </td>
+
+                    <!-- Existing -->
+                    <td *ngIf="existingSlots.length > 0" [ngClass]="{'bg-yellow-100': existingSlots[i]}">
+                        <ng-container *ngIf="existingSlots[i]">
+
+                            <div class="flex flex-row justify-between">
+                                <span class="w-1/2 border border px-4 py-2">{{ existingSlots[i].dateSlot |
+                                    date:'mediumDate' }} - {{ existingSlots[i].shiftName }} </span>
+                                <span class="w-1/2 border border px-4 py-2"> {{ existingSlots[i].hospitalName }} ({{
+                                    existingSlots[i].sectionName }})</span>
+                            </div>
+                            <!-- {{ existingSlots[i].dateSlot | date:'mediumDate' }} - {{ existingSlots[i].shiftName }}<br>
+                            {{ existingSlots[i].hospitalName }} ({{ existingSlots[i].sectionName }}) -->
+                        </ng-container>
+                    </td>
+
+                    <!-- Blocked -->
+                    <td *ngIf="blockedSlots.length > 0" class="" [ngClass]="{'bg-red-100': blockedSlots[i]}">
+                        <ng-container *ngIf="blockedSlots[i]">
+
+                            <div class="flex flex-row justify-between">
+                                <span class="w-1/2 border border px-4 py-2">{{ blockedSlots[i].dateSlot |
+                                    date:'mediumDate' }} - {{ blockedSlots[i].shiftName }} </span>
+                                <span class="w-1/2 border border px-4 py-2"> {{ blockedSlots[i].hospitalName }} ({{
+                                    blockedSlots[i].sectionName }})</span>
+                            </div>
+                            <!-- {{ blockedSlots[i].dateSlot | date:'mediumDate' }} - {{ blockedSlots[i].shiftName }} <br> 
+                            {{ blockedSlots[i].hospitalName }} ({{ blockedSlots[i].sectionName }}) -->
+                        </ng-container>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <!-- Add only available -->
+        <button *ngIf="availableSlots.length > 0" pButton type="button" label="Add Available Slot Only"
+            class="p-button-primary mr-2" (click)="addAvailableOnly()"></button>
+
+        <!-- Force add all -->
+        <button *ngIf="existingSlots.length > 0" pButton type="button"
+            label="Force Add both Available and Unconfirmed Slot" class="p-button-success mr-2"
+            (click)="forceAddAll()"></button>
+
+        <!-- Cancel -->
+        <button pButton type="button" label="Cancel" class="p-button-text" (click)="showForceDialog=false"></button>
+    </ng-template>
+</p-dialog>
+
 
 <p-confirmdialog [style]="{ width: '450px' }">
-
-
-
-
-
-    
