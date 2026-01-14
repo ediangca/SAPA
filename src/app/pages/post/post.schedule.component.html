@@ -16,12 +16,12 @@
             </div>
 
             @if (tableOption) {
-            <p-table #dt [value]="slots()" [rows]="20" [columns]="cols" [paginator]="true" [rowHover]="true"
-                [showGridlines]="true" [loading]="loading"
+            <p-table #dt [value]="slots()" [rows]="100" [columns]="cols" [paginator]="true" [rowHover]="true"
+                [showGridlines]="true", [loading]="loading", 
                 [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionname', 'status', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
                 dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
-                [showCurrentPageReport]="true" [rowsPerPageOptions]="[20, 50, 100, 500, 1000]"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 300, 500, 1000]"
                 paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="61vh"
                 (selectionChange)="onScheduleSelectionChange($event)">
 
