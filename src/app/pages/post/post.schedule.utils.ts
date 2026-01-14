@@ -15,6 +15,8 @@ export function mapSlotsToEvents(slots: any[], roleID: string | null = null) {
     start: `${slot.dateSlot}T${slot.startTime}`,
     end: computeEnd(slot.dateSlot, slot.endTime),
     extendedProps: {
+      slotID: slot.slotID,
+      dateSlot: slot.dateSlot,
       slotStatus: slot.slotStatus,
       schoolID: slot.schoolID,
       schoolName: slot.schoolName,
@@ -55,66 +57,121 @@ export function mapSlotsToEvents(slots: any[], roleID: string | null = null) {
 //   }));
 // }
 
+// export function aggregateSlotsByDay(
+//   slots: any[],
+//   roleID: string | null = null,
+//   currentUserID: string | null = null
+// ): EventInput[] {
+//   // 1️⃣ Filter slots based on role
+//   let filteredSlots = slots;
+//   if (roleID !== 'UGR0001' && roleID !== 'UGR0002' && currentUserID) {
+//     filteredSlots = slots.filter(slot => slot.userID === currentUserID);
+//   }
+
+//   // 2️⃣ Aggregate by date
+//   const dateMap = new Map<string, any[]>();
+//   filteredSlots.forEach(slot => {
+//     const day = slot.dateSlot;
+//     if (!dateMap.has(day)) dateMap.set(day, []);
+//     dateMap.get(day)!.push(slot);
+//   });
+
+//   // 3️⃣ For each day, group slots by school (admin) or hospital (coordinator)
+//   const events: EventInput[] = [];
+
+//   dateMap.forEach((daySlots, day) => {
+//     if (roleID === 'UGR0001' || roleID === 'UGR0002') {
+//       // Admin → group by schoolID
+//       const schoolMap = new Map<string, any[]>();
+//       daySlots.forEach(slot => {
+//         if (!schoolMap.has(slot.schoolID)) schoolMap.set(slot.schoolID, []);
+//         schoolMap.get(slot.schoolID)!.push(slot);
+//       });
+
+//       schoolMap.forEach((schoolSlots, schoolID) => {
+//         const schoolName = schoolSlots[0].schoolName;
+//         events.push({
+//           id: `${day}-${schoolID}`,
+//           start: day,
+//           allDay: true,
+//           title: schoolName, // Show school name
+//           extendedProps: { slots: schoolSlots }
+//         });
+//       });
+
+//     } else {
+//       // Coordinator → group by hospitalID
+//       const hospitalMap = new Map<string, any[]>();
+//       daySlots.forEach(slot => {
+//         if (!hospitalMap.has(slot.hospitalID)) hospitalMap.set(slot.hospitalID, []);
+//         hospitalMap.get(slot.hospitalID)!.push(slot);
+//       });
+
+//       hospitalMap.forEach((hospitalSlots, hospitalID) => {
+//         const hospitalName = hospitalSlots[0].hospitalName;
+//         events.push({
+//           id: `${day}-${hospitalID}`,
+//           start: day,
+//           allDay: true,
+//           title: hospitalName, // Show hospital name
+//           extendedProps: { slots: hospitalSlots }
+//         });
+//       });
+//     }
+//   });
+
+//   return events;
+// }
+
 export function aggregateSlotsByDay(
   slots: any[],
   roleID: string | null = null,
   currentUserID: string | null = null
 ): EventInput[] {
-  // 1️⃣ Filter slots based on role
-  let filteredSlots = slots;
-  if (roleID !== 'UGR0001' && roleID !== 'UGR0002' && currentUserID) {
-    filteredSlots = slots.filter(slot => slot.userID === currentUserID);
+
+  const isAdmin = roleID === 'UGR0001' || roleID === 'UGR0002';
+
+  // 1️⃣ Filter slots by role
+  const filteredSlots = (!isAdmin && currentUserID)
+    ? slots.filter(s => s.userID === currentUserID)
+    : slots;
+
+  // 2️⃣ Group slots by date
+  const dateMap = new Map<string, any[]>();
+  for (const slot of filteredSlots) {
+    if (!dateMap.has(slot.dateSlot)) {
+      dateMap.set(slot.dateSlot, []);
+    }
+    dateMap.get(slot.dateSlot)!.push(slot);
   }
 
-  // 2️⃣ Aggregate by date
-  const dateMap = new Map<string, any[]>();
-  filteredSlots.forEach(slot => {
-    const day = slot.dateSlot;
-    if (!dateMap.has(day)) dateMap.set(day, []);
-    dateMap.get(day)!.push(slot);
-  });
-
-  // 3️⃣ For each day, group slots by school (admin) or hospital (coordinator)
+  // 3️⃣ Build events
   const events: EventInput[] = [];
 
   dateMap.forEach((daySlots, day) => {
-    if (roleID === 'UGR0001' || roleID === 'UGR0002') {
-      // Admin → group by schoolID
-      const schoolMap = new Map<string, any[]>();
-      daySlots.forEach(slot => {
-        if (!schoolMap.has(slot.schoolID)) schoolMap.set(slot.schoolID, []);
-        schoolMap.get(slot.schoolID)!.push(slot);
-      });
 
-      schoolMap.forEach((schoolSlots, schoolID) => {
-        const schoolName = schoolSlots[0].schoolName;
-        events.push({
-          id: `${day}-${schoolID}`,
-          start: day,
-          allDay: true,
-          title: schoolName, // Show school name
-          extendedProps: { slots: schoolSlots }
-        });
-      });
-    } else {
-      // Coordinator → group by hospitalID
-      const hospitalMap = new Map<string, any[]>();
-      daySlots.forEach(slot => {
-        if (!hospitalMap.has(slot.hospitalID)) hospitalMap.set(slot.hospitalID, []);
-        hospitalMap.get(slot.hospitalID)!.push(slot);
-      });
+    const groupKey = isAdmin ? 'schoolID' : 'hospitalID';
+    const titleKey = isAdmin ? 'schoolName' : 'hospitalName';
 
-      hospitalMap.forEach((hospitalSlots, hospitalID) => {
-        const hospitalName = hospitalSlots[0].hospitalName;
-        events.push({
-          id: `${day}-${hospitalID}`,
-          start: day,
-          allDay: true,
-          title: hospitalName, // Show hospital name
-          extendedProps: { slots: hospitalSlots }
-        });
-      });
+    const groupMap = new Map<string, any[]>();
+
+    for (const slot of daySlots) {
+      const key = slot[groupKey];
+      if (!groupMap.has(key)) {
+        groupMap.set(key, []);
+      }
+      groupMap.get(key)!.push(slot);
     }
+
+    groupMap.forEach((groupSlots, key) => {
+      events.push({
+        id: `${day}-${key}`,
+        start: day,
+        allDay: true,
+        title: groupSlots[0][titleKey],
+        extendedProps: { slots: groupSlots }
+      });
+    });
   });
 
   return events;

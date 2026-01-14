@@ -77,8 +77,26 @@
                             <p-sortIcon field="dateSlot" />
                         </th>
                         <th pSortableColumn="shiftName" style="min-width:10rem">
-                            Shift
-                            <p-sortIcon field="shiftName" />
+                            <div class="flex justify-between items-center">
+                                Shift
+                                <p-columnFilter field="shiftName" matchMode="in" display="menu" [showMatchModes]="false"
+                                    [showOperator]="false" [showAddButton]="false">
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Shift Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="shiftOption" optionLabel="shiftName"
+                                            optionValue="shiftName" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+
+                                </p-columnFilter>
+                            </div>
                         </th>
                         <th pSortableColumn="hospitalName" style="min-width:10rem">
                             <div class="flex justify-between items-center">
@@ -124,6 +142,28 @@
                                 </p-columnFilter>
                             </div>
                         </th>
+                        <th pSortableColumn="schoolName" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                School
+                                <p-columnFilter field="schoolName" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">School Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="schools" optionLabel="schoolName"
+                                            optionValue="schoolName" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+
+                                </p-columnFilter>
+                            </div>
+                        </th>
                         <th pSortableColumn="status" style="min-width:10rem">
                             <div class="flex justify-between items-center">
                                 Status
@@ -154,36 +194,6 @@
                     </tr>
                 </ng-template>
 
-                <!-- <ng-template #body let-slot>
-                    <tr>
-                        <td pFrozenColumn style="width: 3rem">
-                            <p-tableCheckbox [value]="slot" />
-                        </td>
-                        <td style="min-width: 3rem">{{ slot.dateSlot }}</td>
-                        <td style="min-width: 10rem">{{ slot.shiftName}}
-                            <small class="block text-gray-500">({{ formatTime(slot.startTime)}} - {{
-                                formatTime(slot.endTime) }})</small>
-                        </td>
-                        <td style="min-width: 3rem">{{ slot.hospitalName }}</td>
-                        <td style="min-width: 3rem">{{ slot.sectionName }}</td>
-                        <td style="min-width: 3rem">
-                            <p-tag [value]="getStatus(slot.slotStatus,'value')"
-                                [severity]="getStatus(slot.slotStatus,'severirty')" styleClass="dark:bg-surface-900!" />
-                        </td>
-                        <td style="min-width: 3rem">{{ dateFormat(slot.date_Created) }}</td>
-                        <td>
-                            <div class="flex flex-row gap-2">
-                                @if (slot.slotStatus == 0) {
-                                <p-button *ngIf="d" icon="pi pi-trash" severity="danger" [rounded]="true"
-                                    [outlined]="true" (click)="delete(slot)" />
-                                }
-                                <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
-                                    (click)="onEventClick(slot)" />
-
-                            </div>
-                        </td>
-                    </tr>
-                </ng-template> -->
 
                 <ng-template pTemplate="body" let-slot>
                     <tr>
@@ -199,6 +209,7 @@
                         </td>
                         <td>{{ slot.hospitalName }}</td>
                         <td>{{ slot.sectionName }}</td>
+                        <td>{{ slot.schoolName }}</td>
                         <td>
                             <p-tag [value]="getStatus(slot.slotStatus,'value')"
                                 [severity]="getStatus(slot.slotStatus,'severirty')" />
@@ -334,7 +345,7 @@
                         <small class="text-red-500">Date is required.</small>
                         }
                     </div>
-                    @if(dialogDateRange.length > 0){
+                    @if(printDateRange.length > 0){
                     <div>
                         <label for="hospitals" class="block font-bold mb-3">Hospitals</label>
                         <p-select styleClass="w-full" id="hospitals" [options]="hospitals" optionLabel="hospitalName"
@@ -425,21 +436,21 @@
             <div class="flex items-center border-b pb-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
                 <i class="fas fa-school mr-2 text-secondary-500"></i>
                 <span class="font-semibold text-gray-700 flex-1">School</span>
-                <span class="text-gray-800 font-bold">{{ `${selectedEvent.extendedProps.schoolName}` }}</span>
+                <span class="text-gray-800 font-bold">{{ `${selectedEvent.schoolName}` }}</span>
             </div>
 
             <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
                 <i class="fas fa-user mr-2 text-secondary-500"></i>
                 <span class="font-semibold text-gray-700 flex-1">Coordinator</span>
-                <span class="text-gray-800 font-bold">{{ `${selectedEvent.extendedProps.fullname}` }}</span>
+                <span class="text-gray-800 font-bold">{{ `${selectedEvent.fullname}` }}</span>
             </div>
 
             <!-- Title -->
             <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
                 <i class="fas fa-hospital mr-2 text-secondary-500"></i>
                 <span class="font-semibold text-gray-700 flex-1">Hospital & Section</span>
-                <span class="text-gray-800 font-bold">{{ `${selectedEvent.extendedProps.hospitalName} -
-                    ${selectedEvent.extendedProps.sectionName}` }}</span>
+                <span class="text-gray-800 font-bold">{{ `${selectedEvent.hospitalName} -
+                    ${selectedEvent.sectionName}` }}</span>
             </div>
 
             <!-- Shift -->
@@ -447,9 +458,18 @@
                 <i class="pi pi-clock mr-2 text-secondary-500"></i>
                 <span class="font-semibold text-gray-700 flex-1">Shift</span>
                 <span class="p-3 bg-green-100 text-green-800 rounded-full text-sm font-bold">
-                    {{ selectedEvent.extendedProps.shiftName }} ({{ selectedEvent.extendedProps.startTime }} -
-                    {{ selectedEvent.extendedProps.endTime }})
+                    {{ selectedEvent.shiftName }} ({{ selectedEvent.startTime }} -
+                    {{ selectedEvent.endTime }})
                 </span>
+            </div>
+
+            <!-- Status -->
+            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-200">
+                <i class="pi pi-clock mr-2 text-secondary-500"></i>
+                <span class="font-semibold text-gray-700 flex-1">Status</span>
+                <p-tag [value]="getStatus(selectedEvent.slotStatus, 'value')"
+                    [severity]="getStatus(selectedEvent.slotStatus, 'severirty')"
+                    styleClass="dark:bg-surface-900!"></p-tag>
             </div>
 
         </div>
@@ -457,52 +477,15 @@
 
     <!-- Dialog footer -->
     <ng-template pTemplate="footer">
+        <p-button *ngIf="selectedEvent.slotStatus == 1" label="Request to Cancel" class="mr-2" severity="warn"
+            (click)="changeStatus(3, selectedEvent)">
+        </p-button>
+        <p-button *ngIf="selectedEvent.slotStatus == 3" label="Confirm Cancel Request" class="mr-2" severity="danger"
+            (click)="changeStatus(4, selectedEvent)">
+        </p-button>
         <button pButton type="button" label="Close" class="p-button-secondary"
             (click)="displayEventDialog=false"></button>
     </ng-template>
-</p-dialog>
-
-
-<!-- PRINT CONFIRMATION DIALOG -->
-<p-dialog header="Print Schedule" [(visible)]="printDialogVisible" [modal]="true" [dismissableMask]="true"
-    [style]="{ width: '480px' }" [breakpoints]="{ '960px': '90vw', '640px': '95vw' }">
-
-    <div class="p-3">
-
-        <p class="text-gray-700">
-            Select the date range you want to print.
-        </p>
-
-        <!-- DATE RANGE SELECTOR -->
-        <p-datepicker [(ngModel)]="dialogDateRange" class="w-full" [inline]="true" selectionMode="range"
-            dateFormat="yyyy-MM-dd" showIcon="true" placeholder="Select date range"></p-datepicker>
-
-        <div *ngIf="dialogDateRange?.length === 2" class="mt-3 p-3 border-round border-1 surface-border bg-gray-50">
-            <p><strong>Date From:</strong> {{ dialogDateRange[0] | date:'yyyy-MM-dd' }}</p>
-            <p><strong>Date To:</strong> {{ dialogDateRange[1] | date:'yyyy-MM-dd' }}</p>
-        </div>
-
-        <p class="mt-3 text-sm text-red-600">
-            *Choose a date range to filter and print the schedule.
-        </p>
-    </div>
-
-    <ng-template pTemplate="footer">
-        <p-button label="Cancel" icon="pi pi-times" class="p-button-text" (onClick)="closePrintDialog()">
-        </p-button>
-
-        <p-button label="Print PDF" icon="pi pi-file-pdf" severity="danger" (onClick)="confirmPrintSchedule()">
-        </p-button>
-    </ng-template>
-
-</p-dialog>
-
-<p-dialog header="Schedules" [(visible)]="dayDialog" modal>
-    <ul class="space-y-2 text-sm">
-        <li *ngFor="let s of daySlots">
-            {{ s.hospitalName }} – {{ s.shiftName }}
-        </li>
-    </ul>
 </p-dialog>
 
 
@@ -582,13 +565,246 @@
 
         <!-- Force add all -->
         <button *ngIf="existingSlots.length > 0" pButton type="button"
-            label="Force Add both Available and Unconfirmed Slot" class="p-button-success mr-2"
-            (click)="forceAddAll()"></button>
+            [label]="'Force Add' + (availableSlots.length > 0? ' both Available and ':' ') + 'Unconfirmed Slot' "
+            class="p-button-success mr-2" (click)="forceAddAll()"></button>
 
         <!-- Cancel -->
         <button pButton type="button" label="Cancel" class="p-button-text" (click)="showForceDialog=false"></button>
     </ng-template>
 </p-dialog>
 
+<p-dialog [header]="'Schedules – ' + selectedDay" [(visible)]="dayDialog" modal [style]="{ width: '70vw' }"
+    [resizable]="false">
+
+    <p-table [value]="daySlots" [rowHover]="true" [showGridlines]="true" responsiveLayout="stack" breakpoint="960px"
+        dataKey="slotID" [loading]="loadingDaySlots" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} schedules" [showCurrentPageReport]="true"
+        [scrollable]="true" scrollHeight="50vh">
+
+
+        <!-- TABLE HEADER -->
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Date</th>
+                <th pSortableColumn="shiftName" style="min-width:10rem">
+                    <div class="flex justify-between items-center">
+                        Shift
+                        <p-columnFilter field="shiftName" matchMode="in" display="menu" [showMatchModes]="false"
+                            [showOperator]="false" [showAddButton]="false">
+
+                            <ng-template #header>
+                                <div class="px-3 pt-3 pb-0">
+                                    <span class="font-bold">Shift Picker</span>
+                                </div>
+                            </ng-template>
+
+                            <ng-template #filter let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="shiftOption" optionLabel="shiftName"
+                                    optionValue="shiftName" placeholder="Any" class="w-full"
+                                    (onChange)="filter($event.value)">
+                                </p-multiSelect>
+                            </ng-template>
+
+                        </p-columnFilter>
+                    </div>
+                </th>
+                <th pSortableColumn="hospitalName" style="min-width:10rem">
+                    <div class="flex justify-between items-center">
+                        Hospital
+                        <p-columnFilter field="hospitalName" matchMode="in" display="menu" [showMatchModes]="false"
+                            [showOperator]="false" [showAddButton]="false">
+
+                            <ng-template #header>
+                                <div class="px-3 pt-3 pb-0">
+                                    <span class="font-bold">Hospital Picker</span>
+                                </div>
+                            </ng-template>
+
+                            <ng-template #filter let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="hospitals" optionLabel="hospitalName"
+                                    optionValue="hospitalName" placeholder="Any" class="w-full"
+                                    (onChange)="filter($event.value)">
+                                </p-multiSelect>
+                            </ng-template>
+
+                        </p-columnFilter>
+                    </div>
+                </th>
+                <th *ngIf="isAdminRole()" pSortableColumn="schoolName" style="min-width:10rem">
+                    <div class="flex justify-between items-center">
+                        School(s)
+                        <p-columnFilter field="schoolName" matchMode="in" display="menu" [showMatchModes]="false"
+                            [showOperator]="false" [showAddButton]="false">
+
+                            <ng-template #header>
+                                <div class="px-3 pt-3 pb-0">
+                                    <span class="font-bold">School Picker</span>
+                                </div>
+                            </ng-template>
+
+                            <ng-template #filter let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="schools" optionLabel="schoolName"
+                                    optionValue="schoolName" placeholder="Any" class="w-full"
+                                    (onChange)="filter($event.value)">
+                                </p-multiSelect>
+                            </ng-template>
+
+                        </p-columnFilter>
+                    </div>
+                </th>
+                <th pSortableColumn="sectionName" style="min-width:10rem">
+                    <div class="flex justify-between items-center">
+                        Section
+                        <p-columnFilter field="sectionName" matchMode="in" display="menu" [showMatchModes]="false"
+                            [showOperator]="false" [showAddButton]="false">
+
+                            <ng-template #header>
+                                <div class="px-3 pt-3 pb-0">
+                                    <span class="font-bold">Hospital Picker</span>
+                                </div>
+                            </ng-template>
+
+                            <ng-template #filter let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="sections" optionLabel="sectionName"
+                                    optionValue="sectionName" placeholder="Any" class="w-full"
+                                    (onChange)="filter($event.value)">
+                                </p-multiSelect>
+                            </ng-template>
+
+                        </p-columnFilter>
+                    </div>
+                </th>
+                <th pSortableColumn="status" style="min-width:10rem">
+                    <div class="flex justify-between items-center">
+                        Status
+                        <p-columnFilter field="slotStatus" matchMode="in" display="menu" [showMatchModes]="false"
+                            [showOperator]="false" [showAddButton]="false">
+
+                            <ng-template #header>
+                                <div class="px-3 pt-3 pb-0">
+                                    <span class="font-bold">Status Picker</span>
+                                </div>
+                            </ng-template>
+
+                            <ng-template #filter let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="headStatuses" optionLabel="label"
+                                    optionValue="value" placeholder="Any" class="w-full"
+                                    (onChange)="filter($event.value)">
+                                </p-multiSelect>
+                            </ng-template>
+
+                        </p-columnFilter>
+                    </div>
+                </th>
+                <th>
+                    Action
+                </th>
+            </tr>
+        </ng-template>
+
+        <!-- TABLE BODY -->
+        <ng-template pTemplate="body" let-slot>
+            <tr>
+                <td>{{ slot.dateSlot }}</td>
+
+                <td>
+                    {{ slot.shiftName }}
+                    <small class="block text-gray-500">
+                        ({{ formatTime(slot.startTime) }} – {{ formatTime(slot.endTime) }})
+                    </small>
+                </td>
+
+                <td>{{ slot.hospitalName }}</td>
+
+                <td *ngIf="isAdminRole()">{{ slot.schoolName }}</td>
+
+                <td>{{ slot.sectionName }}</td>
+
+                <td>
+                    <p-tag [value]="getStatus(slot.slotStatus, 'value')"
+                        [severity]="getStatus(slot.slotStatus, 'severirty')" />
+                </td>
+                <td>
+                    @if (canRequestCancel(slot)) {
+                    <!-- STUDENT: Request Cancel -->
+                    <p-button icon="pi pi-file-export" severity="warn" [rounded]="true" [outlined]="true"
+                        pTooltip="Request to Cancel" tooltipPosition="top" (click)="changeStatus(3, slot)">
+                    </p-button>
+
+                    } @else if (canApproveCancel(slot)) {
+                    <!-- ADMIN / COORDINATOR: Approve Cancel -->
+                    <p-button icon="pi pi-check" severity="success" [rounded]="true" [outlined]="true"
+                        pTooltip="Confirm Cancel Request" tooltipPosition="top" (click)="changeStatus(4, slot)">
+                    </p-button>
+
+                    } @else {
+                    <span class="text-gray-400">—</span>
+                    }
+
+                </td>
+            </tr>
+        </ng-template>
+
+        <!-- EMPTY STATE -->
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="6" class="text-center text-gray-500 py-4">
+                    No schedules found for this day.
+                </td>
+            </tr>
+        </ng-template>
+
+        <!-- LOADING SKELETON -->
+        <ng-template pTemplate="loadingbody">
+            <tr *ngFor="let _ of [1,2,3,4,5]">
+                <td><p-skeleton width="6rem" /></td>
+                <td>
+                    <p-skeleton width="8rem" />
+                    <p-skeleton width="5rem" height="0.8rem" class="mt-1" />
+                </td>
+                <td><p-skeleton width="7rem" /></td>
+                <td><p-skeleton width="8rem" /></td>
+                <td><p-skeleton width="6rem" /></td>
+                <td><p-skeleton width="5rem" height="1.4rem" borderRadius="1rem" /></td>
+            </tr>
+        </ng-template>
+
+    </p-table>
+</p-dialog>
+
+
+<!-- PRINT CONFIRMATION DIALOG -->
+<p-dialog header="Print Schedule" [(visible)]="printDialogVisible" [modal]="true" [dismissableMask]="true"
+    [style]="{ width: '480px' }" [breakpoints]="{ '960px': '90vw', '640px': '95vw' }">
+
+    <div class="p-3">
+
+        <p class="text-gray-700">
+            Select the date range you want to print.
+        </p>
+
+        <!-- DATE RANGE SELECTOR -->
+        <p-datepicker [(ngModel)]="printDateRange" class="w-full" [inline]="true" selectionMode="range"
+            dateFormat="yyyy-MM-dd" showIcon="true" placeholder="Select date range"></p-datepicker>
+
+        <div *ngIf="printDateRange?.length === 2" class="mt-3 p-3 border-round border-1 surface-border bg-gray-50">
+            <p><strong>Date From:</strong> {{ printDateRange[0] | date:'yyyy-MM-dd' }}</p>
+            <p><strong>Date To:</strong> {{ printDateRange[1] | date:'yyyy-MM-dd' }}</p>
+        </div>
+
+        <p class="mt-3 text-sm text-red-600">
+            *Choose a date range to filter and print the schedule.
+        </p>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" icon="pi pi-times" class="p-button-text" (onClick)="closePrintDialog()">
+        </p-button>
+
+        <p-button label="Print PDF" icon="pi pi-file-pdf" severity="danger" (onClick)="confirmPrintSchedule()">
+        </p-button>
+    </ng-template>
+
+</p-dialog>
 
 <p-confirmdialog [style]="{ width: '450px' }">

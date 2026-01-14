@@ -124,6 +124,7 @@ export class StoreService {
 
   isModuleActive(moduleID: string): boolean {
     const privileges = this.privileges$.getValue();
+    this.logger.printLogs('i', `Module Privilege ${moduleID}`, privileges);
     return privileges.some(
       (priv: any) =>
         priv.moduleID === moduleID && priv.isActive

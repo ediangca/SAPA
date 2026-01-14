@@ -16,7 +16,7 @@
                     </div>
                     <div class="flex items-center justify-between">
                         <div class="flex row">
-                            <p-button label="New" icon="pi pi-plus" severity="primary" class="mr-2"
+                            <p-button *ngIf="c" label="New" icon="pi pi-plus" severity="primary" class="mr-2"
                                 (onClick)="openNew()" />
                             <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
                                 (onClick)="deleteSelected()" [disabled]="!selectUsers || !selectUsers.length" /> -->
@@ -99,9 +99,9 @@
                                 (click)="edit(user)" />
 
                             @if (user.status === 'U') {
-                            <p-button class="mr-2" icon="pi pi-trash" severity="danger" pTooltip="Delete" tooltipPosition="top"
+                            <p-button *ngIf="d"  class="mr-2" icon="pi pi-trash" severity="danger" pTooltip="Delete" tooltipPosition="top"
                                 [rounded]="true" [outlined]="true" (click)="delete(user)" />
-                            <p-button class="mr-2" icon="fa fa-paper-plane" severity="info" pTooltip="Resend Account"
+                            <p-button class="mr-2" icon="fa fa-paper-plane" severity="info" pTooltip="Resend Verification"
                                 tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="resendVerification(user)" />
                             }@else if(user.status === 'P'){
                             <p-button class="mr-2" icon="fa fa-thumbs-up" severity="info" pTooltip="Approve Account"

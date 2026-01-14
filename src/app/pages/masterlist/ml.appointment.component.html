@@ -113,7 +113,7 @@
                                 }
                                 <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
                                 pTooltip="Show" tooltipPosition="top" (click)="show(appointment)" />
-                                <p-button icon="pi pi-times" severity="warn" [rounded]="true" [outlined]="true"
+                                <p-button *ngIf="appointment.status === 1" icon="pi pi-times" severity="warn" [rounded]="true" [outlined]="true"
                                 pTooltip="Request to Cancel" tooltipPosition="top" (click)="changeStatus(3, appointment)" />
                             </div>
                         </td>

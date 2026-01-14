@@ -1,7 +1,7 @@
 <div class="flex flex-col md:flex-row gap-8">
     <div class="md:w-5/6">
         <div class="card">
-            <p-table #dt [value]="users()" [rows]="10" [columns]="cols" [paginator]="true"
+            <p-table #dt [value]="users()" [rows]="10" [columns]="cols" [paginator]="true" [showGridlines]="true"
                 [globalFilterFields]="['userID', 'email', 'rolename', 'status', 'date_created']"
                 [tableStyle]="{ 'min-width': '75rem'}" [(selection)]="selectedUsers" [rowHover]="true" dataKey="userID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"

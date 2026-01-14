@@ -34,6 +34,7 @@ import { MenuModule } from 'primeng/menu';
 import { TieredMenuModule } from 'primeng/tieredmenu';
 import { AppMenuitem } from '@/layout/component/app.menuitem';
 import { RouterModule } from '@angular/router';
+import { filter, switchMap, tap } from 'rxjs';
 
 interface Column {
     field: string;
@@ -50,34 +51,34 @@ interface ExportColumn {
     selector: 'ml-student',
     standalone: true,
     imports: [
-    CommonModule,
-    MenuModule,
-    TieredMenuModule,
-    TableModule,
-    FormsModule,
-    TooltipModule,
-    ButtonModule,
-    CheckboxModule,
-    // AppMenuitem,
-    PanelMenuModule,
-    RippleModule,
-    ToastModule,
-    ToolbarModule,
-    RatingModule,
-    InputTextModule,
-    TextareaModule,
-    SelectModule,
-    RadioButtonModule,
-    InputNumberModule,
-    DialogModule,
-    TagModule,
-    InputIconModule,
-    IconFieldModule,
-    ConfirmDialogModule,
-    ReactiveFormsModule,
-    FormsModule,
-    RouterModule,
-],
+        CommonModule,
+        MenuModule,
+        TieredMenuModule,
+        TableModule,
+        FormsModule,
+        TooltipModule,
+        ButtonModule,
+        CheckboxModule,
+        // AppMenuitem,
+        PanelMenuModule,
+        RippleModule,
+        ToastModule,
+        ToolbarModule,
+        RatingModule,
+        InputTextModule,
+        TextareaModule,
+        SelectModule,
+        RadioButtonModule,
+        InputNumberModule,
+        DialogModule,
+        TagModule,
+        InputIconModule,
+        IconFieldModule,
+        ConfirmDialogModule,
+        ReactiveFormsModule,
+        FormsModule,
+        RouterModule,
+    ],
     templateUrl: './ml.student.component.html',
     providers: [MessageService, ConfirmationService],
     styleUrl: './css/masterlist.scss'
@@ -112,9 +113,15 @@ export class Student implements OnInit {
 
     emailPattern: string = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
-
     assignDialog: boolean = false;
     schoolID: any | null;
+
+    c: boolean = false;
+    r: boolean = false;
+    u: boolean = false;
+    d: boolean = false;
+    s: boolean = false;
+    p: boolean = false;
 
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
@@ -145,18 +152,15 @@ export class Student implements OnInit {
 
     buildSubComponent() {
         this.subcomponent = [
-            ...(this.tokenPayload.role === 'UGR0001'
-                ? [
-                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
-                ]
-                : [
-                    { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
-                ]),
+            {
+                id: 'p', label: 'Print All', visible: this.p, icon: 'fas fa-print', command: () => this.printAll()
+            },
             {
                 id: 's',
                 label: 'Status',
                 icon: 'fas fa-layer-group',
                 disabled: !this.selectUsers || this.selectUsers.length === 0,
+                visible: this.s,
                 items: [
                     ...(this.tokenPayload.role === 'UGR0001' ?
                         [
@@ -178,16 +182,16 @@ export class Student implements OnInit {
 
     loadData() {
         this.store.getUserPayload()
-            .subscribe(res => {
-                this.tokenPayload = res;
-                this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
+            .pipe(
+                filter(Boolean),
+                tap(p => this.tokenPayload = p),
+                switchMap(() => this.store.getPrivilegesLoaded())
+            )
+            .subscribe(() => {
+                this.initPrivileges();
+                this.loadRoles();
             });
-        this.loadStudents();
 
-        this.api.getRoles().subscribe({
-            next: (roles) => this.roles = roles,
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch Roles', err)
-        });
 
         this.cols = [
             { field: 'UserID', header: 'ID', customExportHeader: 'User ID' },
@@ -196,6 +200,57 @@ export class Student implements OnInit {
             { field: 'role', header: 'Role' },
             { field: 'status', header: 'Status' },
         ];
+    }
+
+    loadRoles() {
+        this.api.getRoles().subscribe({
+            next: (roles) => this.roles = roles,
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch Roles', err)
+        });
+    }
+
+    initPrivileges() {
+        const moduleID = 'MOD0006';
+        this.c = this.store.isAllowedAction(moduleID, 'create');
+        this.r = this.store.isAllowedAction(moduleID, 'retrieve');
+        this.u = this.store.isAllowedAction(moduleID, 'update');
+        this.d = this.store.isAllowedAction(moduleID, 'delete');
+        this.s = this.store.isAllowedAction(moduleID, 'status');
+        this.p = this.store.isAllowedAction(moduleID, 'printall');
+
+
+        this.subcomponent = this.subcomponent.filter((item: any) => {
+            this.logger.printLogs('i', `Component Accessability: s${this.s}, p${this.p}`, item);
+            switch (item.id) {
+                case 's': return this.s;
+                case 'p': return this.p;
+                default: return true;
+            }
+        });
+
+        this.buildSubComponent()
+        this.loadStudents();
+    }
+
+    loadStudents() {
+        if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
+            this.api.getUsers().subscribe({
+                next: (users) => {
+                    this.logger.printLogs('i', 'Students loaded', users)
+                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
+                    this.logger.printLogs('i', 'Students loaded for AdminSys | SAP Admin', this.users)
+                },
+                error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+            });
+        } else {
+            this.api.GetStudentBySchoolCoordinatorID(this.tokenPayload.nameid).subscribe({
+                next: (users) => {
+                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
+                    this.logger.printLogs('i', 'Students loaded for Others', this.users)
+                },
+                error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+            });
+        }
     }
 
     exportCSV() {
@@ -439,28 +494,6 @@ export class Student implements OnInit {
         this.itemDialog = false;
         this.submitted = false;
     }
-
-    loadStudents() {
-        if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
-            this.api.getUsers().subscribe({
-                next: (users) => {
-                    this.logger.printLogs('i', 'Students loaded', users)
-                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
-                    this.logger.printLogs('i', 'Students loaded for AdminSys | SAP Admin', this.users)
-                },
-                error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
-            });
-        } else {
-            this.api.GetStudentBySchoolCoordinatorID(this.tokenPayload.nameid).subscribe({
-                next: (users) => {
-                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
-                    this.logger.printLogs('i', 'Students loaded for Others', this.users)
-                },
-                error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
-            });
-        }
-    }
-
 
     hideAssignDialog() {
         this.assignDialog = false;

@@ -121,6 +121,13 @@ export class Hospital implements OnInit {
     model: MenuItem[] = [];
     tokenPayload: any | null;
 
+    c: boolean = false;
+    r: boolean = false;
+    u: boolean = false;
+    d: boolean = false;
+    s: boolean = false;
+    p: boolean = false;
+    section: boolean = false;
 
     constructor(private fb: FormBuilder,
         private productService: ProductService,
@@ -143,6 +150,19 @@ export class Hospital implements OnInit {
 
     }
 
+    ngOnInit() {
+        this.loadData();
+
+        this.model = [
+            {
+                items: [
+                    { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
+
+                ]
+            }
+        ];
+
+    }
     // exportCSV() {
     //     this.logger.printLogs('i', 'Exporting CSV', this.hospitals());
     //     this.dt.exportCSV();
@@ -205,25 +225,12 @@ export class Hospital implements OnInit {
         });
     }
 
-    ngOnInit() {
-        this.loadData();
-
-        this.model = [
-            {
-                items: [
-                    { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-
-                ]
-            }
-        ];
-
-    }
-
     loadData() {
         this.store.getUserPayload()
             .subscribe(res => {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
+                this.initPriveleges();
             });
         this.loadHospitals();
         this.loadSections();
@@ -237,6 +244,17 @@ export class Hospital implements OnInit {
 
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
 
+    }
+
+    initPriveleges() {
+        const moduleID = 'MOD0005';
+        this.c = this.store.isAllowedAction(moduleID, 'create');
+        this.r = this.store.isAllowedAction(moduleID, 'retrieve');
+        this.u = this.store.isAllowedAction(moduleID, 'update');
+        this.d = this.store.isAllowedAction(moduleID, 'delete');
+        this.s = this.store.isAllowedAction(moduleID, 'status');
+        this.p = this.store.isAllowedAction(moduleID, 'printall');
+        this.section = this.store.isModuleActive("MOD0003")
     }
 
     getSectionsAsString(hospital: any): string {
@@ -272,7 +290,7 @@ export class Hospital implements OnInit {
             return null;
         }
     }
-    
+
     openNew() {
         this.form.reset({
             hospitalName: '',
@@ -361,7 +379,7 @@ export class Hospital implements OnInit {
                             this.logger.printLogs('i', `Loaded sections for ${hospital.hospitalID}`, sections);
                             // Sum all allocations across sections
                             hospital.totalAllocations = sections.reduce(
-                                (sum: number, s: any) => sum + (s.allocation || 0),
+                                (sum: number, s: any) => sum + ((s.status == true ? s.allocation : 0) || 0),
                                 0
                             );
 

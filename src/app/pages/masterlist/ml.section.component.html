@@ -3,7 +3,7 @@
     <!-- SECTION TABLE -->
     <div class="md:w-4/5">
         <div class="card">
-            <p-table #dt [value]="sections()" [rows]="10" [columns]="cols" [paginator]="true"
+            <p-table #dt [value]="sections()" [rows]="10" [columns]="cols" [paginator]="true" [showGridlines]="true"
                 [globalFilterFields]="['sectionID', 'sectionName']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSections"
                 [rowHover]="true" dataKey="sectionID"

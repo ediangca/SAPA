@@ -2,7 +2,7 @@
 <div class="flex flex-col md:flex-row gap-8">
     <div class="md:w-5/6">
         <div class="card">
-            <p-table #dt [value]="roles()" [rows]="10" [columns]="cols" [paginator]="true"
+            <p-table #dt [value]="roles()" [rows]="10" [columns]="cols" [paginator]="true" [showGridlines]="true"
                 [globalFilterFields]="['roleID', 'roleName', 'status`']" [tableStyle]="{ 'min-width': '75rem'}"
                 [(selection)]="selectRoles" [rowHover]="true" dataKey="roleID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"

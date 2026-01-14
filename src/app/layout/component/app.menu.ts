@@ -43,19 +43,7 @@ export class AppMenu implements OnInit {
                     { id: "MOD0005", label: 'Schools', icon: 'fas fa-school', routerLink: ['/dashboard/masterlist/schools'] },
                     { id: "MOD0006", label: 'Students', icon: 'fas fa-users-line', class: 'rotated-icon', routerLink: ['/dashboard/masterlist/students'] },
                     { id: "MOD0007", label: 'Appointments', icon: 'fas fa-calendar-check', class: 'rotated-icon', routerLink: ['/dashboard/masterlist/appointments'] },
-                    // { label: 'Table', icon: 'pi pi-fw pi-table', routerLink: ['/dashboard/uikit/table'] },
-                    // { label: 'List', icon: 'pi pi-fw pi-list', routerLink: ['/dashboard/uikit/list'] },
-                    // { label: 'Tree', icon: 'pi pi-fw pi-share-alt', routerLink: ['/dashboard/uikit/tree'] },
-                    // { label: 'Panel', icon: 'pi pi-fw pi-tablet', routerLink: ['/dashboard/uikit/panel'] },
-                    // { label: 'Overlay', icon: 'pi pi-fw pi-clone', routerLink: ['/dashboard/uikit/overlay'] },
-                    // { label: 'Media', icon: 'pi pi-fw pi-image', routerLink: ['/dashboard/uikit/media'] },
-                    // { label: 'Menu', icon: 'pi pi-fw pi-bars', routerLink: ['/dashboard/uikit/menu'] },
-                    // { label: 'Message', icon: 'pi pi-fw pi-comment', routerLink: ['/dashboard/uikit/message'] },
-                    // { label: 'File', icon: 'pi pi-fw pi-file', routerLink: ['/dashboard/uikit/file'] },
-                    // { label: 'Chart', icon: 'pi pi-fw pi-chart-bar', routerLink: ['/dashboard/uikit/charts'] },
-                    // { label: 'Timeline', icon: 'pi pi-fw pi-calendar', routerLink: ['/dashboard/uikit/timeline'] },
-                    // { label: 'Misc', icon: 'pi pi-fw pi-circle', routerLink: ['/dashboard/uikit/misc'] }
-                ]
+                    ]
             },
             {
                 label: 'Post',
@@ -92,14 +80,35 @@ export class AppMenu implements OnInit {
 
     }
 
-    validateModule() {
-        this.modules = this.modules.map((module: any) => ({
-            ...module,
-            items: module.items.filter((item: any) => {
-                // this.logger.printLogs('i', `Itemsssss:`, item);
-                return this.store.isModuleActive(item.id);
-            })
-        }));
+    // validateModule() {
+    //     this.modules = this.modules.map((module: any) => ({
+    //         ...module,
+    //         items: module.items.filter((item: any) => {
+    //             // this.logger.printLogs('i', `Itemsssss:`, item);
+    //             return this.store.isModuleActive(item.id);
+    //         })
+    //     }));
+    // }
 
-    }
+    validateModule() {
+    this.modules = this.modules
+        .map((module: any) => {
+            // If module has no items (edge case), return as-is
+            if (!module.items || module.items.length === 0) {
+                return module;
+            }
+
+            const activeItems = module.items.filter((item: any) =>
+                this.store.isModuleActive(item.id)
+            );
+
+            return {
+                ...module,
+                items: activeItems
+            };
+        })
+        // 🔥 Remove group menu if no active items remain
+        .filter((module: any) => module.items && module.items.length > 0);
+}
+
 }

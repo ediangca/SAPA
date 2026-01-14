@@ -14,6 +14,7 @@ import { LogsService } from '@/services/logs.service';
 import { PdfService } from '@/services/pdf.service';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { NgToastService } from 'ng-angular-popup';
+import { StoreService } from '@/services/store.service';
 
 
 @Component({
@@ -51,16 +52,26 @@ export class HospitalProperties implements OnInit {
 
     @Input() hospitals: any[] = [];
     @Input() sections: any[] = [];
+    @Input() section: boolean = false;
+    @Input() p: boolean = false;
 
     constructor(private api: ApiService, private logger: LogsService,
-        private pdfService: PdfService, private toast: NgToastService) {
+        private pdfService: PdfService, private toast: NgToastService,
+        private store: StoreService,
+    ) {
 
     }
 
     ngOnInit(): void {
         this.subcomponent = [
-            { label: 'Sections', icon: 'fas fa-section', routerLink: ['/dashboard/masterlist/sections'] },
-            { label: 'Print All', icon: 'fas fa-print', command: () => this.printAll() },
+            {
+                label: 'Sections', icon: 'fas fa-section', routerLink: ['/dashboard/masterlist/sections'],
+                visible: this.section
+            },
+            {
+                label: 'Print All', icon: 'fas fa-print', command: () => this.printAll(),
+                visible: this.store.isAllowedAction(this.hospitals.length > 0 ? "MOD0002" : "MOD0003", "printall")
+            },
 
         ];
         // this.properties = [
@@ -117,7 +128,17 @@ export class HospitalProperties implements OnInit {
 
     }
 
+
+    validateModule() {
+        this.subcomponent = this.subcomponent.map((module: any) => ({
+            ...module,
+            items: module.items.filter((item: any) => {
+                // this.logger.printLogs('i', `Itemsssss:`, item);
+            })
+        }));
+    }
+
+
 }
 
 
-    

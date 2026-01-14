@@ -486,9 +486,28 @@ export class ApiService {
     return this.handleRequest<any[]>('get', 'Slots', { logAction: 'Fetching Slots' });
   }
 
-  getSlotsByRange(start: string, end: string) {
-    return this.handleRequest<any[]>('get', 'Slots/range', { params: { start, end }, logAction: 'Fetch Slots By Range' });
+  getSlotsByUserID(userID: string) {
+    return this.handleRequest<any[]>('get', 'Slots/user', { id: userID, logAction: 'Fetching Slots' });
   }
+
+  // getSlotsByRange(start: string, end: string) {
+  //   return this.handleRequest<any[]>('get', 'Slots/range', { params: { start, end }, logAction: 'Fetch Slots By Range' });
+  // }
+  getSlotsByRange(start: string, end: string, userID?: string) {
+    const params: any = { start, end };
+
+    // ✅ Attach userID only if it exists
+    if (userID) {
+      params.userID = userID;
+    }
+
+    return this.handleRequest<any[]>(
+      'get',
+      'Slots/range',
+      { params, logAction: 'Fetch Slots By Range' }
+    );
+  }
+
 
   getSlotsByAllocationIDs(payload: { AllocationID: string[] }) {
     return this.handleRequest<any[]>('post', 'Slots/byAllocation', { body: payload, logAction: 'Fetching Slots By AllocationIDs' });
