@@ -247,7 +247,7 @@ export class Hospital implements OnInit {
     }
 
     initPriveleges() {
-        const moduleID = 'MOD0005';
+        const moduleID = 'MOD0002';
         this.c = this.store.isAllowedAction(moduleID, 'create');
         this.r = this.store.isAllowedAction(moduleID, 'retrieve');
         this.u = this.store.isAllowedAction(moduleID, 'update');

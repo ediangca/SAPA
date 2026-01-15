@@ -383,18 +383,13 @@ export class Schedule implements OnInit {
                 ]
                 :
                 [
-                    ...(this.s ?
-                        [
-                            {
-                                label: 'Request Cancel',
-                                icon: 'fas fa-file-arrow-up',
-                                disabled: !this.selectSlots || this.selectSlots.length === 0,
-                                command: () => this.changeStatus(3)
-                            },
-                        ]
-                        :
-                        []
-                    ),
+                    {
+                        label: 'Request Cancel',
+                        icon: 'fas fa-file-arrow-up',
+                        disabled: !this.selectSlots || this.selectSlots.length === 0,
+                        visible: this.s,
+                        command: () => this.changeStatus(3)
+                    },
                 ]),
         ];
 
@@ -1364,11 +1359,11 @@ export class Schedule implements OnInit {
                     next: (res: any) => {
 
                         this.selectSlots = [];
-                        this.showErrorAlert("Status Saved",res.message ?? 'Slot status updated.', false, "success")
+                        this.showErrorAlert("Status Saved", res.message ?? 'Slot status updated.', false, "success")
                         this.loadSlots();
                     },
                     error: (err: any) => {
-                        this.showErrorAlert("Status Failed to Updadte",err.message ?? 'Failed to update slot status.', false, "warning")
+                        this.showErrorAlert("Status Failed to Updadte", err.message ?? 'Failed to update slot status.', false, "warning")
                     }
                 });
             }

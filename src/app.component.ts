@@ -14,12 +14,14 @@ import AOS from 'aos';
     <!-- <ng-toast [width]="400"[position]="ToasterPosition.TOP_RIGHT" /> configure width with position   -->
     <router-outlet></router-outlet>
     @if (isLoading | async) {
-      <div class="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div class="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm">
         <!-- 🔥 Custom Loading GIF -->
-        <img src="assets/images/hospital-loading.gif" alt="Loading..." class="w-64 h-64 mb-0" />
+        <!-- <img src="assets/images/hospital-loading.gif" alt="Loading..." class="w-64 h-64 mb-0" /> -->
+        
+        <img src="assets/images/sapa-logo.gif" alt="Loading..." class="w-64 h-64 mb-0" />
         
         <!-- Text + Bouncing dots -->
-        <div class="flex items-center text-white text-2xl font-semibold" style="margin-top: -50px;">
+        <div class="flex items-center text-white text-2xl font-semibold" style="margin-top: -10px;">
           <span class="ml-2 flex space-x-4">
             <!-- <span class="w-4 h-4 bg-sky-500/50 rounded-full animate-bounce-high delay-0"></span>
             <span class="w-4 h-4 bg-sky-500/50 rounded-full animate-bounce-high delay-200"></span>
