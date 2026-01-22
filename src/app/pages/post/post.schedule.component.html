@@ -128,7 +128,7 @@
 
                                     <ng-template #header>
                                         <div class="px-3 pt-3 pb-0">
-                                            <span class="font-bold">Hospital Picker</span>
+                                            <span class="font-bold">Section Picker</span>
                                         </div>
                                     </ng-template>
 
@@ -477,17 +477,29 @@
 
     <!-- Dialog footer -->
     <ng-template pTemplate="footer">
-        <p-button *ngIf="selectedEvent.slotStatus == 1" label="Request to Cancel" class="mr-2" severity="warn"
-            (click)="changeStatus(3, selectedEvent)">
+        @if(canManageStudent(selectedEvent)){
+            
+            <p-button icon="pi pi-users" label="Manage Student" severity="success"  [outlined]="true"
+                pTooltip="Manage Student" tooltipPosition="top" (click)="openMangeStudent(slot)">
+            </p-button>
+        }
+
+        @if (selectedEvent.slotStatus == 1 && !isWithinTwoWeeks(selectedEvent.dateSlot)) {
+        <p-button icon="pi pi-file-export" label="Request to Cancel" severity="warn"  [outlined]="true"
+            pTooltip="Request to Cancel" tooltipPosition="top" (click)="changeStatus(3, selectedEvent)">
         </p-button>
-        <p-button *ngIf="selectedEvent.slotStatus == 3" label="Confirm Cancel Request" class="mr-2" severity="danger"
-            (click)="changeStatus(4, selectedEvent)">
-        </p-button>
+
+        }
+        
+        @if(canApproveCancel(selectedEvent)){
+            <p-button label="Confirm Cancel Request" class="mr-2" severity="danger"
+                (click)="changeStatus(4, selectedEvent)">
+            </p-button>
+    }
         <button pButton type="button" label="Close" class="p-button-secondary"
             (click)="displayEventDialog=false"></button>
     </ng-template>
 </p-dialog>
-
 
 <p-dialog header="Slot Conflict Detected" [(visible)]="showForceDialog" [modal]="true" [closable]="false"
     [style]="{ width: '90%', maxWidth: '1024px' }">
@@ -725,20 +737,22 @@
                         [severity]="getStatus(slot.slotStatus, 'severirty')" />
                 </td>
                 <td>
-                    @if (canRequestCancel(slot)) {
+                    @if(canManageStudent(slot)){
+                    <p-button icon="pi pi-users" severity="success" [rounded]="true" [outlined]="true"
+                        pTooltip="Manage student" tooltipPosition="top" (click)="openMangeStudent(slot)">
+                    </p-button>
+                    }
+
+                    @if (canRequestCancel(slot) && !isWithinTwoWeeks(slot.dateSlot)) {
                     <!-- STUDENT: Request Cancel -->
                     <p-button icon="pi pi-file-export" severity="warn" [rounded]="true" [outlined]="true"
                         pTooltip="Request to Cancel" tooltipPosition="top" (click)="changeStatus(3, slot)">
                     </p-button>
-
                     } @else if (canApproveCancel(slot)) {
                     <!-- ADMIN / COORDINATOR: Approve Cancel -->
                     <p-button icon="pi pi-check" severity="success" [rounded]="true" [outlined]="true"
                         pTooltip="Confirm Cancel Request" tooltipPosition="top" (click)="changeStatus(4, slot)">
                     </p-button>
-
-                    } @else {
-                    <span class="text-gray-400">—</span>
                     }
 
                 </td>
@@ -771,6 +785,54 @@
 
     </p-table>
 </p-dialog>
+
+
+<p-dialog header="Manage Students" [(visible)]="manageStudentDialog" [modal]="true" [closable]="false"
+    [style]="{ width: '90%', maxWidth: '1024px' }">
+    
+    <p>
+    Select a student(s) to assign duty at
+        <span class="text-primary-500 font-bold">
+            {{ slot?.hospitalName ?? 'Hospital Name' }}
+            ({{ slot?.sectionName ?? 'Section Name' }})
+        </span>
+        on
+        <span class="text-primary-500 font-bold">
+            {{ slot?.dateSlot ?? 'Date Slot' }}
+            ({{ slot?.shiftName ?? 'Shift Name' }})
+        </span>.
+    </p>
+
+    <div class="overflow-auto" style="max-height: 60vh;">
+        <div class="card">
+            <p-pick-list
+                [source]="sourceStudent"
+                [target]="targetStudent"
+                breakpoint="1400px"
+                showSourceFilter="true"
+                showTargetFilter="true"
+                sourceFilterPlaceholder="Search available student"
+                targetFilterPlaceholder="Search assigned student">
+
+                <ng-template #item let-item>
+                        {{ item.fullname }}
+                </ng-template>
+
+            </p-pick-list>
+        </div>
+    </div>
+       
+    <ng-template pTemplate="footer" to>
+        <!-- Add only available -->
+         @if(targetStudent.length > 0){
+            <button pButton type="button" label="Save Assignments"
+            class="p-button-primary mr-2" (click)="saveAssignStudentStudent()"></button>
+         }
+        <!-- Cancel -->
+        <button pButton type="button" label="Cancel" class="p-button-text" (click)="onCloseManageStudent()"></button>
+    </ng-template>
+</p-dialog>
+
 
 
 <!-- PRINT CONFIRMATION DIALOG -->

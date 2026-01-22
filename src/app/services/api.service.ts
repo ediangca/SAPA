@@ -547,6 +547,147 @@ export class ApiService {
   deleteSlots(ids: string[]) {
     return this.handleRequest('delete', 'Slots/bulk', { body: ids, logAction: 'Deleting Slots' });
   }
+  /*------------------- APPOINTED STUDENTS -------------------*/
+
+  // GET: api/AppointedStudentts
+  getAppointedStudents() {
+    return this.handleRequest<any[]>(
+      'get',
+      'AppointedStudentts',
+      { logAction: 'Fetching Appointed Students' }
+    );
+  }
+
+  // GET: api/AppointedStudentts/{id}
+  getAppointedStudentById(id: string) {
+    return this.handleRequest<any>(
+      'get',
+      'AppointedStudentts',
+      { id, logAction: 'Fetching Appointed Student By ID' }
+    );
+  }
+
+  // GET: api/AppointedStudentts/user/{id}
+  getAppointedStudentsByUserID(userID: string) {
+    return this.handleRequest<any[]>(
+      'get',
+      'AppointedStudentts/user',
+      { id: userID, logAction: 'Fetching Appointed Students By User' }
+    );
+  }
+
+  // GET: api/AppointedStudentts/slot/{id}
+  getAppointedStudentsBySlotID(slotID: string) {
+    return this.handleRequest<any[]>(
+      'get',
+      'AppointedStudentts/slot',
+      { id: slotID, logAction: 'Fetching Appointed Students By Slot' }
+    );
+  }
+
+  // GET: api/AppointedStudentts/hospital/{id}
+  getAppointedStudentsByHospitalID(hospitalID: string) {
+    return this.handleRequest<any[]>(
+      'get',
+      'AppointedStudentts/hospital',
+      { id: hospitalID, logAction: 'Fetching Appointed Students By Hospital' }
+    );
+  }
+
+  // GET: api/AppointedStudentts/hospital&section?hid=&sid=
+  getAppointedStudentsByHospitalAndSection(hid: string, sid: string) {
+    return this.handleRequest<any[]>(
+      'get',
+      'AppointedStudentts/hospital&section',
+      {
+        params: { hid, sid },
+        logAction: 'Fetching Appointed Students By Hospital & Section'
+      }
+    );
+  }
+
+  // GET: api/AppointedStudentts/range
+  getAppointedStudentsByRange(
+    start: string,
+    end: string,
+    userId?: string
+  ) {
+    const params: any = { start, end };
+
+    if (userId) {
+      params.userId = userId;
+    }
+
+    return this.handleRequest<any[]>(
+      'get',
+      'AppointedStudentts/range',
+      {
+        params,
+        logAction: 'Fetching Appointed Students By Date Range'
+      }
+    );
+  }
+
+  // POST: api/AppointedStudentts
+  createAppointedStudent(payload: any) {
+    return this.handleRequest<any>(
+      'post',
+      'AppointedStudentts',
+      {
+        body: payload,
+        logAction: 'Creating Appointed Student'
+      }
+    );
+  }
+
+  // POST: api/AppointedStudentts/bulk-by-slot
+  bulkReplaceAppointedStudentsBySlot(payload: any) {
+    return this.handleRequest<any>(
+      'post',
+      'AppointedStudentts/bulk-by-slot',
+      {
+        body: payload,
+        logAction: 'Bulk Replace Appointed Students By Slot'
+      }
+    );
+  }
+
+  // PUT: api/AppointedStudentts/{id}
+  updateAppointedStudent(id: string, payload: any) {
+    return this.handleRequest<any>(
+      'put',
+      'AppointedStudentts',
+      {
+        id,
+        body: payload,
+        logAction: 'Updating Appointed Student'
+      }
+    );
+  }
+
+  // DELETE: api/AppointedStudentts/{id}
+  deleteAppointedStudent(id: string) {
+    return this.handleRequest<any>(
+      'delete',
+      'AppointedStudentts',
+      {
+        id,
+        logAction: 'Deleting Appointed Student'
+      }
+    );
+  }
+
+  // GET: api/AppointedStudentts/exists/{slotId}
+  isSlotAlreadyAppointed(slotID: string) {
+    return this.handleRequest<any>(
+      'get',
+      'AppointedStudentts/exists',
+      {
+        id: slotID,
+        logAction: 'Checking Slot Appointment Existence'
+      }
+    );
+  }
 
   /*----------------------- APPOINTMENTS -----------------------*/
   getAppointments() {

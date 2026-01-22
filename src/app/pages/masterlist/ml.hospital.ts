@@ -34,6 +34,8 @@ import * as XLSX from 'xlsx';
 import { Tooltip } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
+import { take } from 'rxjs';
+import { SortAltIcon } from 'primeng/icons/sortalt';
 
 
 interface Column {
@@ -109,6 +111,7 @@ export class Hospital implements OnInit {
 
     form!: FormGroup;
 
+    loading: boolean = false;
     submitted: boolean = false;
 
     @ViewChild('dt') dt!: Table;
@@ -231,9 +234,9 @@ export class Hospital implements OnInit {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
                 this.initPriveleges();
+                this.loadHospitals();
+                this.loadSections();
             });
-        this.loadHospitals();
-        this.loadSections();
         this.cols = [
             { field: 'hospitalID', header: 'ID', customExportHeader: 'Hospital ID' },
             { field: 'hospitalName', header: 'Name' },
@@ -363,6 +366,7 @@ export class Hospital implements OnInit {
     }
 
     loadHospitals() {
+        this.loading = true;
         this.api.getHospitals().subscribe({
             next: (hospitals) => {
 
@@ -383,8 +387,12 @@ export class Hospital implements OnInit {
                                 0
                             );
 
+                            this.loading = false;
                         },
-                        error: (err) => this.logger.printLogs('e', `Failed to load sections for ${hospital.hospitalID}`, err)
+                        error: (err) => {
+                            this.logger.printLogs('e', `Failed to load sections for ${hospital.hospitalID}`, err)
+                            this.loading = false;
+                        }
                     });
                 });
 

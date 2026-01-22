@@ -45,6 +45,7 @@ import { Tooltip } from "primeng/tooltip";
 import { ChipModule } from 'primeng/chip';
 import { BehaviorSubject, combineLatest, filter, switchMap, take, tap } from 'rxjs';
 import { SkeletonModule } from 'primeng/skeleton';
+import { PickListModule } from 'primeng/picklist';
 
 
 interface Column {
@@ -160,6 +161,7 @@ const ROLE_PERMISSIONS: Record<string, number[]> = {
         MultiSelectModule,
         SkeletonModule,
         ChipModule,
+        PickListModule,
         Tooltip
     ],
     templateUrl: './post.schedule.component.html',
@@ -177,7 +179,7 @@ export class Schedule implements OnInit {
 
 
     slots = signal<any[]>([]);
-    slot!: any;
+    public slot!: any;
     selectSlots!: any[] | [];
     public loading: boolean = false;
     loadingDaySlots: boolean = false;
@@ -203,6 +205,7 @@ export class Schedule implements OnInit {
     assignDialog: boolean = false;
     qrDialog: boolean = false;
     coordinatorID: any | null;
+    manageStudentDialog: boolean = false;
 
     viewOptions = [
         { label: 'Table', value: true, icon: 'pi pi-table' },
@@ -292,6 +295,9 @@ export class Schedule implements OnInit {
     daySlots: any[] = [];
     dayDialog: boolean = false;
 
+    sourceStudent: any[] = [];
+    targetStudent: any[] = [];
+
 
     private privilegesLoadedSubject = new BehaviorSubject<boolean>(false);
     privilegesLoaded$ = this.privilegesLoadedSubject.asObservable();
@@ -321,7 +327,6 @@ export class Schedule implements OnInit {
         this.initData();
         this.initCols();
     }
-
 
     initForm() {
         this.form = this.fb.group({
@@ -354,6 +359,29 @@ export class Schedule implements OnInit {
                 this.loadSections();
                 this.loadShifts();
             });
+    }
+
+    initPrivileges() {
+        const moduleID = 'MOD0008';
+        this.c = this.store.isAllowedAction(moduleID, 'create');
+        this.r = this.store.isAllowedAction(moduleID, 'retrieve');
+        this.u = this.store.isAllowedAction(moduleID, 'update');
+        this.d = this.store.isAllowedAction(moduleID, 'delete');
+        this.s = this.store.isAllowedAction(moduleID, 'status');
+        this.p = this.store.isAllowedAction(moduleID, 'printall');
+
+
+        // this.subcomponent = this.subcomponent.filter((item: any) => {
+        //     this.logger.printLogs('i', `Component Accessability: s${this.s}, p${this.p}`, item);
+        //     switch (item.id) {
+        //         case 's': return this.s;
+        //         case 'p': return this.p;
+        //         default: return true;
+        //     }
+        // });
+
+        this.buildSubComponent()
+        this.loadSlots();
     }
 
     isAdminRole(): boolean {
@@ -393,29 +421,6 @@ export class Schedule implements OnInit {
                 ]),
         ];
 
-    }
-
-    initPrivileges() {
-        const moduleID = 'MOD0008';
-        this.c = this.store.isAllowedAction(moduleID, 'create');
-        this.r = this.store.isAllowedAction(moduleID, 'retrieve');
-        this.u = this.store.isAllowedAction(moduleID, 'update');
-        this.d = this.store.isAllowedAction(moduleID, 'delete');
-        this.s = this.store.isAllowedAction(moduleID, 'status');
-        this.p = this.store.isAllowedAction(moduleID, 'printall');
-
-
-        this.subcomponent = this.subcomponent.filter((item: any) => {
-            this.logger.printLogs('i', `Component Accessability: s${this.s}, p${this.p}`, item);
-            switch (item.id) {
-                case 's': return this.s;
-                case 'p': return this.p;
-                default: return true;
-            }
-        });
-
-        this.buildSubComponent()
-        this.loadSlots();
     }
 
 
@@ -791,6 +796,9 @@ export class Schedule implements OnInit {
     onChangeView(event: any) {
         this.tableOption = event?.value ?? false;
         this.logger.printLogs('i', 'Calendar View : ', this.tableOption);
+        if (this.tableOption) {
+            this.loadSlots();
+        }
     }
 
     onDateSelect(event: any) {
@@ -946,72 +954,23 @@ export class Schedule implements OnInit {
         table.clear();
     }
 
-    // onEventClick(clickInfo: any) {
-    //     const props = clickInfo.event.extendedProps;
-    //     this.confirmationService.confirm({
-    //         header: 'Event Details',
-    //         message: `
-    //     <b>Shift:</b> ${props.shiftName} <br/>
-    //     <b>Start Time:</b> ${props.startTime} <br/>
-    //     <b>End Time:</b> ${props.endTime} <br/>
-    //     <b>Allocation:</b> ${props.allocation}
-    //   `,
-    //         acceptVisible: false, // hide accept button if just viewing
-    //         rejectVisible: true,
-    //         icon: 'pi pi-info-circle',
-    //         acceptLabel: 'Close',
-    //         rejectLabel: 'Cancel',
-    //         accept: () => { },
-    //         reject: () => { }
-    //     });
-    // }
 
     onEventClick(slot: any) {
         this.selectedEvent = slot;
+        this.slot = slot;
         this.logger.printLogs('i', 'Selected Slot', slot || []);
         this.displayEventDialog = true;
-
-        // this.logger.printLogs('i', 'Selected Slot', slot.event || slot);
-        // if (slot.event) {
-        //     this.selectedEvent = slot.event;
-        // } else {
-        //     this.selectedEvent =
-        //         ({
-        //             id: slot.slotID,
-        //             title: `${slot.hospitalName}(${slot.sectionName}) - ${slot.shiftName}`,
-        //             shift: slot.shiftName,
-        //             // `${slot.shiftName} - ${slot.sectionName}`,
-        //             // describedAs: slot.shiftName,
-        //             // status: slot.allocationStatus,
-        //             start: `${slot.dateSlot}T${slot.startTime}`,
-        //             end: computeEnd(slot.dateSlot!, slot.endTime!),
-        //             extendedProps: {
-        //                 slotStatus: slot.slotStatus,
-        //                 schoolID: slot.schoolID,
-        //                 schoolName: slot.schoolName,
-        //                 hospitalID: slot.hospitalID,
-        //                 hospitalName: slot.hospitalName,
-        //                 sectionID: slot.sectionID,
-        //                 sectionName: slot.sectionName,
-        //                 shiftID: slot.shiftID,
-        //                 shiftName: slot.shiftName,
-        //                 startTime: `${formatTimeString(slot.dateSlot + 'T' + slot.startTime)}`,
-        //                 endTime: `${formatTimeString(computeEnd(slot.dateSlot, slot.endTime))}`,
-        //                 allocation: slot.allocation,
-        //                 allocationStatus: slot.allocationStatus,
-        //                 userID: slot.userID,
-        //                 fullname: slot.fullname,
-        //             }
-        //         })
-        // }
-
-        // this.displayEventDialog = true;
     }
 
 
     openNew(selectInfo: DateSelectArg | null) {
 
         this.printDateRange = [];
+
+        this.loadHospitals();
+        this.loadSchools();
+        this.loadSections();
+        this.loadShifts();
 
         if (selectInfo) {
             const start = new Date(selectInfo.start);
@@ -1076,157 +1035,16 @@ export class Schedule implements OnInit {
         this.submitted = false;
     }
 
-    // changeStatus(status: number, slot: any | null = null) {
-    //     this.logger.printLogs('i', `Selected Slots to ${this.getStatus(status, 'value')}`, slot);
-
-    //     const slotIDs = slot ? [slot.slotID] :
-    //         (this.selectSlots?.map((slot: any) => slot.slotID) ?? []);
-    //     const slots =
-    //         slot ? [`${slot.hospitalName}(${slot.sectionName}) <br> (${this.dateFormat(slot.dateSlot)} ${this.formatTime(slot.startTime)} - ${this.formatTime(slot.endTime)})`] :
-    //             (this.selectSlots?.map(
-    //                 (slot: any) =>
-    //                     `- ${slot.hospitalName}(${slot.sectionName}) <br> (${this.dateFormat(slot.dateSlot)} ${this.formatTime(slot.startTime)} - ${this.formatTime(slot.endTime)})`
-    //             ) ?? []);
-
-    //     if (slotIDs.length < 1) {
-    //         this.messageService.add({
-    //             severity: 'warn',
-    //             summary: 'No Selected Slot(s)',
-    //             detail: 'Please select at least one slot first!',
-    //             life: 3000
-    //         });
-    //         return;
-    //     }
-
-    //     const rules: Record<number, { allowed: number[]; message: string }> = {
-    //         // CONFIRM
-    //         1: {
-    //             allowed: [0], // Pending
-    //             message: 'Only Pending slot(s) can be Confirmed.'
-    //         },
-
-    //         // DECLINE
-    //         2: {
-    //             allowed: [0], // Pending
-    //             message: 'Only Pending slot(s) can be Declined.'
-    //         },
-
-    //         // CANCEL REQUEST
-    //         3: {
-    //             allowed: [1], // Confirmed
-    //             message: 'Only Confirmed slot(s) can request cancellation.'
-    //         },
-
-    //         // CANCELED (final)
-    //         4: {
-    //             allowed: [3], // Cancel Request
-    //             message: 'Only slot(s) with Cancel Request can be Canceled.'
-    //         },
-
-    //         // BACK TO PENDING (optional, admin use)
-    //         0: {
-    //             allowed: [2, 4], // Declined, Canceled
-    //             message: 'Only Declined or Canceled slot(s) can be set back to Pending.'
-    //         }
-    //     };
-
-
-    //     const rule = rules[status];
-
-    //     if (rule) {
-    //         // const hasInvalid = slot ?
-    //         //     !rule.allowed.includes(slot.status)
-    //         //     :
-    //         //     this.selectSlots.some(
-    //         //         (a: any) => !rule.allowed.includes(a.status)
-    //         //     );
-
-    //         const slotsToCheck = slot ? [slot] : this.selectSlots;
-
-    //         const hasInvalid = slotsToCheck.some(
-    //             (s: any) => !rule.allowed.includes(s.status)
-    //         );
-
-
-    //         if (hasInvalid) {
-    //             this.messageService.add({
-    //                 severity: 'warn',
-    //                 summary: 'Invalid Slot(s) Selection',
-    //                 detail: rule.message,
-    //                 life: 3000
-    //             });
-    //             return;
-    //         }
-    //     }
-
-    //     if (status === 3) {
-    //         const slotsToCheck = slot ? [slot] : this.selectSlots;
-
-    //         const hasInvalidDate = slotsToCheck.some(
-    //             (s: any) => this.isWithinTwoWeeks(s.dateSlot)
-    //         );
-
-    //         if (hasInvalidDate) {
-    //             this.messageService.add({
-    //                 severity: 'warn',
-    //                 summary: 'Cancel Request Not Allowed',
-    //                 detail: 'Cancel requests must be made at least 2 weeks before the slot date.',
-    //                 life: 4000
-    //             });
-    //             return;
-    //         }
-    //     }
-
-    //     this.confirmationService.confirm({
-    //         message: `Are you sure you want to change the status of selected slot <br><br>${slots.join('<br>')} <br><br>to <b> ${this.getStatus(status, 'value')} </b>?`,
-    //         header: 'Confirm Status Update',
-    //         icon: 'pi pi-exclamation-triangle',
-    //         acceptLabel: "Yes! I'm Sure",
-    //         rejectLabel: 'Cancel',
-    //         acceptButtonStyleClass: 'p-button-success',
-    //         rejectButtonStyleClass: 'p-button-outlined  p-button-secondary',
-
-    //         accept: () => {
-    //             this.api.updateSlotStatus(status, slotIDs).subscribe({
-    //                 next: (res: any) => {
-    //                     this.messageService.add({
-    //                         severity: 'success',
-    //                         summary: 'Success',
-    //                         detail: res.message,
-    //                         life: 3000
-    //                     });
-
-    //                     this.logger.printLogs('i', 'Status updated successfully', res);
-    //                     this.loadSlots();
-    //                     this.showErrorAlert('Successful', 'Slot status updated', false, 'success',);
-    //                     this.messageService.add({
-    //                         severity: 'success',
-    //                         summary: 'Successful',
-    //                         detail: 'Slot status updated',
-    //                         life: 3000
-    //                     });
-    //                     this.selectSlots = [];
-    //                 },
-    //                 error: (err) => {
-    //                     this.messageService.add({
-    //                         severity: 'error',
-    //                         summary: err,
-    //                         detail: 'Failed to update slot status.',
-    //                         life: 3000
-    //                     });
-    //                     this.logger.printLogs('e', 'Failed to update status', err);
-    //                 }
-    //             });
-    //         }
-    //     });
-    // }
-
-    private isWithinTwoWeeks(dateSlot: string | Date): boolean {
+    isWithinTwoWeeks(dateSlot: string | Date): boolean {
         const slotDate = new Date(dateSlot);
         const today = new Date();
 
         const diffTime = slotDate.getTime() - today.getTime();
         const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+        this.logger.printLogs('i', 'Selected Date Slot is ', dateSlot);
+        this.logger.printLogs('i', 'Difference Days', diffDays);
+        this.logger.printLogs('i', 'isWithinTwoWeeks', diffDays < 14);
 
         return diffDays < 14;
     }
@@ -1294,6 +1112,7 @@ export class Schedule implements OnInit {
 
             return !allowedTargets.includes(status);
         });
+
         this.logger.printLogs('i', 'STATUS TRANSITION VALIDATION - status', status);
         this.logger.printLogs('i', 'STATUS TRANSITION VALIDATION - hasInvalidTransition', hasInvalidTransition);
         this.logger.printLogs(
@@ -1370,6 +1189,13 @@ export class Schedule implements OnInit {
         });
     }
 
+    canManageStudent(slot: any): boolean {
+        return (
+            (this.tokenPayload.role === 'UGR0001' ||
+                this.tokenPayload.role === 'UGR0003') &&
+            slot.slotStatus === 1 // CONFIRMED
+        );
+    }
 
     canRequestCancel(slot: any): boolean {
         return (
@@ -1418,61 +1244,6 @@ export class Schedule implements OnInit {
         this.createSchedule(request);
     }
 
-    // createSchedule(request: any, force: boolean = false) {
-    //     this.forceRequest = request;
-
-    //     this.api.createBulkSchedules(request, force).subscribe({
-    //         next: (res: any) => {
-    //             this.logger.printLogs('i', 'Create Slot Response : ', res);
-
-    //             // Blocked slots
-    //             if (res.blocked?.length > 0) {
-    //                 this.messageService.add({
-    //                     severity: 'warn',
-    //                     summary: 'Blocked Slots',
-    //                     detail: `${res.blocked.length} slot(s) already confirmed and cannot be overridden.`,
-    //                     life: 5000
-    //                 });
-    //             }
-
-    //             // Existing unconfirmed slots → ask user
-    //             if ((res.skipped?.length > 0 || (res.blocked?.length > 0 && res.added?.length > 0)) && !force) {
-    //                 this.messageService.add({
-    //                     severity: 'warn',
-    //                     summary: 'Existing Slots',
-    //                     detail: `${res.skipped.length} slot(s) already exist as unconfirmed. Choose an action to proceed.`,
-    //                     life: 5000
-    //                 });
-    //                 this.availableSlots = res.added || [];
-    //                 this.blockedSlots = res.blocked || [];
-    //                 this.existingSlots = res.skipped; // skipped represents existing unconfirmed
-    //                 this.showForceDialog = true;
-    //             }
-
-    //             // Slots newly created
-    //             if (res.added?.length > 0 && res.blocked?.length < 1) {
-    //                 this.showErrorAlert('Successful', 'Slots created successfully', false, 'success',);
-    //                 this.loadSlots();
-    //             }
-    //             if (res.added?.length > 0 && (res.skipped?.length > 0 || res.blockedSlots?.length > 0) && force) {
-    //                 this.showErrorAlert('Successful', 'Slots created successfully', false, 'success',);
-    //                 this.loadSlots();
-    //             }
-    //             if (res.added?.length > 0 && res.skipped?.length < 1  && !force) {
-    //                 this.showErrorAlert('Successful', 'Slots created successfully', false, 'success',);
-    //                 this.loadSlots();
-    //             }
-    //         },
-    //         error: (err) => {
-    //             this.messageService.add({
-    //                 severity: 'error',
-    //                 summary: 'Error',
-    //                 detail: err?.error?.message || 'Failed to save slots.',
-    //                 life: 5000
-    //             });
-    //         }
-    //     });
-    // }
 
     createSchedule(request: any, force: boolean = false) {
         this.forceRequest = request;
@@ -1532,6 +1303,60 @@ export class Schedule implements OnInit {
         });
     }
 
+    openMangeStudent(slot: any) {
+        // Open Dialog and add student management logic here
+        this.slot = slot;
+        this.logger.printLogs('i', 'Manage Student for Slot:', slot);
+        this.dayDialog = false;
+        this.displayEventDialog = false;
+
+        this.targetStudent = [];
+
+        this.api.getAppointedStudentsBySlotID(slot.slotID).subscribe({
+            next: (appointedStudents: any) => {
+                this.targetStudent = (appointedStudents || []).map((x: any) => ({
+                    userID: x.userID,
+                    fullname: x.fullname
+                }));
+
+                this.logger.printLogs('i', 'Target students (appointed)', this.targetStudent);
+
+                // STEP 2: Load ALL users and filter students
+                this.manageStudentDialog = true;
+                this.loadAvailableStudents();
+            },
+            error: (err: any) => {
+                this.logger.printLogs('e', 'Failed to fetch appointed students', err);
+                this.manageStudentDialog = false;
+                this.loadAvailableStudents(); // still load source
+            }
+        });
+
+
+    }
+
+    loadAvailableStudents() {
+        this.api.getUsers().subscribe({
+            next: (users) => {
+                const appointedUserIDs = new Set(
+                    this.targetStudent.map((x: any) => x.userID)
+                );
+
+                this.sourceStudent = (users || [])
+                    .filter((u: any) =>
+                        u.roleID === 'UGR0004' &&   // STUDENT
+                        !appointedUserIDs.has(u.userID)
+                    )
+                    .map((u: any) => ({
+                        userID: u.userID,
+                        fullname: `${u.lastname}, ${u.firstname} ${u.middlename || ''}`.trim()
+                    }));
+
+                this.logger.printLogs('i', 'Source students (available)', this.sourceStudent);
+            },
+            error: (err: any) => this.logger.printLogs('e', 'Failed to fetch users', err)
+        });
+    }
 
     getMaxLengthIndices(): number[] {
         const maxLength = Math.max(
@@ -1651,6 +1476,40 @@ export class Schedule implements OnInit {
         });
     }
 
+    saveAssignStudentStudent() {
+        if (!this.slot || !this.targetStudent.length) {
+            return;
+        }
+
+        const payload = {
+            slotID: this.slot.slotID,
+            userIDs: this.targetStudent.map((x: any) => x.userID)
+        };
+        this.manageStudentDialog = false;
+
+        this.logger.printLogs('i', 'Saving student assignments', payload);
+
+        this.api.bulkReplaceAppointedStudentsBySlot(payload).subscribe({
+            next: (res: any) => {
+                // this.logger.printLogs('i', 'Students assigned successfully', res);
+                this.showErrorAlert('Successful', 'Students assigned successfully', false, 'success',);
+                this.onCloseManageStudent();
+            },
+            error: (err: any) => {
+                // this.logger.printLogs('e', 'Failed to assign students', err);
+                this.showErrorAlert('Assigning Students Failed', err.message || 'Failed to assign students to slot.', false, 'error',);
+                this.onCloseManageStudent();
+            }
+        });
+    }
+
+    onCloseManageStudent() {
+        this.sourceStudent = [];
+        this.targetStudent = [];
+        this.slot = null;
+        this.manageStudentDialog = false;
+    }
+
     private showErrorAlert(title: string, message: string, dialogOpen: boolean, severity: 'error' | 'info' | 'warning' | 'success' = 'success') {
 
         this.messageService.add({
@@ -1667,8 +1526,8 @@ export class Schedule implements OnInit {
             confirmButtonText: 'OK',
         }).then((result) => {
             if (result.isConfirmed) {
-                this.itemDialog, this.displayEventDialog, this.showForceDialog, this.showForceDialog
-                this.dayDialog, this.printDialogVisible = dialogOpen;
+                this.itemDialog, this.displayEventDialog, this.showForceDialog, this.showForceDialog, 
+                this.dayDialog, this.manageStudentDialog, this.printDialogVisible = dialogOpen;
             }
         });
     }
