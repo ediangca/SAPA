@@ -420,9 +420,7 @@ export class Schedule implements OnInit {
                     },
                 ]),
         ];
-
     }
-
 
     initCols() {
         this.cols = [
@@ -446,88 +444,6 @@ export class Schedule implements OnInit {
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
 
     }
-
-    // this.calendarOptions = signal<CalendarOptions>({
-    //     height: '100%',       // fill parent div height
-    //     plugins: [
-    //         interactionPlugin,
-    //         dayGridPlugin,
-    //         timeGridPlugin,
-    //         listPlugin,
-    //     ],
-    //     headerToolbar: {
-    //         //today
-    //         left: 'prev,next,myCustomButton',
-    //         center: 'title',
-    //         right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-    //         //   listWeek
-    //     },
-    //     customButtons: {
-    //         myCustomButton: {
-    //             text: 'New Schedule',
-    //             click: () => {
-    //                 // This function runs when the button is clicked
-    //                 console.log('Custom button clicked!');
-    //                 // You can open a modal, add an event, etc.
-    //                 this.openNew(null);
-    //             }
-    //         }
-    //     },
-    //     initialView: 'dayGridMonth',
-    //     // initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
-    //     // initialEvents: this.INITIAL_EVENTS,
-    //     events: [],
-    //     weekends: true,
-    //     editable: true,
-    //     selectable: true,
-    //     selectMirror: true,
-    //     dayMaxEvents: true,
-    //     eventClick: (clickInfo: any) => this.onEventClick(clickInfo),
-    //     select: this.openNew.bind(this),
-    //     // eventClick: this.handleEventClick.bind(this),
-    //     // eventsSet: this.handleEvents.bind(this)
-    //     //  you can update a remote database when these fire:
-    //     // eventAdd:
-    //     // eventChange:
-    //     // eventRemove:
-
-
-    //     // height: 'calc(100vh - 12rem)', 
-    //     // contentHeight: 'auto'
-    // });
-
-    // private getTodayStart(): Date {
-    //     const d = new Date();
-    //     d.setHours(0, 0, 0, 0);
-    //     return d;
-    // }
-
-    // private getMinAllowedDate(): Date {
-    //     const d = this.getTodayStart();
-    //     d.setDate(d.getDate() + 7); // 1 week from today
-    //     return d;
-    // }
-
-    // private buildDisabledDateBackgroundEvents(viewStart: Date, viewEnd: Date) {
-    //     const today = new Date();
-    //     today.setHours(0, 0, 0, 0);
-
-    //     const minAllowed = new Date(today);
-    //     minAllowed.setDate(minAllowed.getDate() + 7);
-
-    //     if (viewStart >= minAllowed) return [];
-
-    //     return [
-    //         {
-    //             start: viewStart,
-    //             end: minAllowed,
-    //             display: 'background',
-    //             classNames: ['fc-disabled-range']
-    //         }
-    //     ];
-    // }
-
-
 
     buildCalendarEvents() {
         this.calendarOptions = {
@@ -614,26 +530,6 @@ export class Schedule implements OnInit {
         };
     }
 
-
-    // loadMonthEvents(info: any, success: any, failure: any) {
-    //     const startDate = this.dateFormat(info.startStr) || '';
-    //     const endDate = this.dateFormat(info.endStr) || '';
-
-    //     // call API and aggregate with role-based logic
-    //     this.api.getSlotsByRange(startDate, endDate).subscribe({
-    //         next: slots => {
-    //             const aggregated = aggregateSlotsByDay(
-    //                 slots,
-    //                 this.tokenPayload.role,      // role of current user
-    //                 this.tokenPayload.nameid     // userID for filtering
-    //             );
-    //             success(aggregated);
-    //         },
-    //         error: err => failure(err)
-    //     });
-
-    // }
-
     loadMonthEvents(info: any, success: any, failure: any) {
         const startDate = this.dateFormat(info.startStr) || '';
         const endDate = this.dateFormat(info.endStr) || '';
@@ -665,21 +561,6 @@ export class Schedule implements OnInit {
             error: failure
         });
     }
-
-
-
-    // loadMonthEvents(info: any, success: any, failure: any) {
-    //     const startDate = this.dateFormat(info.startStr) || '';
-    //     const endDate = this.dateFormat(info.endStr) || '';
-
-    //     this.api.getSlotsByRange(startDate, endDate).subscribe({
-    //         next: slots => {
-    //             const aggregated = aggregateSlotsByDay(slots);
-    //             success(aggregated);
-    //         },
-    //         error: err => failure(err)
-    //     });
-    // }
 
     loadSlots() {
         this.loading = true;
@@ -730,18 +611,6 @@ export class Schedule implements OnInit {
             });
         }
     }
-
-    // onMonthEventClick(info: any) {
-    //     this.dayDialog = true; // open p-dialog
-
-
-    //     const slots = info.event.extendedProps.slots;
-
-    //     this.selectedDay = info.event.startStr;
-    //     this.daySlots = slots;
-
-    //     this.logger.printLogs('i', 'Day slots', this.daySlots)
-    // }
 
     onMonthEventClick(info: any) {
         this.dayDialog = true;              // open dialog immediately
@@ -881,20 +750,6 @@ export class Schedule implements OnInit {
             hour12: true
         }).format(date);
     }
-
-    // toggleWeekends() {
-    //     this.calendarOptions().weekends = !this.calendarOptions().weekends // toggle the boolean!
-    // }
-
-    // filterByHospital(hospitalId: string) {
-    //     const filtered = this.slots().filter(s => s.hospitalID === hospitalId);
-    //     const mapped = mapSlotsToEvents(filtered);
-
-    //     this.calendarOptions.update(opts => ({
-    //         ...opts,
-    //         events: mapped
-    //     }));
-    // }
 
     getStatus(status: any, type: string): any {
         // this.logger.printLogs('i', 'Status: ', status)
@@ -1042,9 +897,9 @@ export class Schedule implements OnInit {
         const diffTime = slotDate.getTime() - today.getTime();
         const diffDays = diffTime / (1000 * 60 * 60 * 24);
 
-        this.logger.printLogs('i', 'Selected Date Slot is ', dateSlot);
-        this.logger.printLogs('i', 'Difference Days', diffDays);
-        this.logger.printLogs('i', 'isWithinTwoWeeks', diffDays < 14);
+        // this.logger.printLogs('i', 'Selected Date Slot is ', dateSlot);
+        // this.logger.printLogs('i', 'Difference Days', diffDays);
+        // this.logger.printLogs('i', 'isWithinTwoWeeks', diffDays < 14);
 
         return diffDays < 14;
     }
@@ -1328,11 +1183,9 @@ export class Schedule implements OnInit {
             error: (err: any) => {
                 this.logger.printLogs('e', 'Failed to fetch appointed students', err);
                 this.manageStudentDialog = false;
-                this.loadAvailableStudents(); // still load source
+                // this.loadAvailableStudents(); // still load source
             }
         });
-
-
     }
 
     loadAvailableStudents() {
@@ -1345,6 +1198,8 @@ export class Schedule implements OnInit {
                 this.sourceStudent = (users || [])
                     .filter((u: any) =>
                         u.roleID === 'UGR0004' &&   // STUDENT
+                        u.schoolID === this.slot.schoolID && // Assign School of the slot
+                        u.status === 'A' &&      // Aprrove users only
                         !appointedUserIDs.has(u.userID)
                     )
                     .map((u: any) => ({
@@ -1352,6 +1207,14 @@ export class Schedule implements OnInit {
                         fullname: `${u.lastname}, ${u.firstname} ${u.middlename || ''}`.trim()
                     }));
 
+                if(this.sourceStudent.length === 0){
+                    this.messageService.add({
+                        severity: 'info',
+                        summary: 'No Available Students',
+                        detail: 'There are no available students to assign for this slot.',
+                        life: 4000
+                    });
+                }
                 this.logger.printLogs('i', 'Source students (available)', this.sourceStudent);
             },
             error: (err: any) => this.logger.printLogs('e', 'Failed to fetch users', err)

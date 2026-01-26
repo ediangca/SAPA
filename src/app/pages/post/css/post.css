@@ -42,3 +42,11 @@
 }
 
 /* FULL CALENDAR */
+
+
+
+/* PICK LIST */
+:host ::ng-deep .p-picklist-list-wrapper,
+:host ::ng-deep .p-picklist-list {
+  height: 100%;
+}
