@@ -33,14 +33,20 @@
             </a>
         </li>
         <li>
-            <a (click)="router.navigate([''], { fragment: 'features' })" pRipple
+            <a (click)="router.navigate([''], { fragment: 'aboutus' })" pRipple
                 class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
                 <span>About SAP</span>
             </a>
         </li>
+        <li>
+            <a (click)="router.navigate([''], { fragment: 'stakeholders' })" pRipple
+                class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
+                <span>Stakeholder</span>
+            </a>
+        </li>
         <li class="relative group">
             <!-- Parent button -->
-            <a (click)="router.navigate([''], { fragment: 'highlights' })" pRipple
+            <a (click)="router.navigate([''], { fragment: 'partners' })" pRipple
                 class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl flex items-center gap-2 cursor-pointer">
                 <span>Team</span>
                 <!-- Dropdown indicator -->
@@ -53,25 +59,20 @@
             <!-- Dropdown menu -->
             <ul
                 class="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 shadow-lg rounded-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-300 ease-in-out z-20">
+                
                 <li>
-                    <a routerLink="/" pRipple
-                        class="block px-4 py-2 text-surface-900 dark:text-surface-0 font-medium text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg">
-                        SAP Team
-                    </a>
-                </li>
-                <li>
-                    <a routerLink="/" pRipple
+                    <a (click)="router.navigate([''], { fragment: 'hospitals' })" pRipple
                         class="block px-4 py-2 text-surface-900 dark:text-surface-0 font-medium text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg">
                         Hospital Partners
                     </a>
                 </li>
+                <li>
+                    <a (click)="router.navigate([''], { fragment: 'schools' })" pRipple
+                        class="block px-4 py-2 text-surface-900 dark:text-surface-0 font-medium text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg">
+                        Schools
+                    </a>
+                </li>
             </ul>
-        </li>
-        <li>
-            <a (click)="router.navigate([''], { fragment: 'highlights' })" pRipple
-                class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
-                <span>News & Updates</span>
-            </a>
         </li>
         <li>
             <a (click)="router.navigate([''], { fragment: 'pricing' })" pRipple

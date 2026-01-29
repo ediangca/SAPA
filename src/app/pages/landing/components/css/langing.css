@@ -1,0 +1,18 @@
+   .hero-gradient {
+       background: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
+   }
+
+   .dark .hero-gradient {
+       background: linear-gradient(135deg, #0c4a6e 0%, #064e3b 100%);
+   }
+
+   .glass-card {
+       background: rgba(255, 255, 255, 0.7);
+       backdrop-filter: blur(10px);
+       border: 1px solid rgba(255, 255, 255, 0.2);
+   }
+
+   .dark .glass-card {
+       background: rgba(15, 23, 42, 0.7);
+       border: 1px solid rgba(255, 255, 255, 0.05);
+   }
