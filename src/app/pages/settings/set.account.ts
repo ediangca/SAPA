@@ -1,4 +1,4 @@
-import { Component, OnInit} from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -21,6 +21,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from "primeng/tooltip";
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
+import { QRCodeComponent } from 'angularx-qrcode';
 
 
 
@@ -28,6 +29,7 @@ import { InputTextModule } from 'primeng/inputtext';
     selector: 'settings-account',
     standalone: true,
     imports: [
+        QRCodeComponent,
         CommonModule,
         FormsModule,
         ButtonModule,
@@ -64,14 +66,16 @@ export class Account implements OnInit {
 
     newPassword: string = '';
 
+    showQrModal = false;
+
     constructor(private fb: FormBuilder,
-            private messageService: MessageService,
-            private confirmationService: ConfirmationService,
-            private store: StoreService,
-            private api: ApiService,
-            private logger: LogsService,
-            private vf: ValidateForm
-        ) {
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService,
+        private store: StoreService,
+        private api: ApiService,
+        private logger: LogsService,
+        private vf: ValidateForm
+    ) {
         this.form = this.fb.group({
             userID: [null],
             roleID: ['', Validators.required],
@@ -133,6 +137,14 @@ export class Account implements OnInit {
 
     get isEmailVerified(): boolean {
         return !!this.user?.Email_Verified_At;
+    }
+
+    openQrZoom(): void {
+        this.showQrModal = true;
+    }
+
+    closeQrZoom(): void {
+        this.showQrModal = false;
     }
 
     filterSpace() {

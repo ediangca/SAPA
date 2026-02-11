@@ -7,7 +7,7 @@ import { Component } from '@angular/core';
     class="relative py-16 px-6 lg:px-24 mx-auto max-w-7xl"
 >
     
-    <section id="partners" class="py-20 bg-white dark:bg-slate-900">
+    <section id="partners" class="py-20  bg-primary-50 dark:bg-slate-900">
       <div class="container mx-auto px-6">
         <div class="text-center mb-16">
           <h2

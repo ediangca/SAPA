@@ -549,56 +549,56 @@ export class ApiService {
   }
   /*------------------- APPOINTED STUDENTS -------------------*/
 
-  // GET: api/AppointedStudentts
+  // GET: api/AppointedStudents
   getAppointedStudents() {
     return this.handleRequest<any[]>(
       'get',
-      'AppointedStudentts',
+      'AppointedStudents',
       { logAction: 'Fetching Appointed Students' }
     );
   }
 
-  // GET: api/AppointedStudentts/{id}
+  // GET: api/AppointedStudents/{id}
   getAppointedStudentById(id: string) {
     return this.handleRequest<any>(
       'get',
-      'AppointedStudentts',
+      'AppointedStudents',
       { id, logAction: 'Fetching Appointed Student By ID' }
     );
   }
 
-  // GET: api/AppointedStudentts/user/{id}
+  // GET: api/AppointedStudents/user/{id}
   getAppointedStudentsByUserID(userID: string) {
     return this.handleRequest<any[]>(
       'get',
-      'AppointedStudentts/user',
+      'AppointedStudents/user',
       { id: userID, logAction: 'Fetching Appointed Students By User' }
     );
   }
 
-  // GET: api/AppointedStudentts/slot/{id}
+  // GET: api/AppointedStudents/slot/{id}
   getAppointedStudentsBySlotID(slotID: string) {
     return this.handleRequest<any[]>(
       'get',
-      'AppointedStudentts/slot',
+      'AppointedStudents/slot',
       { id: slotID, logAction: 'Fetching Appointed Students By Slot' }
     );
   }
 
-  // GET: api/AppointedStudentts/hospital/{id}
+  // GET: api/AppointedStudents/hospital/{id}
   getAppointedStudentsByHospitalID(hospitalID: string) {
     return this.handleRequest<any[]>(
       'get',
-      'AppointedStudentts/hospital',
+      'AppointedStudents/hospital',
       { id: hospitalID, logAction: 'Fetching Appointed Students By Hospital' }
     );
   }
 
-  // GET: api/AppointedStudentts/hospital&section?hid=&sid=
+  // GET: api/AppointedStudents/hospital&section?hid=&sid=
   getAppointedStudentsByHospitalAndSection(hid: string, sid: string) {
     return this.handleRequest<any[]>(
       'get',
-      'AppointedStudentts/hospital&section',
+      'AppointedStudents/hospital&section',
       {
         params: { hid, sid },
         logAction: 'Fetching Appointed Students By Hospital & Section'
@@ -606,7 +606,7 @@ export class ApiService {
     );
   }
 
-  // GET: api/AppointedStudentts/range
+  // GET: api/AppointedStudents/range
   getAppointedStudentsByRange(
     start: string,
     end: string,
@@ -620,7 +620,7 @@ export class ApiService {
 
     return this.handleRequest<any[]>(
       'get',
-      'AppointedStudentts/range',
+      'AppointedStudents/range',
       {
         params,
         logAction: 'Fetching Appointed Students By Date Range'
@@ -628,11 +628,11 @@ export class ApiService {
     );
   }
 
-  // POST: api/AppointedStudentts
+  // POST: api/AppointedStudents
   createAppointedStudent(payload: any) {
     return this.handleRequest<any>(
       'post',
-      'AppointedStudentts',
+      'AppointedStudents',
       {
         body: payload,
         logAction: 'Creating Appointed Student'
@@ -640,11 +640,11 @@ export class ApiService {
     );
   }
 
-  // POST: api/AppointedStudentts/bulk-by-slot
+  // POST: api/AppointedStudents/bulk-by-slot
   bulkReplaceAppointedStudentsBySlot(payload: any) {
     return this.handleRequest<any>(
       'post',
-      'AppointedStudentts/bulk-by-slot',
+      'AppointedStudents/bulk-by-slot',
       {
         body: payload,
         logAction: 'Bulk Replace Appointed Students By Slot'
@@ -652,11 +652,11 @@ export class ApiService {
     );
   }
 
-  // PUT: api/AppointedStudentts/{id}
+  // PUT: api/AppointedStudents/{id}
   updateAppointedStudent(id: string, payload: any) {
     return this.handleRequest<any>(
       'put',
-      'AppointedStudentts',
+      'AppointedStudents',
       {
         id,
         body: payload,
@@ -665,11 +665,11 @@ export class ApiService {
     );
   }
 
-  // DELETE: api/AppointedStudentts/{id}
+  // DELETE: api/AppointedStudents/{id}
   deleteAppointedStudent(id: string) {
     return this.handleRequest<any>(
       'delete',
-      'AppointedStudentts',
+      'AppointedStudents',
       {
         id,
         logAction: 'Deleting Appointed Student'
@@ -677,11 +677,11 @@ export class ApiService {
     );
   }
 
-  // GET: api/AppointedStudentts/exists/{slotId}
+  // GET: api/AppointedStudents/exists/{slotId}
   isSlotAlreadyAppointed(slotID: string) {
     return this.handleRequest<any>(
       'get',
-      'AppointedStudentts/exists',
+      'AppointedStudents/exists',
       {
         id: slotID,
         logAction: 'Checking Slot Appointment Existence'

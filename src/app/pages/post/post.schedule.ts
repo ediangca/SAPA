@@ -206,6 +206,8 @@ export class Schedule implements OnInit {
     qrDialog: boolean = false;
     coordinatorID: any | null;
     manageStudentDialog: boolean = false;
+    
+    manageAttendanceDialog: boolean = false;
 
     viewOptions = [
         { label: 'Table', value: true, icon: 'pi pi-table' },
@@ -297,6 +299,7 @@ export class Schedule implements OnInit {
 
     sourceStudent: any[] = [];
     targetStudent: any[] = [];
+    attendance: any[] = [];
 
 
     private privilegesLoadedSubject = new BehaviorSubject<boolean>(false);
@@ -1165,7 +1168,6 @@ export class Schedule implements OnInit {
         this.dayDialog = false;
         this.displayEventDialog = false;
 
-        this.targetStudent = [];
 
         this.api.getAppointedStudentsBySlotID(slot.slotID).subscribe({
             next: (appointedStudents: any) => {
@@ -1188,6 +1190,19 @@ export class Schedule implements OnInit {
         });
     }
 
+    openAttendance(slot: any, studentID: string|null = null) {
+        // Open Dialog and add student management logic here
+        this.slot = slot;
+        this.logger.printLogs('i', 'Attendance for Slot:', slot);
+        this.dayDialog = false;
+        this.displayEventDialog = false;
+        this.manageStudentDialog = false;
+        this.manageAttendanceDialog = true;
+        this.targetStudent = [];
+
+    }
+
+
     loadAvailableStudents() {
         this.api.getUsers().subscribe({
             next: (users) => {
@@ -1207,7 +1222,7 @@ export class Schedule implements OnInit {
                         fullname: `${u.lastname}, ${u.firstname} ${u.middlename || ''}`.trim()
                     }));
 
-                if(this.sourceStudent.length === 0){
+                if (this.sourceStudent.length === 0) {
                     this.messageService.add({
                         severity: 'info',
                         summary: 'No Available Students',
@@ -1373,6 +1388,16 @@ export class Schedule implements OnInit {
         this.manageStudentDialog = false;
     }
 
+    
+
+    onCloseManagAttendance() {
+        this.sourceStudent = [];
+        this.targetStudent = [];
+        this.slot = null;
+        this.attendance = [];
+        this.manageAttendanceDialog = false;
+    }
+
     private showErrorAlert(title: string, message: string, dialogOpen: boolean, severity: 'error' | 'info' | 'warning' | 'success' = 'success') {
 
         this.messageService.add({
@@ -1389,8 +1414,8 @@ export class Schedule implements OnInit {
             confirmButtonText: 'OK',
         }).then((result) => {
             if (result.isConfirmed) {
-                this.itemDialog, this.displayEventDialog, this.showForceDialog, this.showForceDialog, 
-                this.dayDialog, this.manageStudentDialog, this.printDialogVisible = dialogOpen;
+                this.itemDialog, this.displayEventDialog, this.showForceDialog, this.showForceDialog,
+                    this.dayDialog, this.manageStudentDialog, this.printDialogVisible = dialogOpen;
             }
         });
     }

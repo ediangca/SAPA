@@ -10,8 +10,10 @@ import { CommonModule } from '@angular/common';
     <<section id="aboutus" class="py-24 bg-background-light dark:bg-background-dark">
   <div class="container mx-auto px-6">
     <div class="max-w-4xl mx-auto text-center" data-aos="fade-up">
-      <h2 class="font-display text-4xl font-bold mb-6">
+      <h2 class="font-display text-4xl font-bold text-slate-900 dark:text-white">
         About SAP
+      <span data-aos="fade-up" class="block text-sm font-semibold text-slate-400 uppercase tracking-widest mt-2">
+      School Affiliation Program</span>
       </h2>
       <div
         class="glass-card p-10 rounded-3xl shadow-xl text-center"
@@ -29,7 +31,7 @@ import { CommonModule } from '@angular/common';
         "/>
      
         <p class="italic text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-          “The School Affiliation Program Online System strengthens collaboration
+          “The School Affiliation Program strengthens collaboration
           between Davao del Norte hospitals and partner schools through a secure,
           transparent, and efficient digital platform.”
         </p>

@@ -47,8 +47,8 @@ export class NavbarWidget {
         this.nestedMenuItems = [
             {
                 label: 'Schedule',
-                icon: 'pi pi-fw pi-calendar'
-                // routerLink: ['']
+                icon: 'pi pi-fw pi-calendar',
+                routerLink: '/dashboard/post/schedules'
             },
             {
                 label: 'Inbox',

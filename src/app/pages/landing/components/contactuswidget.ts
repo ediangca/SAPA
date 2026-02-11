@@ -7,8 +7,7 @@ import { RippleModule } from 'primeng/ripple';
   selector: 'contactus-widget',
   imports: [DividerModule, ButtonModule, RippleModule],
   template: `
-   <section
-  id="contact"
+   <section id="contactus"
   class="py-28 bg-primary-50 dark:bg-slate-900">
   <div class="container mx-auto px-6">
 
@@ -64,6 +63,13 @@ import { RippleModule } from 'primeng/ripple';
                 </span>
               </div>
               <div>
+                <a
+                  href="mailto:
+                peedo.admin@davaodelnorte.gov.ph"
+                  class="text-lg font-medium text-slate-900 dark:text-white hover:text-primary transition">
+                  
+                peedo.admin@davaodelnorte.gov.ph
+                </a>
                 <a
                   href="mailto:peedo.davnor.officialw@gmail.com"
                   class="text-lg font-medium text-slate-900 dark:text-white hover:text-primary transition">
