@@ -43,7 +43,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { mapSlotsToEvents, formatTimeString, computeEnd, aggregateSlotsByDay } from './post.schedule.utils';
 import { Tooltip } from "primeng/tooltip";
 import { ChipModule } from 'primeng/chip';
-import { BehaviorSubject, combineLatest, filter, switchMap, take, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, forkJoin, switchMap, take, tap } from 'rxjs';
 import { SkeletonModule } from 'primeng/skeleton';
 import { PickListModule } from 'primeng/picklist';
 
@@ -202,11 +202,12 @@ export class Schedule implements OnInit {
 
     tokenPayload: any | null;
 
+    assignedStudents = 0;
     assignDialog: boolean = false;
     qrDialog: boolean = false;
     coordinatorID: any | null;
     manageStudentDialog: boolean = false;
-    
+
     manageAttendanceDialog: boolean = false;
 
     viewOptions = [
@@ -1168,13 +1169,28 @@ export class Schedule implements OnInit {
         this.dayDialog = false;
         this.displayEventDialog = false;
 
+        this.assignedStudents = 0;
+        this.sourceStudent = [];
+        this.targetStudent = [];
+
 
         this.api.getAppointedStudentsBySlotID(slot.slotID).subscribe({
             next: (appointedStudents: any) => {
-                this.targetStudent = (appointedStudents || []).map((x: any) => ({
-                    userID: x.userID,
-                    fullname: x.fullname
-                }));
+                // this.targetStudent = (appointedStudents || []).map((x: any) => ({
+                //     userID: x.userID,
+                //     fullname: x.fullname
+                // }));
+
+
+                this.targetStudent = appointedStudents
+                    ? appointedStudents.map((x: any) => ({
+                        userID: x.userID,
+                        fullname: x.fullname
+                    }))
+                    : [];
+
+
+                this.assignedStudents = this.targetStudent.length;
 
                 this.logger.printLogs('i', 'Target students (appointed)', this.targetStudent);
 
@@ -1185,12 +1201,24 @@ export class Schedule implements OnInit {
             error: (err: any) => {
                 this.logger.printLogs('e', 'Failed to fetch appointed students', err);
                 this.manageStudentDialog = false;
+                this.assignedStudents = 0;
                 // this.loadAvailableStudents(); // still load source
             }
         });
     }
 
-    openAttendance(slot: any, studentID: string|null = null) {
+    trackByUserID(index: number, item: any) {
+        return item.userID;
+    }
+    get sourceStudents() {
+        return [...this.sourceStudent];
+    }
+
+    get targetStudents() {
+        return [...this.targetStudent];
+    }
+
+    openAttendance(slot: any, studentID: string | null = null) {
         // Open Dialog and add student management logic here
         this.slot = slot;
         this.logger.printLogs('i', 'Attendance for Slot:', slot);
@@ -1354,32 +1382,134 @@ export class Schedule implements OnInit {
         });
     }
 
+
+    // saveAssignStudentStudent() {
+    //     if (!this.slot || !this.targetStudent.length) {
+    //         return;
+    //     }
+
+    //     const payload = {
+    //         slotID: this.slot.slotID,
+    //         userIDs: this.targetStudent.map((x: any) => x.userID)
+    //     };
+    //     this.manageStudentDialog = false;
+
+    //     this.logger.printLogs('i', 'Saving student assignments', payload);
+    //     this.logger.printLogs('i', 'Saving targetStudent:', JSON.stringify(this.targetStudent));
+
+    //     this.api.bulkReplaceAppointedStudentsBySlot(payload).subscribe({
+    //         next: (res: any) => {
+    //             // this.logger.printLogs('i', 'Students assigned successfully', res);
+    //             this.showErrorAlert('Successful', 'Students assigned successfully', false, 'success',);
+    //             this.onCloseManageStudent();
+    //         },
+    //         error: (err: any) => {
+    //             // this.logger.printLogs('e', 'Failed to assign students', err);
+    //             this.showErrorAlert('Assigning Students Failed', err.message || 'Failed to assign students to slot.', false, 'error',);
+    //             this.onCloseManageStudent();
+    //         }
+    //     });
+    // }
+
+    get hasAssignedStudents(): boolean {
+        return this.targetStudent.length > 0;
+    }
+
+    onTransfer(event: any) {
+
+        this.assignedStudents = event.items.length;
+
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Students Assigned',
+            detail: `${this.assignedStudents} student(s) moved.`,
+            life: 2000
+        });
+
+        this.logger.printLogs('i', 'Target Students Updated:', this.assignedStudents);
+
+        // this.targetStudent = [...this.targetStudent];
+    }
+    onMoveToTarget(event: any) {
+    const movedCount = event.items.length;
+    this.assignedStudents = this.assignedStudents + movedCount;
+
+        this.logger.printLogs(
+            'i',
+            'Move to Target Assigned Students:',
+            this.assignedStudents
+        );
+    }
+    onMoveAllToTarget(event: any) {
+    const movedCount = event.items.length;
+    this.assignedStudents = this.assignedStudents + movedCount;
+
+        this.logger.printLogs(
+            'i',
+            'Move All to Target Assigned Students:',
+            this.assignedStudents
+        );
+    }
+    onMoveToSource(event: any) {
+    const movedCount = event.items.length;
+    this.assignedStudents = this.assignedStudents - movedCount;
+
+        this.logger.printLogs(
+            'i',
+            'Move to Source Assigned Students:',
+            this.assignedStudents
+        );
+    } 
+    onMoveAllToSource(event: any) {
+    const movedCount = event.items.length;
+    this.assignedStudents = this.assignedStudents - movedCount;
+
+        this.logger.printLogs(
+            'i',
+            'Move All to Source Assigned Students:',
+            this.assignedStudents
+        );
+    }
+
     saveAssignStudentStudent() {
-        if (!this.slot || !this.targetStudent.length) {
+
+        if (!this.slot) return;
+
+        const selected = [...this.targetStudent]; // 🔥 clone
+
+        if (!selected.length) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Students Selected',
+                detail: 'Please select at least one student.',
+                life: 3000
+            });
             return;
         }
 
         const payload = {
             slotID: this.slot.slotID,
-            userIDs: this.targetStudent.map((x: any) => x.userID)
+            userIDs: selected.map(x => x.userID)
         };
-        this.manageStudentDialog = false;
 
-        this.logger.printLogs('i', 'Saving student assignments', payload);
+        this.logger.printLogs('i', 'Saving payload:', payload);
 
         this.api.bulkReplaceAppointedStudentsBySlot(payload).subscribe({
-            next: (res: any) => {
-                // this.logger.printLogs('i', 'Students assigned successfully', res);
-                this.showErrorAlert('Successful', 'Students assigned successfully', false, 'success',);
+            next: () => {
+                this.showErrorAlert('Successful', 'Students assigned successfully', false, 'success');
                 this.onCloseManageStudent();
             },
             error: (err: any) => {
-                // this.logger.printLogs('e', 'Failed to assign students', err);
-                this.showErrorAlert('Assigning Students Failed', err.message || 'Failed to assign students to slot.', false, 'error',);
-                this.onCloseManageStudent();
+                this.showErrorAlert(
+                    'Assigning Students Failed',
+                    err?.error?.message || 'Failed to assign students.',
+                    false,
+                    'error'
+                );
             }
         });
     }
+
 
     onCloseManageStudent() {
         this.sourceStudent = [];
@@ -1388,7 +1518,7 @@ export class Schedule implements OnInit {
         this.manageStudentDialog = false;
     }
 
-    
+
 
     onCloseManagAttendance() {
         this.sourceStudent = [];
