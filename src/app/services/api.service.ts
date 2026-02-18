@@ -254,6 +254,30 @@ export class ApiService {
     );
   }
 
+  /*----------------------- DASHBOARD -----------------------*/
+
+  getDashboardSummary(params?: any) {
+    return this.handleRequest<any>(
+      'get',
+      'dashboard/summary',
+      {
+        params,
+        logAction: 'Fetching Dashboard Summary'
+      }
+    );
+  }
+  
+  getAdminPosts(page: number, pageSize: number) {
+    return this.handleRequest<any[]>(
+      'get',
+      'Dashboard/AdminPosts',
+      {
+        params: { page, pageSize },
+        logAction: 'Fetch Admin Posts'
+      }
+    );
+  }
+
   /*----------------------- HOSPITAL -----------------------*/
   getHospitals() {
     return this.handleRequest<any[]>('get', 'Hospitals', { logAction: 'Fetching Hospitals' });

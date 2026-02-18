@@ -20,20 +20,20 @@ import { Component } from '@angular/core';
           <div
             class="bg-background-light dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 text-center hover:shadow-lg transition-shadow group">
             <div
-              class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary transition-colors">
+              class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-blue-500 transition-colors">
               <span
-                class="material-icons-outlined text-primary group-hover:text-white text-3xl transition-colors"><i class="fa-regular fa-hospital"></i></span>
+                class="material-icons-outlined text-blue-500 group-hover:text-white text-3xl transition-colors"><i class="fa-regular fa-hospital"></i></span>
             </div>
-            <h4 class="font-bold text-lg mb-2">Government Hospitals</h4>
+            <h4 class="font-bold text-lg mb-2">Goverment Hospitals</h4>
             <p class="text-sm text-slate-500 dark:text-slate-400">Streamlined
               management of clinical slots and student rotations.</p>
           </div>
           <div
             class="bg-background-light dark:bg-slate-800 p-8 rounded-2xl border border-slate-100 dark:border-slate-700 text-center hover:shadow-lg transition-shadow group">
             <div
-              class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-accent-green transition-colors">
+              class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-green-500 transition-colors">
               <span
-                class="material-icons-outlined text-accent-green group-hover:text-white text-3xl transition-colors"><i class="fa-solid fa-graduation-cap"></i></span>
+                class="material-icons-outlined text-green-500 group-hover:text-white text-3xl transition-colors"><i class="fa-solid fa-graduation-cap"></i></span>
             </div>
             <h4 class="font-bold text-lg mb-2">Partner Institutions</h4>
             <p class="text-sm text-slate-500 dark:text-slate-400">Colleges and
