@@ -239,6 +239,7 @@
                         <td><p-skeleton width="7rem" height="1rem" /></td>
                         <td><p-skeleton width="5rem" height="1.4rem" borderRadius="1rem" /></td>
                         <td><p-skeleton width="6rem" height="1rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
                         <td>
                             <div class="flex gap-2">
                                 <p-skeleton shape="circle" size="2rem" />
@@ -313,7 +314,7 @@
                     </ng-container>
                 </ul>
                  -->
-                <p-panelmenu [model]="subcomponent"></p-panelmenu>
+                <p-panelmenu *ngIf="!loading" [model]="subcomponent"></p-panelmenu>
             </div>
             <!--             
             <div class="h-1/2">
@@ -328,6 +329,7 @@
 
 </div>
 
+<!-- Post Schedule -->
 <p-dialog header="Post Schedule" [(visible)]="itemDialog" [style]="{ width: '450px' }" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
@@ -424,6 +426,7 @@
     </ng-template>
 </p-dialog>
 
+<!-- Schedule Details -->
 <p-dialog header="Schedule Details" [(visible)]="displayEventDialog" [modal]="true" [closable]="true"
     [style]="{ width: '560px' }" [resizable]="false" [breakpoints]="{'640px':'95vw'}">
 
@@ -474,7 +477,6 @@
         </div>
     </div>
 
-    <!-- Dialog footer -->
     <ng-template pTemplate="footer">
         @if(canManageStudent(selectedEvent)){
             
@@ -499,10 +501,11 @@
             </p-button>
         }
         <button pButton type="button" label="Close" class="p-button-secondary"
-            (click)="displayEventDialog=false"></button>
+            (click)="onCloseDetails()"></button>
     </ng-template>
 </p-dialog>
 
+<!-- Schedule Conflict -->
 <p-dialog header="Slot Conflict Detected" [(visible)]="showForceDialog" [modal]="true" [closable]="false"
     [style]="{ width: '90%', maxWidth: '1024px' }">
 
@@ -587,11 +590,12 @@
     </ng-template>
 </p-dialog>
 
-<p-dialog [header]="'Schedules – ' + selectedDay" [(visible)]="dayDialog" modal [style]="{ width: '70vw' }"
+<!-- Schedule Selected Day -->
+<p-dialog [header]="'Schedules (' + selectedDay + ')' " [(visible)]="dayDialog" modal [style]="{ width: '70vw' }"
     [resizable]="false">
 
     <p-table [value]="daySlots" [rowHover]="true" [showGridlines]="true" responsiveLayout="stack" breakpoint="960px"
-        dataKey="slotID" [loading]="loadingDaySlots" [paginator]="true" [rows]="10" [rowsPerPageOptions]="[10, 20, 50]"
+        dataKey="slotID" [loading]="loadingDaySlots" [paginator]="true" paginatorDropdownAppendTo="body" [rows]="50" [rowsPerPageOptions]="[50 ,100, 500, 1000]"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} schedules" [showCurrentPageReport]="true"
         [scrollable]="true" scrollHeight="50vh">
 
@@ -739,11 +743,14 @@
                         [severity]="getStatus(slot.slotStatus, 'severirty')" />
                 </td>
                 <td>
-                    @if(canManageStudent(slot)){
+                    <!-- @if(canManageStudent(slot)){
                     <p-button icon="pi pi-users" severity="primary" [rounded]="true" [outlined]="true"
                         pTooltip="Manage student" tooltipPosition="top" (click)="openMangeStudent(slot)">
                     </p-button>
-                    }
+                    } -->
+                    
+                    <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
+                    (click)="onEventClick(slot)" />
 
                     @if (canRequestCancel(slot) && !isWithinTwoWeeks(slot.dateSlot)) {
                     <!-- STUDENT: Request Cancel -->
@@ -789,7 +796,7 @@
 </p-dialog>
 
 <!-- Manage Appointed Student -->
-<p-dialog header="Manage Students" [(visible)]="manageStudentDialog" [modal]="true" [closable]="false"
+<p-dialog header="Manage Students" [(visible)]="manageStudentDialog" [modal]="true" [closable]="false"  [dismissableMask]="true"
     [style]="{ height: '50%', minHeight:'420px', maxHeight: '768px', width: '90%', minWidth: '380px', maxWidth: '1024px' }"
     contentStyleClass="flex flex-col h-full" resizable="true"
     >
@@ -865,9 +872,9 @@
 </p-dialog>
 
 <!-- Manage Appointed Student Attendance -->
-<p-dialog header="Manage Attendance" [(visible)]="manageAttendanceDialog" [modal]="true" [closable]="false"
-    [style]="{ height: '50%', minHeight:'420px', maxHeight: '768px', width: '90%', minWidth: '380px', maxWidth: '1024px' }"
-    contentStyleClass="flex flex-col h-full" resizable="true"
+<p-dialog header="Attendance" [(visible)]="manageAttendanceDialog" [modal]="true" [closable]="false"
+    [style]="{ height: '100%', minHeight:'420px', width: '90%', minWidth: '380px', maxWidth: '624px' }"
+    contentStyleClass="flex flex-col h-full" [resizable]="true"
     >
     
     <p>List of student attendance assigned at
@@ -881,16 +888,98 @@
             ({{ slot?.shiftName ?? 'Shift Name' }})
         </span>.
     </p>
-       
+    
+    
+    <div class="flex-1 overflow-auto mt-3">
+        
+        <!-- Skeleton Loader -->
+        <ng-container *ngIf="loadingAttendance">
+
+            <div *ngFor="let i of [1,2,3,4,5]" class="flex items-center gap-3 mb-3">
+                <p-skeleton width="70%" height="1.5rem"></p-skeleton>
+                <p-skeleton shape="circle" size="1.8rem"></p-skeleton>
+            </div>
+
+        </ng-container>
+
+        <p-table  *ngIf="!loadingAttendance"
+        [value]="appointedStudents"
+        dataKey="studentID"
+        [scrollable]="true"
+        scrollHeight="flex"
+        responsiveLayout="scroll"
+        class="p-datatable-sm">
+
+            <!-- Header -->
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="fullname">
+                        <div class="flex justify-space gap-2 items-center">
+                        Name
+                            <p-sortIcon field="fullname"></p-sortIcon>
+                            <p-columnFilter type="text" field="fullname" display="fullname" placeholder="Search by name"></p-columnFilter>
+                        </div>
+                    </th>
+                    <th>
+                        <div class="flex justify-center items-center">
+                        Attendance
+                        </div>
+                    </th>
+                </tr>
+            </ng-template>
+
+            <!-- Body -->
+            <ng-template pTemplate="body" let-student>
+            <tr>
+
+                <!-- Student Info -->
+                <td>
+                    <div class="font-semibold">
+                        {{ student.fullname }}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                        {{ student.studentID }}
+                    </div>
+                </td>         
+                <td class="text-center">
+                    <div class="flex justify-center items-center">
+                        <!-- Present -->
+                        <i *ngIf="student.hasAttendance"
+                        class="pi pi-check-circle text-green-500 text-xl">
+                        </i>
+
+                        <!-- No Record -->
+                        <i *ngIf="!student.hasAttendance"
+                        class="pi pi-times-circle text-red-400 text-xl">
+                        </i>
+                    </div>
+                </td>
+
+                </tr>
+            </ng-template>
+
+            <!-- Empty Message -->
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="2" class="text-center p-4 text-gray-400">
+                        No appointed students found.
+                    </td>
+                </tr>
+            </ng-template>
+
+        </p-table>
+
+    </div>
     <ng-template pTemplate="footer" to>
         <!-- Add only available -->
-         @if(targetStudent.length > 0){
+        @if(targetStudent.length > 0){
             <button pButton type="button" label="Save Assignments"
             class="p-button-primary mr-2" (click)="saveAssignStudentStudent()"></button>
-         }
+        }
         <!-- Cancel -->
-        <button pButton type="button" label="Cancel" class="p-button-text" (click)="onCloseManagAttendance()"></button>
+        <button pButton type="button" label="Close" class="p-button-text" (click)="onCloseManagAttendance()"></button>
     </ng-template>
+
 </p-dialog>
 
 <!-- PRINT CONFIRMATION DIALOG -->
@@ -906,22 +995,104 @@
         <!-- DATE RANGE SELECTOR -->
         <p-datepicker [(ngModel)]="printDateRange" class="w-full" [inline]="true" selectionMode="range"
             dateFormat="yyyy-MM-dd" showIcon="true" placeholder="Select date range"></p-datepicker>
-
+<!-- 
         <div *ngIf="printDateRange?.length === 2" class="mt-3 p-3 border-round border-1 surface-border bg-gray-50">
             <p><strong>Date From:</strong> {{ printDateRange[0] | date:'yyyy-MM-dd' }}</p>
             <p><strong>Date To:</strong> {{ printDateRange[1] | date:'yyyy-MM-dd' }}</p>
+        </div> -->
+        <!-- SCHOOL SELECT -->
+        <!-- FILTERS (ONLY SHOW IF DATE RANGE IS SELECTED) -->
+        <div  *ngIf="printDateRange.length>1 && (printDateRange?.[0] !== null && printDateRange?.[1] !== null)" class="mt-3">
+
+            <!-- SCHOOL SELECT -->
+            <div class="mb-3">
+                <label class="block font-bold mb-2">School</label>
+                <p-select
+                    styleClass="w-full"
+                    [options]="schools"
+                    optionLabel="schoolName"
+                    optionValue="schoolID"
+                    appendTo="body"
+                    [(ngModel)]="selectedSchoolID"
+                    placeholder="All Schools">
+                </p-select>
+            </div>
+
+            <!-- HOSPITAL SELECT -->
+            <div class="mb-3">
+                <label class="block font-bold mb-2">Hospital</label>
+                <p-select
+                    styleClass="w-full"
+                    [options]="hospitals"
+                    optionLabel="hospitalName"
+                    optionValue="hospitalID"
+                    appendTo="body"
+                    [(ngModel)]="selectedHospitalID"
+                    placeholder="All Hospitals">
+                </p-select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="block font-bold mb-2">Status</label>
+                <p-select
+                    styleClass="w-full"
+                    [options]="slotStatusOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    appendTo="body"
+                    [(ngModel)]="selectedStatus"
+                    placeholder="All Statuses">
+                </p-select>
+            </div>
+
+            <!-- CLEAR FILTERS -->
+            <div class="flex justify-end">
+                <p-button
+                    label="Clear Filters"
+                    icon="pi pi-filter-slash"
+                    severity="secondary"
+                    class="p-button-text"
+                    (onClick)="clearPrintFilters()">
+                </p-button>
+            </div>
+
         </div>
 
         <p class="mt-3 text-sm text-red-600">
             *Choose a date range to filter and print the schedule.
         </p>
+
+        <!-- FILTER SUMMARY -->
+        <div *ngIf="printDateRange?.length === 2"
+            class="mt-4 p-3 border-round border-1 surface-border bg-gray-50 text-sm">
+
+            <p class="font-semibold mb-2">Selected Filters</p>
+
+            <p><strong>Date:</strong>
+                {{ printDateRange[0] | date:'yyyy-MM-dd' }}
+                –
+                {{ printDateRange[1] | date:'yyyy-MM-dd' }}
+            </p>
+
+            <p><strong>School:</strong>
+                {{ getSelectedSchoolName() || 'All Schools' }}
+            </p>
+
+            <p><strong>Hospital:</strong>
+                {{ getSelectedHospitalName() || 'All Hospitals' }}
+            </p>
+            
+            <p><strong>Status:</strong>
+                {{ getSelectedStatusLabel() || 'All Statuses' }}
+            </p>
+        </div>
     </div>
 
     <ng-template pTemplate="footer">
         <p-button label="Cancel" icon="pi pi-times" class="p-button-text" (onClick)="closePrintDialog()">
         </p-button>
 
-        <p-button label="Print PDF" icon="pi pi-file-pdf" severity="danger" (onClick)="confirmPrintSchedule()">
+        <p-button *ngIf="printDateRange?.[0] !== null && printDateRange?.[1] !== null" label="Print PDF" icon="pi pi-file-pdf" severity="danger" (onClick)="confirmPrintSchedule()">
         </p-button>
     </ng-template>
 

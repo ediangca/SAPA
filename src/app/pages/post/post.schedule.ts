@@ -285,6 +285,16 @@ export class Schedule implements OnInit {
     selectedDateFrom: string | null = null;
     selectedDateTo: string | null = null;
     printDateRange: Date[] = [];
+    selectedSchoolID: number | null = null;
+    selectedHospitalID: number | null = null;
+    selectedStatus: number | null = null;
+    slotStatusOptions = [
+        { label: 'PENDING', value: 0 },
+        { label: 'CONFIRMED', value: 1 },
+        { label: 'DECLINED', value: 2 },
+        { label: 'CANCEL REQUEST', value: 3 },
+        { label: 'CANCELED', value: 4 }
+    ];
 
     showForceDialog: boolean = false;
     availableSlots: any[] = [];
@@ -300,7 +310,10 @@ export class Schedule implements OnInit {
 
     sourceStudent: any[] = [];
     targetStudent: any[] = [];
-    attendance: any[] = [];
+
+    loadingAttendance: boolean = false;
+    appointedStudents: any[] = [];
+    attendanceRecords: any[] = [];
 
 
     private privilegesLoadedSubject = new BehaviorSubject<boolean>(false);
@@ -463,7 +476,8 @@ export class Schedule implements OnInit {
             headerToolbar: {
                 left: 'myCustomButton',
                 center: 'title',
-                right: 'today,dayGridMonth,listWeek prev,next'
+                // 'today,dayGridMonth,listWeek prev,next'
+                right: 'dayGridMonth,listWeek prev,next'
             },
 
             weekends: true,
@@ -1166,8 +1180,8 @@ export class Schedule implements OnInit {
         // Open Dialog and add student management logic here
         this.slot = slot;
         this.logger.printLogs('i', 'Manage Student for Slot:', slot);
-        this.dayDialog = false;
-        this.displayEventDialog = false;
+        // this.dayDialog = false;
+        // this.displayEventDialog = false;
 
         this.assignedStudents = 0;
         this.sourceStudent = [];
@@ -1218,16 +1232,66 @@ export class Schedule implements OnInit {
         return [...this.targetStudent];
     }
 
-    openAttendance(slot: any, studentID: string | null = null) {
-        // Open Dialog and add student management logic here
-        this.slot = slot;
-        this.logger.printLogs('i', 'Attendance for Slot:', slot);
-        this.dayDialog = false;
-        this.displayEventDialog = false;
-        this.manageStudentDialog = false;
-        this.manageAttendanceDialog = true;
-        this.targetStudent = [];
+    // openAttendance(slot: any, studentID: string | null = null) {
+    //     // Open Dialog and add student management logic here
+    //     this.slot = slot;
+    //     this.logger.printLogs('i', 'Attendance for Slot:', slot);
+    //     this.dayDialog = false;
+    //     this.displayEventDialog = false;
+    //     this.manageStudentDialog = false;
+    //     this.manageAttendanceDialog = true;
+    //     this.targetStudent = [];
+    //     this.sourceStudent = [];
 
+
+    // }
+
+    openAttendance(slot: any, studentID: string | null = null) {
+
+        this.slot = slot;
+
+        this.logger.printLogs('i', 'Attendance for Slot:', slot);
+        this.slot = slot;
+
+        // this.dayDialog = false;
+        // this.displayEventDialog = false;
+        // this.manageStudentDialog = false;
+        this.manageAttendanceDialog = true;
+
+        if (!slot?.slotID) return;
+
+        this.loadingAttendance = true;   // LOADING
+
+        // 🔥 Load both in parallel
+        forkJoin({
+            students: this.api.getAppointedStudentsBySlotID(slot.slotID),
+            attendance: this.api.getAttendanceBySlot(slot.slotID)
+        }).subscribe({
+            next: (res) => {
+
+                this.attendanceRecords = res.attendance;
+
+                // 🔥 Merge logic
+                this.appointedStudents = res.students.map(student => {
+
+                    const hasAttendance = this.attendanceRecords
+                        .some(a => a.userID === student.userID);
+
+                    return {
+                        ...student,
+                        hasAttendance,
+                        // attendanceStatus: hasAttendance?.status ?? null
+                    };
+                });
+
+                this.logger.printLogs('i', 'Merged Attendance View', this.appointedStudents);
+                this.loadingAttendance = false;
+            },
+            error: (err) => {
+                this.logger.printLogs('e', 'Failed loading attendance view', err);
+                this.loadingAttendance = false;
+            }
+        });
     }
 
 
@@ -1431,8 +1495,8 @@ export class Schedule implements OnInit {
         // this.targetStudent = [...this.targetStudent];
     }
     onMoveToTarget(event: any) {
-    const movedCount = event.items.length;
-    this.assignedStudents = this.assignedStudents + movedCount;
+        const movedCount = event.items.length;
+        this.assignedStudents = this.assignedStudents + movedCount;
 
         this.logger.printLogs(
             'i',
@@ -1441,8 +1505,8 @@ export class Schedule implements OnInit {
         );
     }
     onMoveAllToTarget(event: any) {
-    const movedCount = event.items.length;
-    this.assignedStudents = this.assignedStudents + movedCount;
+        const movedCount = event.items.length;
+        this.assignedStudents = this.assignedStudents + movedCount;
 
         this.logger.printLogs(
             'i',
@@ -1451,18 +1515,18 @@ export class Schedule implements OnInit {
         );
     }
     onMoveToSource(event: any) {
-    const movedCount = event.items.length;
-    this.assignedStudents = this.assignedStudents - movedCount;
+        const movedCount = event.items.length;
+        this.assignedStudents = this.assignedStudents - movedCount;
 
         this.logger.printLogs(
             'i',
             'Move to Source Assigned Students:',
             this.assignedStudents
         );
-    } 
+    }
     onMoveAllToSource(event: any) {
-    const movedCount = event.items.length;
-    this.assignedStudents = this.assignedStudents - movedCount;
+        const movedCount = event.items.length;
+        this.assignedStudents = this.assignedStudents - movedCount;
 
         this.logger.printLogs(
             'i',
@@ -1477,7 +1541,7 @@ export class Schedule implements OnInit {
 
         const selected = [...this.targetStudent]; // 🔥 clone
 
-        if (!selected.length) {
+        if (this.assignedStudents <= 0) {
             this.messageService.add({
                 severity: 'warn',
                 summary: 'No Students Selected',
@@ -1511,20 +1575,22 @@ export class Schedule implements OnInit {
     }
 
 
+    onCloseDetails() {
+        this.slot = null;
+        this.displayEventDialog = false;
+    }
+
     onCloseManageStudent() {
         this.sourceStudent = [];
         this.targetStudent = [];
-        this.slot = null;
         this.manageStudentDialog = false;
     }
-
-
 
     onCloseManagAttendance() {
         this.sourceStudent = [];
         this.targetStudent = [];
-        this.slot = null;
-        this.attendance = [];
+        this.attendanceRecords = [];
+        this.appointedStudents = [];
         this.manageAttendanceDialog = false;
     }
 
@@ -1555,32 +1621,116 @@ export class Schedule implements OnInit {
         this.printDialogVisible = true;
     }
 
+    getSelectedSchoolName(): string | null {
+        return this.schools?.find(s => s.schoolID === this.selectedSchoolID)?.schoolName || null;
+    }
+
+    getSelectedHospitalName(): string | null {
+        return this.hospitals?.find(h => h.hospitalID === this.selectedHospitalID)?.hospitalName || null;
+    }
+
+    getSelectedStatusLabel(): string | null {
+        return this.slotStatusOptions
+            .find(s => s.value === this.selectedStatus)?.label || null;
+    }
+
+    clearPrintFilters() {
+        this.selectedSchoolID = null;
+        this.selectedHospitalID = null;
+        this.selectedStatus = null;
+    }
+
     closePrintDialog() {
         this.printDialogVisible = false;
     }
 
+    // confirmPrintSchedule() {
+    //     const start = this.printDateRange[0];
+    //     const end = this.printDateRange[1];
+
+    //     const dateFrom = start.toISOString().split('T')[0];
+    //     const dateTo = end.toISOString().split('T')[0];
+
+
+    //     const filteredSlots: any = this.slots().filter((s: any) => {
+    //         return s.dateSlot >= dateFrom && s.dateSlot <= dateTo;
+    //     });
+
+    //     this.logger.printLogs('i', `Slot from ${dateFrom} to ${dateTo}`, filteredSlots)
+
+    //     this.pdfService.generateScheduleReport(
+    //         `LIST OF SCHEDULE
+    //         (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
+    //         filteredSlots,
+    //         start.toString(),
+    //         end.toString()
+    //     );
+
+    //     this.printDialogVisible = false;
+    // }   
+
     confirmPrintSchedule() {
-        const start = this.printDateRange[0];
-        const end = this.printDateRange[1];
+        const [start, end] = this.printDateRange;
 
         const dateFrom = start.toISOString().split('T')[0];
         const dateTo = end.toISOString().split('T')[0];
 
+        const filteredSlots = this.slots().filter((s: any) => {
 
-        const filteredSlots: any = this.slots().filter((s: any) => {
-            return s.dateSlot >= dateFrom && s.dateSlot <= dateTo;
+            // DATE FILTER (required)
+            const isWithinDate =
+                s.dateSlot >= dateFrom && s.dateSlot <= dateTo;
+
+            // OPTIONAL FILTERS
+            const schoolMatch =
+                !this.selectedSchoolID || s.schoolID === this.selectedSchoolID;
+
+            const hospitalMatch =
+                !this.selectedHospitalID || s.hospitalID === this.selectedHospitalID;
+
+            const statusMatch =
+                this.selectedStatus === null || s.slotStatus === this.selectedStatus;
+
+            return isWithinDate && schoolMatch && hospitalMatch && statusMatch;
         });
 
-        this.logger.printLogs('i', `Slot from ${dateFrom} to ${dateTo}`, filteredSlots)
+        this.logger.printLogs(
+            'i',
+            `Filtered slots`,
+            filteredSlots
+        );
+
+        // NO DATA FOUND
+        if (!filteredSlots.length) {
+            this.showErrorAlert(
+                'No Schedule Found',
+                'There are no schedules matching your selected filters.',
+                true,
+                'info'
+            );
+            this.printDialogVisible = false;
+
+            Swal.fire({
+                title: 'No Schedule Found',
+                text: 'There are no schedules matching your selected filters.',
+                icon: 'info',
+                showCancelButton: false,
+                confirmButtonText: 'OK',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    this.printDialogVisible = true;
+                }
+            });
+            return;
+        }
 
         this.pdfService.generateScheduleReport(
-            `LIST OF SCHEDULE
-            (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
+            `LIST OF SCHEDULE (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
             filteredSlots,
             start.toString(),
             end.toString()
         );
 
-        this.printDialogVisible = false;
+        // this.printDialogVisible = false;
     }
 }

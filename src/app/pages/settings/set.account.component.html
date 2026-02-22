@@ -119,8 +119,14 @@
                     <label
                         class="text-sm font-medium text-gray-600">School</label>
                     <div class="mt-1">
-                        {{ (user.roleID === 'UGR0003'? user.coorSchoolName :
+                        {{ (user.roleID === 'UGR0003'? user.coorSchoolName +
+                        ' ('+user.coorSchoolCode+')' :
                         user.schoolName) || 'N/A' }}
+                        <p-button *ngIf="user.roleID === 'UGR0003'" icon="pi pi-copy" [rounded]="true"
+                            [outlined]="false" pTooltip="Copy Code"
+                            value="user.coorSchoolCode"
+                            tooltipPosition="top" severity="secondary"
+                            (click)="copyCode(user.coorSchoolCode)" />
                     </div>
                 </div>
 

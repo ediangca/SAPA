@@ -487,24 +487,39 @@ export class PdfService {
           content.push({
             table: {
               headerRows: 1,
-              widths: [25, '25%', '25%', '25%', '10%'],
+              widths: [20, '30%', '20%', '20%', '10%', '15%'],
               body: [
                 [
                   { text: '#', bold: true, alignment: 'center', fontSize: 9 },
+                  { text: 'School', bold: true, fontSize: 9 },
                   { text: 'Hospital', bold: true, fontSize: 9 },
                   { text: 'Section', bold: true, fontSize: 9 },
                   { text: 'Allocation', bold: true, fontSize: 9 },
                   { text: 'Status', bold: true, fontSize: 9, alignment: 'center' }
                 ],
+                
 
-                ...shiftEntries.map((item: any, idx: number) => [
+                ...shiftEntries.map((item: any, idx: number) =>[
                   { text: idx + 1, alignment: 'center', fontSize: 9 },
+                  { text: item.schoolName, fontSize: 9, noWrap: false },
                   { text: item.hospitalName, fontSize: 9, noWrap: false },
                   { text: item.sectionName, fontSize: 9 },
                   { text: item.allocation?.toString() ?? '0', fontSize: 9 },
+                  // {
+                  //     text: statusIcon.text,
+                  //     color: statusIcon.color,
+                  //     alignment: 'center',
+                  //     fontSize: 12,   // slightly larger for icon feel
+                  //     bold: true
+                  // }
                   {
                     text:
-                      item.slotStatus === 0 ? 'DRAFT' : item.slotStatus === 1 ? 'OPEN' : 'CLOSED',
+                    item.slotStatus === 0 ? 'PENDING'
+                    : item.slotStatus === 1 ? 'CONFIRMED'
+                    : item.slotStatus === 2 ? 'DECLINED'
+                    : item.slotStatus === 3 ? 'CANCEL REQUEST'
+                    : item.slotStatus === 4 ? 'CANCELED'
+                    : 'UNKNOWN',
                     alignment: 'center',
                     fontSize: 9
                   }
@@ -549,6 +564,26 @@ export class PdfService {
     pdfMakeLib.createPdf(docDefinition).open();
 
   }
+
+  getStatusIcon(status: number) {
+    switch (status) {
+        case 0:
+            return { text: '⏳', color: '#f59e0b' }; // Pending
+        case 1:
+            return { text: '✔', color: '#16a34a' }; // Confirmed
+        case 2:
+            return { text: '✖', color: '#dc2626' }; // Declined
+        case 3:
+            return { text: '⚠', color: '#ea580c' }; // Cancel Request
+        case 4:
+            return { text: '⛔', color: '#6b7280' }; // Canceled
+        default:
+            return { text: '?', color: '#000000' };
+    }
+}
+
+
+// Appointment Report
   async generateAppointmentReport(
     title: string,
     appointments: any[],
@@ -671,6 +706,7 @@ export class PdfService {
       pdfMake.createPdf(docDefinition).open();
     }
   }
+
 
   // Return a Promise<string> containing the PDF Data URL
   generateAppointmentReportPreview(

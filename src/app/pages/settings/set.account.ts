@@ -217,6 +217,18 @@ export class Account implements OnInit {
         this.changePassDialog = false;
     }
 
+    copyCode(code: string) {
+        navigator.clipboard.writeText(code).then(() => {
+            this.logger.printLogs('i', 'Copy School code: ', code)
+            this.messageService.add({
+                severity: 'secondary',
+                summary: 'Copied',
+                detail: 'School code copied to clipboard'
+            });
+
+        });
+    }
+
     save() {
         this.submitted = true;
 

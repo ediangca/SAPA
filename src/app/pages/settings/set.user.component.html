@@ -169,6 +169,45 @@
                     <small class="text-red-500" *ngIf="submitted && !form.value['roleID']"> Role is
                         required.</small>
 
+                    <div *ngIf="form.get('roleID')?.value === 'UGR0005'">
+                        <label for="hospitals" class="block font-bold mb-3">Hospitals</label>
+                        <p-select styleClass="w-full" id="hospitals" [options]="hospitals" optionLabel="hospitalName"
+                            optionValue="hospitalID" appendTo="body" formControlName="hospitalID"
+                            (onChange)="getAllocationsByHospitalID($event.value)" placeholder="Select Hospital" />
+                            <small class="text-red-500" *ngIf="submitted && form.get('hospitalID')?.invalid">
+                                Hospital is required.
+                            </small>
+                    </div>
+
+                    <!-- @if(allocations.length > 0 && form.value['roleID'] === 'UGR0005')
+                    {
+                    <div *ngIf="allocations.length > 0">
+                        <label for="shifts" class="block font-bold mb-3">Sections</label>
+                        <p-multiSelect styleClass="w-full" formControlName="allocationID" [options]="allocations"
+                            optionLabel="sectionName" optionValue="allocationID" placeholder="Select Section"
+                            display="chip" [filter]="true" appendTo="body" fluid placeholder="Select Section(s)">
+
+                            <ng-template pTemplate="selectedItems" let-selected>
+                                <div class="flex flex-wra
+                                p gap-2">
+                                    <div *ngFor="let allocation of selected"
+                                        class="inline-flex items-center py-1 px-2 bg-primary text-white rounded-lg">
+                                        {{ allocation.sectionName }}
+                                    </div>
+                                </div>
+                            </ng-template>
+
+                            <ng-template pTemplate="item" let-allocation>
+                                <div class="flex items-center gap-2">
+                                    <span>{{ allocation.sectionName }}</span>
+                                    <small class="text-gray-500">({{ allocation.allocation }})</small>
+                                </div>
+                            </ng-template>
+
+                        </p-multiSelect>
+                    </div>
+                    } -->
+
                 </div>
             </form>
         </div>

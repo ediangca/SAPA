@@ -736,7 +736,19 @@ export class ApiService {
   deleteAppointment(id: number) {
     return this.handleRequest('delete', 'Appointments', { id, logAction: 'Deleting Appointments' });
   }
+  
 
+  /*----------------------- ATTENDANCES -----------------------*/
+  getAttendanceBySlot(slotId: string) {
+  return this.handleRequest<any[]>(
+    'get',
+    'attendance/slot',
+    {
+      id: slotId,
+      logAction: 'Fetching Attendance By Slot'
+    }
+  );
+}
 
   /*----------------------- HOSPITAL -----------------------*/
 

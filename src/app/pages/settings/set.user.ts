@@ -29,6 +29,8 @@ import { TooltipModule } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { CheckboxModule } from "primeng/checkbox";
 import { PasswordDirective, PasswordModule } from "primeng/password";
+import { MultiSelectModule } from 'primeng/multiselect';
+import { Hospital } from '../masterlist/ml.hospital';
 
 interface Column {
     field: string;
@@ -45,32 +47,33 @@ interface ExportColumn {
     selector: 'settings-users',
     standalone: true,
     imports: [
-    CommonModule,
-    TableModule,
-    FormsModule,
-    ButtonModule,
-    RippleModule,
-    CheckboxModule,
-    ToastModule,
-    ToolbarModule,
-    RatingModule,
-    InputTextModule,
-    PasswordModule,
-    TextareaModule,
-    ToggleSwitchModule,
-    SelectModule,
-    RadioButtonModule,
-    InputNumberModule,
-    DialogModule,
-    TagModule,
-    InputIconModule,
-    IconFieldModule,
-    ConfirmDialogModule,
-    PanelMenuModule,
-    ReactiveFormsModule,
-    UsersProperties,
-    TooltipModule,
-],
+        CommonModule,
+        TableModule,
+        FormsModule,
+        ButtonModule,
+        RippleModule,
+        CheckboxModule,
+        ToastModule,
+        ToolbarModule,
+        RatingModule,
+        InputTextModule,
+        PasswordModule,
+        TextareaModule,
+        ToggleSwitchModule,
+        SelectModule,
+        RadioButtonModule,
+        InputNumberModule,
+        MultiSelectModule,
+        DialogModule,
+        TagModule,
+        InputIconModule,
+        IconFieldModule,
+        ConfirmDialogModule,
+        PanelMenuModule,
+        ReactiveFormsModule,
+        UsersProperties,
+        TooltipModule,
+    ],
     templateUrl: './set.user.component.html',
     providers: [MessageService, ConfirmationService],
     styleUrl: './css/set.css'
@@ -100,6 +103,9 @@ export class Users implements OnInit {
     tokenPayload: any | null;
 
     roles: any | [];
+    allocations: any[] = [];
+    hospitals: any[] = [];
+    sections: any[] = [];
 
     emailPattern: string = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
@@ -122,6 +128,7 @@ export class Users implements OnInit {
             middlename: ['', Validators.required],
             roleID: ['', Validators.required],
             email: ['', Validators.required],
+            hospitalID: [null],
             autoUsername: [false]
         });
     }
@@ -135,6 +142,7 @@ export class Users implements OnInit {
             middlename: ['', Validators.required],
             roleID: ['', Validators.required],
             email: ['', Validators.required],
+            hospitalID: [null],
             autoUsername: [false]
         });
         this.loadData();
@@ -147,6 +155,21 @@ export class Users implements OnInit {
                 ]
             }
         ];
+
+
+        this.form.get('roleID')?.valueChanges.subscribe(role => {
+
+            const hospitalControl = this.form.get('hospitalID');
+
+            if (role === 'UGR0005') {
+                hospitalControl?.setValidators([Validators.required]);
+            } else {
+                hospitalControl?.clearValidators();
+                hospitalControl?.setValue(null); // clear hospital if not supervisor
+            }
+
+            hospitalControl?.updateValueAndValidity();
+        });
     }
 
     loadData() {
@@ -154,13 +177,11 @@ export class Users implements OnInit {
             .subscribe(res => {
                 this.tokenPayload = res;
                 this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
-            });
-        this.loadUsers();
 
-        this.api.getRoles().subscribe({
-            next: (roles) => this.roles = roles,
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch Roles', err)
-        });
+                this.loadRoles();
+                this.loadUsers();
+                this.loadHospitals();
+            });
 
         this.cols = [
             { field: 'UserID', header: 'ID', customExportHeader: 'User ID' },
@@ -171,8 +192,26 @@ export class Users implements OnInit {
             { field: 'date_create', header: 'Date Created' },
         ];
 
+
     }
-    
+
+    loadRoles() {
+        this.api.getRoles().subscribe({
+            next: (roles) => this.roles = roles,
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch Roles', err)
+        });
+    }
+
+    loadHospitals() {
+        this.api.getHospitals().subscribe({
+            next: (hospitals) => {
+                this.hospitals = hospitals || [];
+                this.logger.printLogs('i', 'Hospitals loaded', this.hospitals)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch hospitals', err)
+        });
+    }
+
     onStatusChanged() {
         this.selectedUsers = [];
         this.loadUsers();
@@ -282,7 +321,7 @@ export class Users implements OnInit {
             }
         }
     }
-    
+
     isEmailInvalid(): boolean {
         const emailControl = this.form.get('email');
         if (emailControl) {
@@ -291,6 +330,22 @@ export class Users implements OnInit {
             return !emailRegex.test(email);
         }
         return false;
+    }
+
+    getAllocationsByHospitalID(hospitalID: any) {
+        this.itemDialog = false;
+        this.allocations = []; // Clear previous allocations
+        this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);
+        this.api.getAllocationsByHospitalID(hospitalID).subscribe({
+            next: (res) => {
+                this.allocations = res || [];
+                this.allocations = this.allocations.filter(a => a.status == true);
+                this.logger.printLogs('i', 'Allocations loaded by Hospital ID', this.allocations)
+                this.itemDialog = true;
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch allocations by Hospital ID', err),
+        });
+        this.itemDialog = true;
     }
 
     openNew() {
@@ -439,6 +494,8 @@ export class Users implements OnInit {
             this.vf.validateFormFields(this.form);
             return;
         }
+
+
 
 
         /**
