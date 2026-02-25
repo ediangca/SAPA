@@ -117,6 +117,7 @@
 
 </div>
 
+<!-- Post User -->
 <p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="User Details" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
@@ -155,29 +156,55 @@
                         <small class="text-cyan-500">Copy Email ID to Username</small>
                     </div>
 
-                    <label for="username" class="block font-bold mb-3">Username</label>
-                    <input type="text" pInputText id="username" name="username" formControlName="username"
-                        (keyup)="filterSpace()" required autofocus fluid />
-                    <small class="text-red-500" *ngIf="submitted && !form.value['username']"> Username is
-                        required.</small>
+                    <div class="flex flex-row gap-6 items-start mt-2">
 
+                    <!-- QR Code -->
+                    <div *ngIf="user?.userID && user?.roleID === 'UGR0004'" class="shrink-0 text-center cursor-pointer" (click)="openQrZoom()">
+                        <qrcode
+                            [qrdata]="user.userID"
+                            [width]="120"
+                            [errorCorrectionLevel]="'M'"
+                            cssClass="bg-white p-2 rounded shadow"></qrcode>
+                    </div>
 
-                    <label for="roleID" class="block font-bold mb-3">Role</label>
-                    <p-select inputId="roleID" [options]="roles" formControlName="roleID" optionLabel="roleName"
-                        optionValue="roleID" placeholder="Select a Role" [appendTo]="'body'" fluid>
-                    </p-select>
-                    <small class="text-red-500" *ngIf="submitted && !form.value['roleID']"> Role is
-                        required.</small>
+                    <!-- Form Fields -->
+                    <div class="flex-1 space-y-4">
 
-                    <div *ngIf="form.get('roleID')?.value === 'UGR0005'">
-                        <label for="hospitals" class="block font-bold mb-3">Hospitals</label>
-                        <p-select styleClass="w-full" id="hospitals" [options]="hospitals" optionLabel="hospitalName"
-                            optionValue="hospitalID" appendTo="body" formControlName="hospitalID"
-                            (onChange)="getAllocationsByHospitalID($event.value)" placeholder="Select Hospital" />
+                        <!-- Username -->
+                        <div>
+                            <label for="username" class="block font-bold mb-2">Username</label>
+                            <input type="text" pInputText id="username" name="username" formControlName="username"
+                                    (keyup)="filterSpace()" required autofocus class="w-full p-2 border rounded" />
+                            <small class="text-red-500" *ngIf="submitted && !form.value['username']">Username is required.</small>
+                        </div>
+
+                        <!-- Role -->
+                        <div>
+                            <label for="roleID" class="block font-bold mb-2">Role</label>
+                            <p-select inputId="roleID" [options]="roles" formControlName="roleID" optionLabel="roleName"
+                                        optionValue="roleID" placeholder="Select a Role" [appendTo]="'body'" styleClass="w-full">
+                            </p-select>
+                            <small class="text-red-500" *ngIf="submitted && !form.value['roleID']">Role is required.</small>
+                        </div>
+
+                        <!-- Hospital (conditional) -->
+                        <div *ngIf="form.get('roleID')?.value === 'UGR0005'">
+                            <label for="hospitals" class="block font-bold mb-2">Hospitals</label>
+                            <p-select id="hospitals" [options]="hospitals" optionLabel="hospitalName"
+                                        optionValue="hospitalID" appendTo="body" formControlName="hospitalID"
+                                        (onChange)="getAllocationsByHospitalID($event.value)" placeholder="Select Hospital"
+                                        styleClass="w-full">
+                            </p-select>
                             <small class="text-red-500" *ngIf="submitted && form.get('hospitalID')?.invalid">
                                 Hospital is required.
                             </small>
+                        </div>
+
                     </div>
+                    </div>
+                    
+
+
 
                     <!-- @if(allocations.length > 0 && form.value['roleID'] === 'UGR0005')
                     {
@@ -239,6 +266,21 @@
         <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
         <p-button label="Save" icon="pi pi-check" (click)="updatePassword()" />
     </ng-template>
+</p-dialog>
+
+
+<p-dialog [(visible)]="showQrModal" [style]="{ width: 'auto' }"
+    header="QR Code" [modal]="true">
+    <ng-template #content>
+        <qrcode
+            [qrdata]="user.userID"
+            [width]="260"
+            [errorCorrectionLevel]="'M'"></qrcode>
+        <p class="text-center  text-primary">
+            Use this QR code for Attendance.
+        </p>
+    </ng-template>
+
 </p-dialog>
 
 <p-confirmDialog [style]="{ width: '450px' }" acceptIcon="pi pi-check text-white" rejectIcon="pi pi-times text-white"

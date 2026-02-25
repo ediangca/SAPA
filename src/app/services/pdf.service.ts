@@ -86,7 +86,6 @@ export class PdfService {
     };
   }
 
-
   async generateSchoolsReport(schools: any[]) {
     // Ensure logos are loaded before generating
     if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
@@ -393,7 +392,6 @@ export class PdfService {
     pdfMakeLib.createPdf(docDefinition).open();
   }
 
-
   /** ✅ Map status IDs to readable labels */
   private mapStatus(status: number): string {
     switch (status) {
@@ -581,7 +579,6 @@ export class PdfService {
             return { text: '?', color: '#000000' };
     }
 }
-
 
 // Appointment Report
   async generateAppointmentReport(

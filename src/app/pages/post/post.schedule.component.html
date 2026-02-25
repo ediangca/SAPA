@@ -21,7 +21,7 @@
                 [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionname', 'status', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
                 dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
-                [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 300, 500, 1000]"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"
                 paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="61vh"
                 (selectionChange)="onScheduleSelectionChange($event)">
 
@@ -300,7 +300,6 @@
         </div>
     </div>
 
-
     <!-- SUBMENU -->
     <div class="md:w-1/5">
         <div class="card">
@@ -347,13 +346,28 @@
                         <small class="text-red-500">Date is required.</small>
                         }
                     </div>
+
                     @if(printDateRange.length > 0){
+                    <!-- <div *ngIf="isAdminRole" class="flex flex-col gap-2 w-full">
+                        <label class="block font-bold mb-2">School</label>
+                        <p-select
+                            styleClass="w-full"
+                            [options]="schools"
+                            optionLabel="schoolName"
+                            optionValue="schoolID"
+                            appendTo="body"
+                            [(ngModel)]="selectedSchoolID"
+                            placeholder="All Schools">
+                        </p-select>
+                    </div> -->
+                    
                     <div>
                         <label for="hospitals" class="block font-bold mb-3">Hospitals</label>
                         <p-select styleClass="w-full" id="hospitals" [options]="hospitals" optionLabel="hospitalName"
                             optionValue="hospitalID" appendTo="body" formControlName="hospitalID"
                             (onChange)="getAllocationsByHospitalID($event.value)" placeholder="Select Hospital" />
                     </div>
+                    
                     }
                     @if(allocations.length > 0)
                     {
@@ -479,14 +493,13 @@
 
     <ng-template pTemplate="footer">
         @if(canManageStudent(selectedEvent)){
-            
-            <p-button label="Attendance" icon="pi pi-list-check" severity="info" [outlined]="true"
-                pTooltip="Attendance" tooltipPosition="top" (click)="openAttendance(selectedEvent)">
-            </p-button>
             <p-button icon="pi pi-users" label="Manage Student" severity="primary"  [outlined]="true"
                 pTooltip="Manage Student" tooltipPosition="top" (click)="openMangeStudent(slot)">
             </p-button>
         }
+        <p-button label="Attendance" icon="pi pi-list-check" severity="info" [outlined]="true"
+            pTooltip="Attendance" tooltipPosition="top" (click)="openAttendance(selectedEvent)">
+        </p-button>
 
         @if (selectedEvent.slotStatus == 1 && !isWithinTwoWeeks(selectedEvent.dateSlot)) {
         <p-button icon="pi pi-file-export" label="Request to Cancel" severity="warn"  [outlined]="true"
@@ -1002,7 +1015,7 @@
         </div> -->
         <!-- SCHOOL SELECT -->
         <!-- FILTERS (ONLY SHOW IF DATE RANGE IS SELECTED) -->
-        <div  *ngIf="printDateRange.length>1 && (printDateRange?.[0] !== null && printDateRange?.[1] !== null)" class="mt-3">
+        <div  *ngIf="printDateRange?.length === 2  && (printDateRange?.[0] !== null && printDateRange?.[1] !== null)" class="mt-3">
 
             <!-- SCHOOL SELECT -->
             <div class="mb-3">
@@ -1092,7 +1105,7 @@
         <p-button label="Cancel" icon="pi pi-times" class="p-button-text" (onClick)="closePrintDialog()">
         </p-button>
 
-        <p-button *ngIf="printDateRange?.[0] !== null && printDateRange?.[1] !== null" label="Print PDF" icon="pi pi-file-pdf" severity="danger" (onClick)="confirmPrintSchedule()">
+        <p-button *ngIf="printDateRange?.length === 2  && (printDateRange?.[0] !== null && printDateRange?.[1] !== null)" label="Print PDF" icon="pi pi-file-pdf" severity="danger" (onClick)="confirmPrintSchedule()">
         </p-button>
     </ng-template>
 

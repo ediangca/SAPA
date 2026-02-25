@@ -266,7 +266,7 @@ export class ApiService {
       }
     );
   }
-  
+
   getAdminPosts(page: number, pageSize: number) {
     return this.handleRequest<any[]>(
       'get',
@@ -506,23 +506,47 @@ export class ApiService {
 
   /*----------------------- SLOTS -----------------------*/
 
-  getSlots() {
-    return this.handleRequest<any[]>('get', 'Slots', { logAction: 'Fetching Slots' });
+  getSlots(year?: number) {
+    const params: any = { logAction: 'Fetching Slots' };
+    if (year) params.year = year;
+
+    return this.handleRequest<any[]>('get', 'Slots', params);
   }
 
-  getSlotsByUserID(userID: string) {
-    return this.handleRequest<any[]>('get', 'Slots/user', { id: userID, logAction: 'Fetching Slots' });
+  getSlotsByUserID(userID: string, year?: number) {
+    const params: any = { id: userID, logAction: 'Fetching Slots by User' };
+    if (year) params.year = year;
+
+    return this.handleRequest<any[]>('get', 'Slots/user', params);
+  }
+
+  getSlotsByHospitalID(hospitalID: string, year?: number) {
+    const params: any = { id: hospitalID, logAction: 'Fetching Slots by Hospital' };
+    if (year) params.year = year;
+
+    return this.handleRequest<any[]>('get', 'Slots/hospital', params);
+  }
+
+  getSlotsBySchoolID(schoolID: string, year?: number) {
+    const params: any = { id: schoolID, logAction: 'Fetching Slots by School' };
+    if (year) params.year = year;
+
+    return this.handleRequest<any[]>('get', 'Slots/school', params); // fixed typo: 'shool' → 'school'
   }
 
   // getSlotsByRange(start: string, end: string) {
   //   return this.handleRequest<any[]>('get', 'Slots/range', { params: { start, end }, logAction: 'Fetch Slots By Range' });
   // }
-  getSlotsByRange(start: string, end: string, userID?: string) {
+  getSlotsByRange(start: string, end: string, userID?: string, hospitalID?: string) {
     const params: any = { start, end };
 
     // ✅ Attach userID only if it exists
     if (userID) {
       params.userID = userID;
+    }
+
+    if (hospitalID) {
+      params.hospitalID = hospitalID;
     }
 
     return this.handleRequest<any[]>(
@@ -736,19 +760,19 @@ export class ApiService {
   deleteAppointment(id: number) {
     return this.handleRequest('delete', 'Appointments', { id, logAction: 'Deleting Appointments' });
   }
-  
+
 
   /*----------------------- ATTENDANCES -----------------------*/
   getAttendanceBySlot(slotId: string) {
-  return this.handleRequest<any[]>(
-    'get',
-    'attendance/slot',
-    {
-      id: slotId,
-      logAction: 'Fetching Attendance By Slot'
-    }
-  );
-}
+    return this.handleRequest<any[]>(
+      'get',
+      'attendance/slot',
+      {
+        id: slotId,
+        logAction: 'Fetching Attendance By Slot'
+      }
+    );
+  }
 
   /*----------------------- HOSPITAL -----------------------*/
 

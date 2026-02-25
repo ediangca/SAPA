@@ -157,6 +157,10 @@ export class Account implements OnInit {
             }
         }
     }
+    
+    isAdminRole(): boolean {
+        return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
+    }
 
     isEmailInvalid(): boolean {
         const emailControl = this.form.get('email');

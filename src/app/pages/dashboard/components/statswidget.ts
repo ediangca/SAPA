@@ -1,5 +1,8 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { StoreService } from '@/services/store.service';
+import { filter, switchMap, take, tap } from 'rxjs';
+import { LogsService } from '@/services/logs.service';
 
 @Component({
     standalone: true,
@@ -70,7 +73,7 @@ import { CommonModule } from '@angular/common';
 
         
     <!-- Pending -->
-    <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+    <div class="col-span-4 lg:col-span-4 xl:col-span-6">
         <div class="card">
             <div class="flex justify-between mb-4">
                 <div>
@@ -88,7 +91,7 @@ import { CommonModule } from '@angular/common';
     </div>
 
     <!-- Confirmed -->
-    <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+    <div class="col-span-4 lg:col-span-4 xl:col-span-6">
         <div class="card">
             <div class="flex justify-between mb-4">
                 <div>
@@ -106,7 +109,7 @@ import { CommonModule } from '@angular/common';
     </div>
 
     <!-- Students -->
-    <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+    <div class="col-span-4 lg:col-span-4 xl:col-span-6">
         <div class="card">
             
             <div class="flex justify-between mb-4">
@@ -125,7 +128,7 @@ import { CommonModule } from '@angular/common';
     </div>
 
     <!-- Revenue -->
-    <div class="col-span-12 lg:col-span-6 xl:col-span-3">
+    <div class="col-span-4 lg:col-span-4 xl:col-span-6">
         <div class="card">
             <div class="flex justify-between mb-4">
                 <div>
@@ -143,9 +146,30 @@ import { CommonModule } from '@angular/common';
     </div>
         `
 })
-export class StatsWidget {
+export class StatsWidget implements OnInit {
 
 
     @Input() data!: any;
+    // @Input() tokenPayload!: any;
+    // @Input() user!: any;
+
+    constructor(private store: StoreService,
+        private logger: LogsService
+    ) {
+
+    }
+    ngOnInit(): void {
+        // this.store.getUserPayload()
+        //     .pipe(
+        //         filter(Boolean),
+        //         tap(p => this.tokenPayload = p),
+        //         switchMap(() => this.store.getPrivilegesLoaded()),
+        //         switchMap(() => this.store.getUser().pipe(take(1)))
+        //     )
+        //     .subscribe((user) => {
+        //         this.user = user;
+        //         this.logger.printLogs('i', ' User', this.user);
+        //     });
+    }
 
 }

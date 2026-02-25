@@ -170,13 +170,14 @@ const ROLE_PERMISSIONS: Record<string, number[]> = {
 })
 export class Schedule implements OnInit {
 
+    user: any = null;
+
     subcomponent: MenuItem[] = [];
     properties: MenuItem[] = [];
 
     itemDialog: boolean = false;
     displayEventDialog: boolean = false;
     printDialogVisible: boolean = false;
-
 
     slots = signal<any[]>([]);
     public slot!: any;
@@ -367,9 +368,12 @@ export class Schedule implements OnInit {
             .pipe(
                 filter(Boolean),
                 tap(p => this.tokenPayload = p),
-                switchMap(() => this.store.getPrivilegesLoaded())
+                switchMap(() => this.store.getPrivilegesLoaded()),
+                switchMap(() => this.store.getUser().pipe(take(1)))
             )
-            .subscribe(() => {
+            .subscribe((user) => {
+                this.user = user;
+                this.logger.printLogs('i', ' User', this.user);
                 this.initPrivileges();
                 this.loadHospitals();
                 this.loadSchools();
@@ -404,7 +408,9 @@ export class Schedule implements OnInit {
     isAdminRole(): boolean {
         return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
     }
+// then, given those routes please help proceed with my logic to play with bar section,
 
+ 
     buildSubComponent() {
 
         this.subcomponent = [
@@ -558,15 +564,18 @@ export class Schedule implements OnInit {
         const minAllowed = new Date(today);
         minAllowed.setDate(today.getDate() + 7);
 
-        const isAdmin =
-            this.tokenPayload.role === 'UGR0001' ||
-            this.tokenPayload.role === 'UGR0002';
+        // const isAdmin =
+        //     this.tokenPayload.role === 'UGR0001' ||
+        //     this.tokenPayload.role === 'UGR0002';
 
         // Admin → no user filter
         // Others → pass userID
-        const userID = isAdmin ? null : this.tokenPayload.nameid;
+        const userID = this.isAdmin ? null : (
+            this.tokenPayload.role === 'UGR0004' ||
+                this.tokenPayload.role === 'UGR0005' ? null :
+                this.tokenPayload.nameid);
 
-        this.api.getSlotsByRange(startDate, endDate, userID).subscribe({
+        this.api.getSlotsByRange(startDate, endDate, userID, this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null).subscribe({
             next: slots => {
                 success(
                     aggregateSlotsByDay(
@@ -575,13 +584,19 @@ export class Schedule implements OnInit {
                         this.tokenPayload.nameid
                     )
                 );
+                this.logger.printLogs('i', 'Monthly slots loaded', slots);
             },
             error: failure
         });
     }
 
+    get isAdmin() {
+        return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
+    }
+
     loadSlots() {
         this.loading = true;
+
         if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
             this.api.getSlots().subscribe({
                 next: (slots) => {
@@ -614,8 +629,21 @@ export class Schedule implements OnInit {
                     this.logger.printLogs('e', 'Failed to fetch slots', err)
                 }
             });
-        } else {
+        } else if (this.tokenPayload.role === 'UGR0003') {
             this.api.getSlotsByUserID(this.tokenPayload.nameid).subscribe({
+                next: (slots) => {
+                    this.slots.set(slots);
+                    this.loading = false;
+                    this.buildCalendarEvents();
+                },
+                error: (err) => {
+                    this.loading = false;
+                    this.slots.set([]);
+                    this.logger.printLogs('e', 'Failed to fetch slots', err)
+                }
+            });
+        } else if (this.tokenPayload.role === 'UGR0005') {
+            this.api.getSlotsByHospitalID(this.user.hospitalID).subscribe({
                 next: (slots) => {
                     this.slots.set(slots);
                     this.loading = false;
@@ -837,6 +865,8 @@ export class Schedule implements OnInit {
 
 
     openNew(selectInfo: DateSelectArg | null) {
+
+        if (!this.c) return;
 
         this.printDateRange = [];
 

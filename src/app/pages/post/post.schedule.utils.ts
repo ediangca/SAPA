@@ -123,20 +123,95 @@ export function mapSlotsToEvents(slots: any[], roleID: string | null = null) {
 //   return events;
 // }
 
+
+// export function aggregateSlotsByDay(
+//   slots: any[],
+//   roleID: string | null = null,
+//   currentUserID: string | null = null,
+//   hospitalID: string | null = null
+// ): EventInput[] {
+
+//   const isAdmin = roleID === 'UGR0001' || roleID === 'UGR0002';
+
+//   // 1️⃣ Filter slots by role
+//   const filteredSlots = (!isAdmin && currentUserID)
+//     ? slots.filter(s => s.userID === currentUserID)
+//     : slots;
+
+//   // 2️⃣ Group slots by date
+//   const dateMap = new Map<string, any[]>();
+//   for (const slot of filteredSlots) {
+//     if (!dateMap.has(slot.dateSlot)) {
+//       dateMap.set(slot.dateSlot, []);
+//     }
+//     dateMap.get(slot.dateSlot)!.push(slot);
+//   }
+
+//   // 3️⃣ Build events
+//   const events: EventInput[] = [];
+
+//   dateMap.forEach((daySlots, day) => {
+
+//     const groupKey = isAdmin ? 'schoolID' : 'hospitalID';
+//     const titleKey = isAdmin ? 'schoolName' : 'hospitalName';
+
+//     const groupMap = new Map<string, any[]>();
+
+//     for (const slot of daySlots) {
+//       const key = slot[groupKey];
+//       if (!groupMap.has(key)) {
+//         groupMap.set(key, []);
+//       }
+//       groupMap.get(key)!.push(slot);
+//     }
+
+//     groupMap.forEach((groupSlots, key) => {
+//       events.push({
+//         id: `${day}-${key}`,
+//         start: day,
+//         allDay: true,
+//         title: groupSlots[0][titleKey],
+//         extendedProps: { slots: groupSlots }
+//       });
+//     });
+//   });
+
+//   return events;
+// }
+
 export function aggregateSlotsByDay(
   slots: any[],
   roleID: string | null = null,
-  currentUserID: string | null = null
+  currentUserID: string | null = null,
+  currentSchoolID: string | null = null,
+  currentHospitalID: string | null = null
 ): EventInput[] {
 
   const isAdmin = roleID === 'UGR0001' || roleID === 'UGR0002';
+  const isSchoolCoordinator = roleID === 'UGR0004';
+  const isHospitalSupervisor = roleID === 'UGR0005';
+  const isStudent = roleID === 'UGR0003';
 
-  // 1️⃣ Filter slots by role
-  const filteredSlots = (!isAdmin && currentUserID)
-    ? slots.filter(s => s.userID === currentUserID)
-    : slots;
+  let filteredSlots = slots;
 
-  // 2️⃣ Group slots by date
+  // 🔹 Student → only own slots
+  if (isStudent && currentUserID) {
+    filteredSlots = slots.filter(s => s.userID === currentUserID);
+  }
+
+  // 🔹 School Coordinator → only their school
+  if (isSchoolCoordinator && currentSchoolID) {
+    filteredSlots = slots.filter(s => s.schoolID === currentSchoolID);
+  }
+
+  // 🔹 Hospital Supervisor → only their hospital
+  if (isHospitalSupervisor && currentHospitalID) {
+    filteredSlots = slots.filter(s => s.hospitalID === currentHospitalID);
+  }
+
+  // 🔹 Admin → no filtering
+
+  // Group by date
   const dateMap = new Map<string, any[]>();
   for (const slot of filteredSlots) {
     if (!dateMap.has(slot.dateSlot)) {
@@ -145,18 +220,38 @@ export function aggregateSlotsByDay(
     dateMap.get(slot.dateSlot)!.push(slot);
   }
 
-  // 3️⃣ Build events
   const events: EventInput[] = [];
 
   dateMap.forEach((daySlots, day) => {
 
-    const groupKey = isAdmin ? 'schoolID' : 'hospitalID';
-    const titleKey = isAdmin ? 'schoolName' : 'hospitalName';
+    // 🔹 Student → 1 event per day
+    if (isStudent) {
+      events.push({
+        id: day,
+        start: day,
+        allDay: true,
+        title: `${daySlots.length} Slot(s)`,
+        extendedProps: { slots: daySlots }
+      });
+      return;
+    }
+
+    // 🔹 Admin → group by school
+    // 🔹 School Coordinator → group by hospital
+    // 🔹 Hospital Supervisor → group by hospital
+    const groupKey =
+      isAdmin ? 'schoolID' : 'hospitalID';
+
+    // const titleKey =
+    //   isAdmin ? 'schoolName' : 'hospitalName';
+    const titleKey = 'schoolName';
 
     const groupMap = new Map<string, any[]>();
 
     for (const slot of daySlots) {
       const key = slot[groupKey];
+      if (!key) continue;
+
       if (!groupMap.has(key)) {
         groupMap.set(key, []);
       }
@@ -168,15 +263,15 @@ export function aggregateSlotsByDay(
         id: `${day}-${key}`,
         start: day,
         allDay: true,
-        title: groupSlots[0][titleKey],
+        title: groupSlots[0][titleKey] || 'Unknown',
         extendedProps: { slots: groupSlots }
       });
     });
+
   });
 
   return events;
 }
-
 
 export function computeEnd(date: string, time: string) {
   // If time is 07:00 but start is 23:00, adjust date +1

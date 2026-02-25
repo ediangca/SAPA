@@ -28,9 +28,9 @@ import { UsersProperties } from "./set.user.sidebar";
 import { TooltipModule } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { CheckboxModule } from "primeng/checkbox";
-import { PasswordDirective, PasswordModule } from "primeng/password";
+import { PasswordModule } from "primeng/password";
 import { MultiSelectModule } from 'primeng/multiselect';
-import { Hospital } from '../masterlist/ml.hospital';
+import { QRCodeComponent } from 'angularx-qrcode';
 
 interface Column {
     field: string;
@@ -73,6 +73,7 @@ interface ExportColumn {
         ReactiveFormsModule,
         UsersProperties,
         TooltipModule,
+        QRCodeComponent,
     ],
     templateUrl: './set.user.component.html',
     providers: [MessageService, ConfirmationService],
@@ -111,6 +112,8 @@ export class Users implements OnInit {
 
     autoUsername: boolean = false;
     newPassword: string = '';
+
+    showQrModal = false;
 
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
@@ -346,6 +349,10 @@ export class Users implements OnInit {
             error: (err) => this.logger.printLogs('e', 'Failed to fetch allocations by Hospital ID', err),
         });
         this.itemDialog = true;
+    }
+
+    openQrZoom(): void {
+        this.showQrModal = true;
     }
 
     openNew() {

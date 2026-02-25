@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
@@ -21,13 +21,17 @@ import { FormsModule } from '@angular/forms';
             </div>
         </div>
     </div> -->
-    <div class="card h-[740px]">
+    <div class="card"
+    [style.height]="tokenPayload?.role === 'UGR0001' || tokenPayload?.role === 'UGR0002' ? '740px' : '870px'"
+    >
 
         <div class="font-bold text-primary text-xl mb-6">
             Announcements
         </div>
 
-    <div class="announcement bg-transparent h-[650px] overflow-auto bg-gray-50 rounded-xl">
+    <div class="announcement bg-transparent overflow-auto bg-gray-50 rounded-xl"
+    
+    [style.height]="tokenPayload?.role === 'UGR0001' || tokenPayload?.role === 'UGR0002' ? '650px' : '780px'">
 
         <div *ngFor="let post of posts" 
             class="mb-3 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100">
@@ -37,7 +41,7 @@ import { FormsModule } from '@angular/forms';
                 <div class="flex justify-between items-start">
 
                     <div>
-                        <h2 class="font-semibold text-lg text-gray-800">
+                        <h2 class="font-semibold text-lg text-gray-700">
                             {{ post.title }}
                         </h2>
 
@@ -173,13 +177,16 @@ import { FormsModule } from '@angular/forms';
     `
 })
 export class AnnouncementWidget implements OnInit, OnDestroy {
+
     menu = null;
+    @Input() tokenPayload!: any;
 
     // items = [
     //     { label: 'Add New', icon: 'pi pi-fw pi-plus' },
     //     { label: 'Remove', icon: 'pi pi-fw pi-trash' }
     // ];
 
+    // @Input() tokenPayload!: any;
 
     posts: any[] = [];
     page = 1;

@@ -17,13 +17,15 @@ import { CommonModule } from '@angular/common';
     imports: [CommonModule, StatsWidget, RecentSalesWidget, AnnouncementWidget, RevenueStreamWidget, NotificationsWidget],
     template: `
         <div class="grid grid-cols-12 gap-8">
-            <app-stats-widget class="contents" 
-                    
-            *ngIf="dashboardData"
-            [data]="dashboardData"
-            />
             <div class="col-span-12 xl:col-span-6">
-                <app-announcements-widget />
+                
+                <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="dashboardData && tokenPayload.role === 'UGR0001' || tokenPayload.role === 'UGR0002'">
+                    <app-stats-widget class="contents" [data]="dashboardData"
+                    />
+                </div>
+                
+                <app-announcements-widget [tokenPayload]="tokenPayload" />
+                
             </div>
             <div class="col-span-12 xl:col-span-6">
                 <!-- <app-revenue-stream-widget 
@@ -31,7 +33,7 @@ import { CommonModule } from '@angular/common';
                     [actual]="dashboardData.actualRevenue"
                     [potential]="dashboardData.potentialRevenue">
                 </app-revenue-stream-widget> -->
-                <app-recent-sales-widget [slots]="recentSchedules"/>
+                <app-recent-sales-widget [slots]="slots" [recentSchedules]="recentSchedules" [tokenPayload]="tokenPayload"/>
                 <!-- <app-notifications-widget /> -->
             </div>
         </div>
@@ -47,9 +49,13 @@ export class Dashboard implements OnInit, OnDestroy {
     tokenPayload: any | null;
 
     recentSchedules: any[] = [];
+    slots: any[] = [];
 
     dashboardData!: any;
     private destroy$ = new Subject<void>();
+
+
+    currentYear: number = 0;
 
     constructor(
         public store: StoreService,
@@ -63,7 +69,7 @@ export class Dashboard implements OnInit, OnDestroy {
         //     .pipe(take(1))
         //     .subscribe(user => {
         //         if (user) {
-        //             this.store.loadPrivileges();  // ⬅️ USE YOUR EXISTING FUNCTION
+        //             this.store.loadPrivileges();  // USE YOUR EXISTING FUNCTION
         //         }
         //     });
 
@@ -80,20 +86,35 @@ export class Dashboard implements OnInit, OnDestroy {
         //     });
 
 
+        // Get logged user payload
+        // this.store.getUserPayload()
+        //     .pipe(
+        //         filter(Boolean),
+        //         takeUntil(this.destroy$)
+        //     )
+        //     .subscribe(payload => {
+        //         this.tokenPayload = payload;
+        //         this.loadRecentSchedules();
+        //     });
+
+        this.currentYear = new Date().getFullYear()
         this.loadDashboard();
 
-
-        // 2️⃣ Get logged user payload
         this.store.getUserPayload()
             .pipe(
                 filter(Boolean),
-                takeUntil(this.destroy$)
+                tap(p => this.tokenPayload = p),
+                switchMap(() => this.store.getPrivilegesLoaded()),
+                switchMap(() => this.store.getUser().pipe(take(1)))
             )
-            .subscribe(payload => {
-                this.tokenPayload = payload;
+            .subscribe((user) => {
+                this.user = user;
                 this.loadRecentSchedules();
+                this.logger.printLogs('i', ' User', this.user);
             });
     }
+
+
 
     loadDashboard() {
         this.api.getDashboardSummary()
@@ -115,17 +136,20 @@ export class Dashboard implements OnInit, OnDestroy {
 
         const role = this.tokenPayload.role;
         const userID = this.tokenPayload.unique_name;
+        const hospitalID = this.user.hospitalID;
 
-        if (role === 'UGR0001' || role === 'UGR0002' || role === 'UGR0003' ) {
-            this.api.getSlots()
+        if (role === 'UGR0001' || role === 'UGR0002') {
+            this.api.getSlots(this.currentYear)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(res => this.processSlots(res));
-        }else if (role === 'UGR0003') {
-            this.api.getSlotsByUserID(userID)
+        } else if (role === 'UGR0003') {
+            this.api.getSlotsByUserID(userID, this.currentYear)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(res => this.processSlots(res));
-        }else{
-
+        } else if (role === 'UGR0005') {
+            this.api.getSlotsByHospitalID(hospitalID, this.currentYear)
+                .pipe(takeUntil(this.destroy$))
+                .subscribe(res => this.processSlots(res));
         }
     }
 
@@ -133,7 +157,12 @@ export class Dashboard implements OnInit, OnDestroy {
 
         if (!data) return;
 
-        this.recentSchedules = data
+
+        this.slots = data.filter(slot => slot.slotStatus === 1);
+
+        this.logger.printLogs('i', 'All Slots', data);
+
+        this.recentSchedules = data.filter(slot => slot.slotStatus === 1)
             .sort((a, b) =>
                 new Date(b.date_created).getTime() -
                 new Date(a.date_created).getTime()

@@ -20,7 +20,7 @@
                 </div>
 
                 <!-- Right: QR Code -->
-                <div class="shrink-0 text-center" (click)="openQrZoom()">
+                <div *ngIf="tokenPayload.role === 'UGR0004'" class="shrink-0 text-center" (click)="openQrZoom()">
                     <qrcode
                         [qrdata]="user.userID"
                         [width]="120"
@@ -35,10 +35,10 @@
 
                 <!-- User ID -->
                 <div>
-                    <label class="text-sm font-medium text-gray-600">User
+                    <label class="text-gray-600">User
                         ID</label>
                     <div
-                        class="mt-1 text-gray-900 dark:text-gray-100 font-semibold">
+                        class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
                         {{ user.userID }}
                     </div>
                 </div>
@@ -46,8 +46,8 @@
                 <!-- Username -->
                 <div>
                     <label
-                        class="text-sm font-medium text-gray-600">Username</label>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                        class="text-gray-600">Username</label>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
                         {{ user.username }}
                     </div>
                 </div>
@@ -55,19 +55,19 @@
                 <!-- Email -->
                 <div>
                     <label
-                        class="text-sm font-medium text-gray-600">Email</label>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                        class="text-gray-600">Email</label>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
                         {{ user.email }}
                     </div>
                 </div>
 
                 <!-- Email Verified -->
                 <div>
-                    <label class="text-sm font-medium text-gray-600">Email
+                    <label class="text-gray-600">Email
                         Verified</label>
                     <div class="mt-1">
                         <span
-                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                            class="inline-flex items-center px-3 py-1 rounded-full font-bold"
                             [ngClass]="user.email_Verified_At 
                             ? 'bg-green-100 text-green-700' 
                             : 'bg-red-100 text-red-700'">
@@ -79,50 +79,44 @@
 
                 <!-- Full Name -->
                 <div>
-                    <label class="text-sm font-medium text-gray-600">Full
+                    <label class="text-gray-600">Full
                         Name</label>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
                         {{ user.fullname }}
                     </div>
-                </div>
-
-                <!-- Individual Name Fields -->
-                <div>
-                    <label class="text-sm font-medium text-gray-600">First
-                        Name</label>
-                    <div class="mt-1">{{ user.firstname || '-' }}</div>
-                </div>
-
-                <div>
-                    <label class="text-sm font-medium text-gray-600">Middle
-                        Name</label>
-                    <div class="mt-1">{{ user.middlename || '-' }}</div>
-                </div>
-
-                <div>
-                    <label class="text-sm font-medium text-gray-600">Last
-                        Name</label>
-                    <div class="mt-1">{{ user.lastname || '-' }}</div>
                 </div>
 
                 <!-- Role -->
                 <div>
                     <label
-                        class="text-sm font-medium text-gray-600">Role</label>
-                    <div class="mt-1 font-medium">
+                        class="text-gray-600">Role</label>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
                         {{ user.rolename }}
                     </div>
                 </div>
 
                 <!-- School -->
-                <div>
+                <div *ngIf="tokenPayload.role === 'UGR0003' || tokenPayload.role === 'UGR0004'">
                     <label
                         class="text-sm font-medium text-gray-600">School</label>
-                    <div class="mt-1">
-                        {{ (user.roleID === 'UGR0003'? user.coorSchoolName +
+                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
+                        {{ (tokenPayload.role === 'UGR0003'? user.coorSchoolName +
                         ' ('+user.coorSchoolCode+')' :
                         user.schoolName) || 'N/A' }}
-                        <p-button *ngIf="user.roleID === 'UGR0003'" icon="pi pi-copy" [rounded]="true"
+                        <p-button *ngIf="tokenPayload.role === 'UGR0003'" icon="pi pi-copy" [rounded]="true"
+                            [outlined]="false" pTooltip="Copy Code"
+                            value="user.coorSchoolCode"
+                            tooltipPosition="top" severity="secondary"
+                            (click)="copyCode(user.coorSchoolCode)" />
+                    </div>
+                </div>
+
+                <!-- School -->
+                <div *ngIf="tokenPayload.role === 'UGR0005'">
+                    <label
+                        class="text-gray-600">Hospital</label>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold"> {{ user.hospitalName || 'N/A' }}
+                        <p-button *ngIf="tokenPayload.role === 'UGR0003'" icon="pi pi-copy" [rounded]="true"
                             [outlined]="false" pTooltip="Copy Code"
                             value="user.coorSchoolCode"
                             tooltipPosition="top" severity="secondary"
@@ -131,13 +125,13 @@
                 </div>
 
                 <!-- Password (masked) -->
-                <div>
+                <!-- <div>
                     <label
                         class="text-sm font-medium text-gray-600">Password</label>
                     <div class="mt-1 tracking-widest">
                         ••••••••
                     </div>
-                </div>
+                </div> -->
             </div>
 
             <!-- Actions -->
