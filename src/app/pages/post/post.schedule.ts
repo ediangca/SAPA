@@ -797,6 +797,18 @@ export class Schedule implements OnInit {
         }).format(date);
     }
 
+    
+    formatTimeOnly(time: string): Date {
+        const today = new Date();
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+
+        today.setHours(hours, minutes, seconds || 0);
+        return today;
+    }
+
+
+
+
     getStatus(status: any, type: string): any {
         // this.logger.printLogs('i', 'Status: ', status)
         switch (status) {

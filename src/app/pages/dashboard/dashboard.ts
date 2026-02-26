@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NotificationsWidget } from './components/notificationswidget';
 import { StatsWidget } from './components/statswidget';
-import { RecentSalesWidget } from './components/recentsaleswidget';
+import { RecentSchedule } from './components/recentschedule';
 import { AnnouncementWidget } from './components/announcemenswidget';
 import { RevenueStreamWidget } from './components/revenuestreamwidget';
 import { ApiService } from '@/services/api.service';
@@ -9,25 +9,26 @@ import { AuthService } from '@/services/auth.service';
 import { StoreService } from '@/services/store.service';
 import { LogsService } from '@/services/logs.service';
 import { ActivatedRoute } from '@angular/router';
-import { combineLatest, filter, Subject, switchMap, take, takeUntil, tap } from 'rxjs';
+import { combineLatest, filter, interval, Subject, switchMap, take, takeUntil, tap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'app-dashboard',
-    imports: [CommonModule, StatsWidget, RecentSalesWidget, AnnouncementWidget, RevenueStreamWidget, NotificationsWidget],
+    imports: [CommonModule, StatsWidget, RecentSchedule, AnnouncementWidget, RevenueStreamWidget, NotificationsWidget],
     template: `
         <div class="grid grid-cols-12 gap-8">
             <div class="col-span-12 xl:col-span-6">
-                
-                <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="dashboardData && tokenPayload.role === 'UGR0001' || tokenPayload.role === 'UGR0002'">
-                    <app-stats-widget class="contents" [data]="dashboardData"
-                    />
-                </div>
                 
                 <app-announcements-widget [tokenPayload]="tokenPayload" />
                 
             </div>
             <div class="col-span-12 xl:col-span-6">
+                
+                
+                <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="dashboardData && tokenPayload.role === 'UGR0001' || tokenPayload.role === 'UGR0002'">
+                    <app-stats-widget class="contents" [data]="dashboardData"
+                    />
+                </div>
                 <!-- <app-revenue-stream-widget 
                 *ngIf="dashboardData"
                     [actual]="dashboardData.actualRevenue"
@@ -98,7 +99,7 @@ export class Dashboard implements OnInit, OnDestroy {
         //     });
 
         this.currentYear = new Date().getFullYear()
-        this.loadDashboard();
+
 
         this.store.getUserPayload()
             .pipe(
@@ -109,8 +110,11 @@ export class Dashboard implements OnInit, OnDestroy {
             )
             .subscribe((user) => {
                 this.user = user;
-                this.loadRecentSchedules();
                 this.logger.printLogs('i', ' User', this.user);
+                // interval(60000).subscribe(() => {
+                    this.loadDashboard();
+                    this.loadRecentSchedules();
+                // });
             });
     }
 

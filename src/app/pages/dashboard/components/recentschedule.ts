@@ -9,96 +9,49 @@ import { ApiService } from '@/services/api.service';
 import { take } from 'rxjs';
 import { TagModule } from 'primeng/tag';
 import { ChartModule } from 'primeng/chart';
+import { Popover, PopoverModule } from 'primeng/popover';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import { LogsService } from '@/services/logs.service';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
     standalone: true,
     selector: 'app-recent-sales-widget',
-    imports: [CommonModule, TableModule, ButtonModule, RippleModule, TagModule, ChartModule],
+    imports: [CommonModule, TableModule, ButtonModule, RippleModule, TagModule, ChartModule, PopoverModule, ToastModule, DialogModule],
     template: `
-
-    <div class="card" 
-    [style.height]="tokenPayload?.role === 'UGR0001' || tokenPayload?.role === 'UGR0002' ? '740px' : '870px'"
-    
-    >
-    
-    <!-- [style.height]="tokenPayload?.role === 'UGR0001' || tokenPayload?.role === 'UGR0002' ? '740px' : '670px'" -->
-    
-        <div class="col-span-12 xl:col-span-6"
-        
-        >
-        <div class="font-bold text-primary text-xl">
-            Recent Schedule
-        </div>
-
-            <div class="card mb-0" *ngIf="slots?.length !== 0">
-                <div class="font-semibold text-xl">{{currentYear}}</div>
-                <p-chart type="bar" [data]="barData" [options]="barOptions"></p-chart>
-            </div>
-        </div>
-
-        <p-table 
-            *ngIf="recentSchedules?.length"
-            [value]="recentSchedules"
-            [showGridlines]="true"
-            [rows]="10"
-            [paginator]="false"
-            paginatorDropdownAppendTo="body" 
-            [scrollable]="true" scrollHeight="33vh"
-            hei
-            responsiveLayout="scroll">
-
-            <ng-template #header>
-                <tr>
-                    <th>Date</th>
-                    <th>School</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                </tr>
-            </ng-template>
-
-            <ng-template #body let-slot>
-                <tr>
-                    <td>{{ slot.dateSlot | date:'mediumDate' }}</td>
-                    <td>{{ slot.schoolName }}</td>
-                    <td>{{ slot.hospitalName}}({{slot.sectionName}}) - {{slot.shiftName}}</td>
-                    <td>
-                        <p-tag [value]="getStatus(slot.slotStatus,'value')"
-                        [severity]="getStatus(slot.slotStatus,'severirty')" />
-                    </td>
-                </tr>
-            </ng-template>
-
-        </p-table>
-        
-        <div *ngIf="!recentSchedules?.length" class="text-center p-4 text-muted-color">
-            No recent schedules found.
-        </div>
-    </div>
-    
     `,
-    providers: [ProductService]
+    templateUrl: './recentschedule.component.html',
+    styleUrl: './css/dashboard.css',
+    providers: [MessageService]
 })
-export class RecentSalesWidget implements OnInit, OnChanges {
+export class RecentSchedule implements OnInit, OnChanges {
 
-    products!: Product[];
     @Input() slots: any[] = [];
     @Input() recentSchedules: any[] = [];
     @Input() tokenPayload!: any;
     barData: any;
     barOptions: any;
     currentYear: number = 0;
+    displayEventDialog = false;
 
 
-    constructor(private productService: ProductService,
+    selectedEvent!: any;
+
+
+    constructor(
         private api: ApiService,
-        private store: StoreService) {
+        private store: StoreService,
+        private messageService: MessageService,
+        private logger: LogsService
+    ) {
 
     }
 
     ngOnInit() {
         // this.productService.getProductsSmall().then((data) => (this.products = data));
-        
-        this.currentYear =new Date().getFullYear()
+
+        this.currentYear = new Date().getFullYear()
         this.initChart();
     }
 
@@ -222,5 +175,31 @@ export class RecentSalesWidget implements OnInit, OnChanges {
             default:
                 return (type == 'value' ? 'Cancelled' : 'danger');
         }
+    }
+
+    formatTime(time: string): Date {
+        const today = new Date();
+        const [hours, minutes, seconds] = time.split(':').map(Number);
+
+        today.setHours(hours, minutes, seconds || 0);
+        return today;
+    }
+
+    toggleDataTable(op: Popover, event: any) {
+        op.toggle(event);
+    }
+
+
+    onScheduleSelect(op: Popover, event: any) {
+        op.hide();
+        this.logger.printLogs('i', 'Selected Schedule: ', event.data);
+        this.messageService.add({ severity: 'info', summary: 'Schedule Selected', detail: event?.data.slotID, life: 3000 });
+
+        this.displayEventDialog = true;
+    }
+
+    onCloseDetails() {
+        this.selectedEvent = null;
+        this.displayEventDialog = false;
     }
 }

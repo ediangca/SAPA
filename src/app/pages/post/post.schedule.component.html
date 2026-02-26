@@ -449,41 +449,67 @@
         <!-- Animated Card -->
         <div class="rounded-lg shadow px-5 pb-10 space-y-3">
 
-            <!-- School -->
-            <div class="flex items-center border-b pb-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
-                <i class="fas fa-school mr-2 text-secondary-500"></i>
-                <span class="font-semibold dark:text-surface-100 text-gray-700 flex-1">School</span>
-                <span class="text-gray-800 dark:text-surface-300 font-bold">{{ `${selectedEvent.schoolName}` }}</span>
+            <!-- Date Book -->
+            <div
+                class="flex items-center border-b pb-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
+                <i class="fas fa-clock mr-2 text-secondary-500"></i>
+                <span
+                    class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Date Filed</span>
+                <span class="text-gray-800 dark:text-surface-300 font-bold">{{
+                    `${selectedEvent.date_Created | date:'MMM d, y h:mm a'}` }}</span>
             </div>
 
-            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
+            <!-- School -->
+            <div
+                class="flex items-center border-b pb-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
+                <i class="fas fa-school mr-2 text-secondary-500"></i>
+                <span
+                    class="font-semibold dark:text-surface-100 text-gray-700 flex-1">School</span>
+                <span class="text-gray-800 dark:text-surface-300 font-bold">{{
+                    `${selectedEvent.schoolName}` }}</span>
+            </div>
+
+            <div
+                class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
                 <i class="fas fa-user mr-2 text-secondary-500"></i>
-                <span class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Coordinator</span>
-                <span class="text-gray-800 dark:text-surface-300 font-bold">{{ `${selectedEvent.fullname}` }}</span>
+                <span
+                    class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Coordinator</span>
+                <span class="text-gray-800 dark:text-surface-300 font-bold">{{
+                    `${selectedEvent.fullname}` }}</span>
             </div>
 
             <!-- Title -->
-            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
+            <div
+                class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
                 <i class="fas fa-hospital mr-2 text-secondary-500"></i>
-                <span class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Hospital & Section</span>
-                <span class="text-gray-800 dark:text-surface-300 font-bold">{{ `${selectedEvent.hospitalName} -
+                <span
+                    class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Hospital
+                    & Section</span>
+                <span class="text-gray-800 dark:text-surface-300 font-bold">{{
+                    `${selectedEvent.hospitalName} -
                     ${selectedEvent.sectionName}` }}</span>
             </div>
 
             <!-- Shift -->
-            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-200">
-                <i class="pi pi-clock mr-2 text-secondary-500"></i>
-                <span class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Shift</span>
-                <span class="p-3 bg-green-100 text-green-800 rounded-full text-sm font-bold">
-                    {{ selectedEvent.shiftName }} ({{ selectedEvent.startTime }} -
-                    {{ selectedEvent.endTime }})
+            <div
+                class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-200">
+                <i class="fas fa-cloud-sun mr-2 text-secondary-500"></i>
+                <span
+                    class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Shift</span>
+                <span
+                    class="p-3 bg-green-100 text-green-800 rounded-full text-sm font-bold">
+                    {{ selectedEvent.shiftName }} ({{ formatTimeOnly(selectedEvent.startTime)  | date:'shortTime'  }}
+                    -
+                    {{ formatTimeOnly(selectedEvent.endTime) | date:'shortTime' }})
                 </span>
             </div>
 
             <!-- Status -->
-            <div class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-200">
-                <i class="pi pi-clock mr-2 text-secondary-500"></i>
-                <span class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Status</span>
+            <div
+                class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-200">
+                <i class="fas fa-circle-question mr-2 text-secondary-500"></i>
+                <span
+                    class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Status</span>
                 <p-tag [value]="getStatus(selectedEvent.slotStatus, 'value')"
                     [severity]="getStatus(selectedEvent.slotStatus, 'severirty')"></p-tag>
             </div>

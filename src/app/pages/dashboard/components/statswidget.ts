@@ -114,7 +114,7 @@ import { LogsService } from '@/services/logs.service';
             
             <div class="flex justify-between mb-4">
                 <div>
-            <span class="block text-muted-color font-medium mb-4">Appointed Students</span>
+            <span class="block text-muted-color font-medium mb-4">Total Appointed Students</span>
                     <div class="text-xl font-medium">
                 {{ data?.totalAppointedStudents }}
                     </div>

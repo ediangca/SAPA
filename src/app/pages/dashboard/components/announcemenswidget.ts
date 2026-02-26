@@ -22,16 +22,17 @@ import { FormsModule } from '@angular/forms';
         </div>
     </div> -->
     <div class="card"
-    [style.height]="tokenPayload?.role === 'UGR0001' || tokenPayload?.role === 'UGR0002' ? '740px' : '870px'"
+    [style.height]="tokenPayload?.role === 'UGR0001' || tokenPayload?.role === 'UGR0002' ? '920px' : '870px'"
     >
 
         <div class="font-bold text-primary text-xl mb-6">
             Announcements
         </div>
 
-    <div class="announcement bg-transparent overflow-auto bg-gray-50 rounded-xl"
-    
-    [style.height]="tokenPayload?.role === 'UGR0001' || tokenPayload?.role === 'UGR0002' ? '650px' : '780px'">
+    <!--  -->
+    <div #scrollContainer class="card px-0! announcement bg-transparent overflow-auto bg-gray-50 rounded-xl"
+    [style.height]="tokenPayload?.role === 'UGR0001' || tokenPayload?.role === 'UGR0002' ? '800px' : '780px'"
+    >
 
         <div *ngFor="let post of posts" 
             class="mb-3 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100">
@@ -145,7 +146,7 @@ import { FormsModule } from '@angular/forms';
         </div>
 
         <!-- Loading -->
-        <div *ngIf="loading" class="text-center py-4 text-gray-400">
+        <div *ngIf="loading" class="text-center text-gray-400">
             Loading more posts...
         </div>
 
@@ -181,6 +182,8 @@ export class AnnouncementWidget implements OnInit, OnDestroy {
     menu = null;
     @Input() tokenPayload!: any;
 
+    @ViewChild('scrollContainer', { static: true })
+    scrollContainer!: ElementRef;
     // items = [
     //     { label: 'Add New', icon: 'pi pi-fw pi-plus' },
     //     { label: 'Remove', icon: 'pi pi-fw pi-trash' }
@@ -241,15 +244,21 @@ export class AnnouncementWidget implements OnInit, OnDestroy {
         this.api.getHospitals()
     }
 
-    initIntersectionObserver() {
-        const observer = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting) {
-                this.loadPosts();
-            }
-        });
+ initIntersectionObserver() {
+    const options = {
+        root: this.scrollContainer.nativeElement, // 👈 IMPORTANT
+        rootMargin: '0px',
+        threshold: 0.1
+    };
 
-        observer.observe(this.scrollAnchor.nativeElement);
-    }
+    const observer = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+            this.loadPosts();
+        }
+    }, options);
+
+    observer.observe(this.scrollAnchor.nativeElement);
+}
 
     ngOnDestroy() {
         this.destroy$.next();
