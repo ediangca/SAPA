@@ -405,9 +405,6 @@ export class Schedule implements OnInit {
         this.loadSlots();
     }
 
-    isAdminRole(): boolean {
-        return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
-    }
 // then, given those routes please help proceed with my logic to play with bar section,
 
  
@@ -457,7 +454,7 @@ export class Schedule implements OnInit {
         ];
 
         this.headStatuses = [
-            { label: 'Unposted', value: 0 },
+            { label: 'Unposted |Unconfirmed', value: 0 },
             { label: 'Posted | Confirmed', value: 1 },
             { label: 'Declined', value: 2 },
             { label: 'Cancel Request', value: 3 },
@@ -570,7 +567,7 @@ export class Schedule implements OnInit {
 
         // Admin → no user filter
         // Others → pass userID
-        const userID = this.isAdmin ? null : (
+        const userID = this.isAdmin() ? null : (
             this.tokenPayload.role === 'UGR0004' ||
                 this.tokenPayload.role === 'UGR0005' ? null :
                 this.tokenPayload.nameid);
@@ -590,9 +587,13 @@ export class Schedule implements OnInit {
         });
     }
 
-    get isAdmin() {
+    isAdmin(): boolean {
         return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
     }
+    
+    // isAdminRole(): boolean {
+    //     return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
+    // }
 
     loadSlots() {
         this.loading = true;
@@ -813,7 +814,7 @@ export class Schedule implements OnInit {
         // this.logger.printLogs('i', 'Status: ', status)
         switch (status) {
             case 0:
-                return (type == 'value' ? 'Unposted' : 'contrast')
+                return (type == 'value' ? 'Unconfirmed' : 'contrast')
             case 1:
                 return (type == 'value' ? 'Posted | Confirmed' : 'info')
             case 2:

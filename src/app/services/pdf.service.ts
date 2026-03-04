@@ -495,9 +495,9 @@ export class PdfService {
                   { text: 'Allocation', bold: true, fontSize: 9 },
                   { text: 'Status', bold: true, fontSize: 9, alignment: 'center' }
                 ],
-                
 
-                ...shiftEntries.map((item: any, idx: number) =>[
+
+                ...shiftEntries.map((item: any, idx: number) => [
                   { text: idx + 1, alignment: 'center', fontSize: 9 },
                   { text: item.schoolName, fontSize: 9, noWrap: false },
                   { text: item.hospitalName, fontSize: 9, noWrap: false },
@@ -512,12 +512,12 @@ export class PdfService {
                   // }
                   {
                     text:
-                    item.slotStatus === 0 ? 'PENDING'
-                    : item.slotStatus === 1 ? 'CONFIRMED'
-                    : item.slotStatus === 2 ? 'DECLINED'
-                    : item.slotStatus === 3 ? 'CANCEL REQUEST'
-                    : item.slotStatus === 4 ? 'CANCELED'
-                    : 'UNKNOWN',
+                      item.slotStatus === 0 ? 'UNCONFIRMED'
+                        : item.slotStatus === 1 ? 'CONFIRMED'
+                          : item.slotStatus === 2 ? 'DECLINED'
+                            : item.slotStatus === 3 ? 'CANCEL REQUEST'
+                              : item.slotStatus === 4 ? 'CANCELED'
+                                : 'UNKNOWN',
                     alignment: 'center',
                     fontSize: 9
                   }
@@ -565,22 +565,22 @@ export class PdfService {
 
   getStatusIcon(status: number) {
     switch (status) {
-        case 0:
-            return { text: '⏳', color: '#f59e0b' }; // Pending
-        case 1:
-            return { text: '✔', color: '#16a34a' }; // Confirmed
-        case 2:
-            return { text: '✖', color: '#dc2626' }; // Declined
-        case 3:
-            return { text: '⚠', color: '#ea580c' }; // Cancel Request
-        case 4:
-            return { text: '⛔', color: '#6b7280' }; // Canceled
-        default:
-            return { text: '?', color: '#000000' };
+      case 0:
+        return { text: '⏳', color: '#f59e0b' }; // Pending
+      case 1:
+        return { text: '✔', color: '#16a34a' }; // Confirmed
+      case 2:
+        return { text: '✖', color: '#dc2626' }; // Declined
+      case 3:
+        return { text: '⚠', color: '#ea580c' }; // Cancel Request
+      case 4:
+        return { text: '⛔', color: '#6b7280' }; // Canceled
+      default:
+        return { text: '?', color: '#000000' };
     }
-}
+  }
 
-// Appointment Report
+  // Appointment Report
   async generateAppointmentReport(
     title: string,
     appointments: any[],
@@ -650,7 +650,12 @@ export class PdfService {
                     { text: item.sectionName, fontSize: 9 },
                     { text: item.shiftName, fontSize: 9 },
                     {
-                      text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'OPEN' : 'CLOSED',
+                      text: item.status === 0 ? 'UNCONFIRMED' :
+                        item.status === 1 ? 'POSTED' :
+                          item.status === 2 ? 'DECLINED' :
+                            item.status === 3 ? 'CANCEL REQUEST' :
+                              item.status === 4 ? 'CANCELED' :
+                                'UNKNOWN',
                       alignment: 'center',
                       fontSize: 9
                     }
@@ -776,7 +781,12 @@ export class PdfService {
                       { text: item.sectionName, fontSize: 9 },
                       { text: item.shiftName, fontSize: 9 },
                       {
-                        text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'CONFIRMED' : 'CLOSED',
+                        text: item.status === 0 ? 'UNCONFIRMED' :
+                          item.status === 1 ? 'POSTED' :
+                            item.status === 2 ? 'DECLINED' :
+                              item.status === 3 ? 'CANCEL REQUEST' :
+                                item.status === 4 ? 'CANCELED' :
+                                  'UNKNOWN',
                         alignment: 'center',
                         fontSize: 9
                       }
@@ -915,7 +925,12 @@ export class PdfService {
                     { text: item.sectionName, fontSize: 9 },
                     { text: item.shiftName, fontSize: 9 },
                     {
-                      text: item.status === 0 ? 'PENDING' : item.status === 1 ? 'CONFIRMED' : 'CLOSED',
+                      text: item.status === 0 ? 'UNCONFIRMED' :
+                        item.status === 1 ? 'POSTED' :
+                          item.status === 2 ? 'DECLINED' :
+                            item.status === 3 ? 'CANCEL REQUEST' :
+                              item.status === 4 ? 'CANCELED' :
+                                'UNKNOWN',
                       alignment: 'center',
                       fontSize: 9
                     }

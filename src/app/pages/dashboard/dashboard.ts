@@ -25,8 +25,8 @@ import { CommonModule } from '@angular/common';
             <div class="col-span-12 xl:col-span-6">
                 
                 
-                <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="dashboardData && tokenPayload.role === 'UGR0001' || tokenPayload.role === 'UGR0002'">
-                    <app-stats-widget class="contents" [data]="dashboardData"
+                <div *ngIf="dashboardData">
+                    <app-stats-widget class="contents" [data]="dashboardData" [tokenPayload]="tokenPayload"
                     />
                 </div>
                 <!-- <app-revenue-stream-widget 
@@ -34,7 +34,7 @@ import { CommonModule } from '@angular/common';
                     [actual]="dashboardData.actualRevenue"
                     [potential]="dashboardData.potentialRevenue">
                 </app-revenue-stream-widget> -->
-                <app-recent-sales-widget [slots]="slots" [recentSchedules]="recentSchedules" [tokenPayload]="tokenPayload"/>
+                <app-recent-analytics-widget [slots]="slots" [recentSchedules]="recentSchedules" [tokenPayload]="tokenPayload"/>
                 <!-- <app-notifications-widget /> -->
             </div>
         </div>
@@ -110,18 +110,48 @@ export class Dashboard implements OnInit, OnDestroy {
             )
             .subscribe((user) => {
                 this.user = user;
-                this.logger.printLogs('i', ' User', this.user);
+                this.logger.printLogs('i', ' Tokenpayload ', this.tokenPayload);
+                this.logger.printLogs('i', ' User ', this.user);
                 // interval(60000).subscribe(() => {
-                    this.loadDashboard();
-                    this.loadRecentSchedules();
+                this.loadDashboard();
+                this.loadRecentSchedules();
                 // });
             });
     }
 
 
 
+    // loadDashboard() {
+    //     this.api.getDashboardSummary()
+    //         .pipe(takeUntil(this.destroy$))
+    //         .subscribe({
+    //             next: (res) => {
+    //                 this.dashboardData = res;
+    //                 this.logger.printLogs('i', 'Dashboard Loaded', res);
+    //             },
+    //             error: (err) => {
+    //                 this.logger.printLogs('e', 'Dashboard Error', err);
+    //             }
+    //         });
+    // }
+
     loadDashboard() {
-        this.api.getDashboardSummary()
+
+        if (!this.tokenPayload) return;
+
+        const roleId = this.tokenPayload.role;
+        const userId = this.tokenPayload.nameid;
+
+        const params: any = {
+            userId: userId,
+            roleId: roleId,
+            // startDate: this.startDate ?? null,
+            // endDate: this.endDate ?? null,
+            // allocationId: this.selectedAllocation ?? null,
+            // shiftId: this.selectedShift ?? null
+        };
+
+        this.api.getDashboardSummary(params)
             .pipe(takeUntil(this.destroy$))
             .subscribe({
                 next: (res) => {
@@ -135,11 +165,9 @@ export class Dashboard implements OnInit, OnDestroy {
     }
 
     loadRecentSchedules() {
-
         if (!this.tokenPayload) return;
-
         const role = this.tokenPayload.role;
-        const userID = this.tokenPayload.unique_name;
+        const userID = this.tokenPayload.nameid;
         const hospitalID = this.user.hospitalID;
 
         if (role === 'UGR0001' || role === 'UGR0002') {

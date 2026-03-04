@@ -66,7 +66,7 @@
 
                 <ng-template #header>
                     <tr>
-                        <th pFrozenColumn style="width: 3rem">
+                        <th pFrozenColumn style="width: 3rem" *ngIf="isAdmin()">
                             <p-tableHeaderCheckbox />
                         </th>
                         <!-- <th pSortableColumn="slotID" style="max-width: 1rem">Slot ID
@@ -197,7 +197,7 @@
 
                 <ng-template pTemplate="body" let-slot>
                     <tr>
-                        <td pFrozenColumn style="width: 3rem">
+                        <td pFrozenColumn style="width: 3rem" *ngIf="isAdmin()">
                             <p-tableCheckbox [value]="slot" />
                         </td>
                         <td>{{ slot.dateSlot }}</td>
@@ -282,7 +282,7 @@
                         </p-tag>
                     </ng-template>
                 </full-calendar> -->
-                <!-- [pTooltip]="arg.event.extendedProps.slotStatus === 0 ? 'Unposted' : 
+                <!-- [pTooltip]="arg.event.extendedProps.slotStatus === 0 ? 'Unconfirmed' : 
                             arg.event.extendedProps.slotStatus === 1 ? 'Open' : 'Closed'" tooltipPosition="top" -->
 
                 <full-calendar [options]="calendarOptions">
@@ -687,7 +687,7 @@
                         </p-columnFilter>
                     </div>
                 </th>
-                <th *ngIf="isAdminRole()" pSortableColumn="schoolName" style="min-width:10rem">
+                <th *ngIf="isAdmin" pSortableColumn="schoolName" style="min-width:10rem">
                     <div class="flex justify-between items-center">
                         School(s)
                         <p-columnFilter field="schoolName" matchMode="in" display="menu" [showMatchModes]="false"
@@ -773,7 +773,7 @@
 
                 <td>{{ slot.hospitalName }}</td>
 
-                <td *ngIf="isAdminRole()">{{ slot.schoolName }}</td>
+                <td *ngIf="isAdmin">{{ slot.schoolName }}</td>
 
                 <td>{{ slot.sectionName }}</td>
 

@@ -17,10 +17,8 @@ import { DialogModule } from 'primeng/dialog';
 
 @Component({
     standalone: true,
-    selector: 'app-recent-sales-widget',
+    selector: 'app-recent-analytics-widget',
     imports: [CommonModule, TableModule, ButtonModule, RippleModule, TagModule, ChartModule, PopoverModule, ToastModule, DialogModule],
-    template: `
-    `,
     templateUrl: './recentschedule.component.html',
     styleUrl: './css/dashboard.css',
     providers: [MessageService]

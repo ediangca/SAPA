@@ -13,6 +13,7 @@ import { ResetPasswordResolver } from '@/helper/resolver/reset.resolver';
 import { ResetExpired } from '@/pages/auth/reset-expired.component';
 import { ConfirmSlots } from '@/pages/post/confirm-slot';
 import { ScheduleTokenConfrimationResolver } from '@/helper/resolver/schedule.token.confirmation.resolver';
+import { Angular } from '@/pages/temp/angular';
 
 
 export const appRoutes: Routes = [
@@ -48,6 +49,8 @@ export const appRoutes: Routes = [
     { path: 'confirm-success', component: ConfirmAppointmentSuccess },
     // { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
+    { path: 'angular', component: Angular},
     // { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
-    { path: '**', redirectTo: '/notfound' }
+    { path: '**', redirectTo: '/notfound' },
+
 ];
