@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
     standalone: true,
     selector: 'app-footer',
     template: `
-    <div class="layout-footer bg-gray-50 border-t border-gray-200 p-4 w-full">
+    <div class="layout-footer border-t border-gray-200 p-4 w-full">
         <div class="flex flex-row justify-between items-start w-full text-sm">
 
             <!-- Note Section -->

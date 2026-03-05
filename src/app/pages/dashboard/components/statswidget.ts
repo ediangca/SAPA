@@ -125,7 +125,7 @@ import { LogsService } from '@/services/logs.service';
             </div>
         </div>
 
-        <!-- Students
+        <!-- Students -->
         <div class="col-span-4 lg:col-span-4 xl:col-span-6">
             <div class="card">
                 
@@ -143,7 +143,7 @@ import { LogsService } from '@/services/logs.service';
                 </div>
             </div>
         </div> 
-        -->
+       
 
         <!-- Revenue 
         <div class="col-span-4 lg:col-span-4 xl:col-span-6">

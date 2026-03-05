@@ -92,6 +92,7 @@ import { FormsModule } from '@angular/forms';
 
                         <div class="flex gap-6">
 
+                            <!-- 
                             <button
                                 class="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition">
                                 👍 <span>Like</span>
@@ -100,7 +101,9 @@ import { FormsModule } from '@angular/forms';
                                     {{ post.likeCount || 0 }}
                                 </span>
                             </button>
-
+                            -->
+                            
+                            <!-- 
                             <button
                                 class="flex items-center gap-2 text-gray-600 hover:text-green-600 transition">
                                 🔄 <span>Share</span>
@@ -108,12 +111,13 @@ import { FormsModule } from '@angular/forms';
                                     class="flex items-center gap-1 bg-green-50 text-green-600 text-xs px-3 py-1 rounded-full font-medium">
                                     {{ post.shareCount || 0 }}
                                 </span>
-                            </button>
+                            </button> 
+                            -->
 
                             <button
                                 (click)="post.showComments = !post.showComments"
                                 class="flex items-center gap-2 text-gray-600 hover:text-purple-600 transition">
-                                💬 <span>Comments</span>
+                                💬 <span>Discussion</span>
                                 <span
                                     class="flex items-center gap-1 bg-purple-50 text-purple-600 text-xs px-3 py-1 rounded-full font-medium">
                                     {{ post.commentCount || 0 }}

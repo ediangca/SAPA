@@ -178,6 +178,10 @@ export class Dashboard implements OnInit, OnDestroy {
             this.api.getSlotsByUserID(userID, this.currentYear)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(res => this.processSlots(res));
+        } else if (role === 'UGR0004') {
+            this.api.GetSlotsByAppointUserID(userID, this.currentYear)
+                .pipe(takeUntil(this.destroy$))
+                .subscribe(res => this.processSlots(res));
         } else if (role === 'UGR0005') {
             this.api.getSlotsByHospitalID(hospitalID, this.currentYear)
                 .pipe(takeUntil(this.destroy$))

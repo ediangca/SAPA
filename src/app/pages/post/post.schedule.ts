@@ -590,10 +590,14 @@ export class Schedule implements OnInit {
     isAdmin(): boolean {
         return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
     }
-    
-    // isAdminRole(): boolean {
-    //     return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
-    // }
+
+    isSupervisor(): boolean {
+        return this.tokenPayload.role === 'UGR0005';
+    }
+
+    isSchoolCoordinator(): boolean {
+        return this.tokenPayload.role === 'UGR0003';
+    }
 
     loadSlots() {
         this.loading = true;
@@ -748,10 +752,14 @@ export class Schedule implements OnInit {
         });
         this.itemDialog = true;
     }
+
     loadSchools() {
         this.api.getSchools().subscribe({
             next: (schools) => {
                 this.schools = schools || [];
+                if(this.tokenPayload.role === 'UGR0003') {
+                    this.schools = this.schools.filter((s: any) => s.schoolID === this.user.schoolID);
+                }
                 this.logger.printLogs('i', 'Schools loaded', this.schools)
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
@@ -762,6 +770,9 @@ export class Schedule implements OnInit {
         this.api.getHospitals().subscribe({
             next: (hospitals) => {
                 this.hospitals = hospitals || [];
+                if(this.tokenPayload.role === 'UGR0005') {
+                    this.hospitals = this.hospitals.filter((h: any) => h.hospitalID === this.user.hospitalID);
+                }
                 this.logger.printLogs('i', 'Hospitals loaded', this.hospitals)
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch hospitals', err)

@@ -534,6 +534,13 @@ export class ApiService {
     return this.handleRequest<any[]>('get', 'Slots/school', params); // fixed typo: 'shool' → 'school'
   }
 
+  GetSlotsByAppointUserID(userID: string, year?: number) {
+    const params: any = { id: userID, logAction: 'Fetching Slots by User' };
+    if (year) params.year = year;
+
+    return this.handleRequest<any[]>('get', 'Slots/user/appointed', params);
+  }
+
   // getSlotsByRange(start: string, end: string) {
   //   return this.handleRequest<any[]>('get', 'Slots/range', { params: { start, end }, logAction: 'Fetch Slots By Range' });
   // }

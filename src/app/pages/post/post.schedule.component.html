@@ -66,7 +66,7 @@
 
                 <ng-template #header>
                     <tr>
-                        <th pFrozenColumn style="width: 3rem" *ngIf="isAdmin()">
+                        <th pFrozenColumn style="width: 3rem" *ngIf="isAdmin() || isSchoolCoordinator()">
                             <p-tableHeaderCheckbox />
                         </th>
                         <!-- <th pSortableColumn="slotID" style="max-width: 1rem">Slot ID
@@ -197,7 +197,7 @@
 
                 <ng-template pTemplate="body" let-slot>
                     <tr>
-                        <td pFrozenColumn style="width: 3rem" *ngIf="isAdmin()">
+                        <td pFrozenColumn style="width: 3rem" *ngIf="isAdmin() || isSchoolCoordinator()">
                             <p-tableCheckbox [value]="slot" />
                         </td>
                         <td>{{ slot.dateSlot }}</td>
