@@ -544,8 +544,8 @@ export class ApiService {
   // getSlotsByRange(start: string, end: string) {
   //   return this.handleRequest<any[]>('get', 'Slots/range', { params: { start, end }, logAction: 'Fetch Slots By Range' });
   // }
-  getSlotsByRange(start: string, end: string, userID?: string, hospitalID?: string) {
-    const params: any = { start, end };
+  getSlotsByRange(start: string, end: string, roleID?: string, userID?: string, hospitalID?: string) {
+    const params: any = { start, end, roleID };
 
     // ✅ Attach userID only if it exists
     if (userID) {

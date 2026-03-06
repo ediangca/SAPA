@@ -46,6 +46,7 @@ import { ChipModule } from 'primeng/chip';
 import { BehaviorSubject, combineLatest, filter, forkJoin, switchMap, take, tap } from 'rxjs';
 import { SkeletonModule } from 'primeng/skeleton';
 import { PickListModule } from 'primeng/picklist';
+import { BadgeModule } from 'primeng/badge';
 
 
 interface Column {
@@ -151,6 +152,7 @@ const ROLE_PERMISSIONS: Record<string, number[]> = {
         InputNumberModule,
         DialogModule,
         TagModule,
+        BadgeModule,
         InputIconModule,
         IconFieldModule,
         ConfirmDialogModule,
@@ -405,9 +407,9 @@ export class Schedule implements OnInit {
         this.loadSlots();
     }
 
-// then, given those routes please help proceed with my logic to play with bar section,
+    // then, given those routes please help proceed with my logic to play with bar section,
 
- 
+
     buildSubComponent() {
 
         this.subcomponent = [
@@ -489,17 +491,20 @@ export class Schedule implements OnInit {
             eventDisplay: 'block',
             lazyFetching: true,
             selectable: true,
-            customButtons: {
-                myCustomButton: {
-                    text: 'New Schedule',
-                    click: () => {
-                        // This function runs when the button is clicked
-                        console.log('Custom button clicked!');
-                        // You can open a modal, add an event, etc.
-                        this.openNew(null);
+            ...(this.tokenPayload.role === 'UGR0004' ? {} : {
+                customButtons: {
+                    myCustomButton: {
+                        text: 'New Schedule',
+                        click: () => {
+                            // This function runs when the button is clicked
+                            console.log('Custom button clicked!');
+                            // You can open a modal, add an event, etc.
+                            this.openNew(null);
+                        }
                     }
                 }
-            },
+            })
+            ,
             selectAllow: (selectInfo) => {
                 const minAllowed = new Date();
                 minAllowed.setDate(minAllowed.getDate() + 7);
@@ -568,17 +573,20 @@ export class Schedule implements OnInit {
         // Admin → no user filter
         // Others → pass userID
         const userID = this.isAdmin() ? null : (
-            this.tokenPayload.role === 'UGR0004' ||
-                this.tokenPayload.role === 'UGR0005' ? null :
+                this.isSupervisor()? null :
                 this.tokenPayload.nameid);
 
-        this.api.getSlotsByRange(startDate, endDate, userID, this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null).subscribe({
+        const schoolID = this.isSchoolCoordinator() || this.isIntern() ? this.user.schoolID : null;
+
+        this.api.getSlotsByRange(startDate, endDate, this.tokenPayload.role, this.tokenPayload.nameid, this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null).subscribe({
             next: slots => {
                 success(
                     aggregateSlotsByDay(
                         slots,
                         this.tokenPayload.role,
-                        this.tokenPayload.nameid
+                        this.tokenPayload.nameid,
+                        schoolID,
+                        (this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null)
                     )
                 );
                 this.logger.printLogs('i', 'Monthly slots loaded', slots);
@@ -591,13 +599,18 @@ export class Schedule implements OnInit {
         return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
     }
 
+    isSchoolCoordinator(): boolean {
+        return this.tokenPayload.role === 'UGR0003';
+    }
+
+    isIntern(): boolean {
+        return this.tokenPayload.role === 'UGR0004';
+    }
+
     isSupervisor(): boolean {
         return this.tokenPayload.role === 'UGR0005';
     }
 
-    isSchoolCoordinator(): boolean {
-        return this.tokenPayload.role === 'UGR0003';
-    }
 
     loadSlots() {
         this.loading = true;
@@ -634,7 +647,7 @@ export class Schedule implements OnInit {
                     this.logger.printLogs('e', 'Failed to fetch slots', err)
                 }
             });
-        } else if (this.tokenPayload.role === 'UGR0003') {
+        } else if (this.isSchoolCoordinator()) {
             this.api.getSlotsByUserID(this.tokenPayload.nameid).subscribe({
                 next: (slots) => {
                     this.slots.set(slots);
@@ -647,7 +660,20 @@ export class Schedule implements OnInit {
                     this.logger.printLogs('e', 'Failed to fetch slots', err)
                 }
             });
-        } else if (this.tokenPayload.role === 'UGR0005') {
+        } else if (this.isIntern()) {
+            this.api.GetSlotsByAppointUserID(this.tokenPayload.nameid).subscribe({
+                next: (slots) => {
+                    this.slots.set(slots);
+                    this.loading = false;
+                    this.buildCalendarEvents();
+                },
+                error: (err) => {
+                    this.loading = false;
+                    this.slots.set([]);
+                    this.logger.printLogs('e', 'Failed to fetch slots', err)
+                }
+            });
+        } else if (this.isSupervisor()) {
             this.api.getSlotsByHospitalID(this.user.hospitalID).subscribe({
                 next: (slots) => {
                     this.slots.set(slots);
@@ -757,7 +783,7 @@ export class Schedule implements OnInit {
         this.api.getSchools().subscribe({
             next: (schools) => {
                 this.schools = schools || [];
-                if(this.tokenPayload.role === 'UGR0003') {
+                if (this.isSchoolCoordinator() || this.isIntern()) {
                     this.schools = this.schools.filter((s: any) => s.schoolID === this.user.schoolID);
                 }
                 this.logger.printLogs('i', 'Schools loaded', this.schools)
@@ -770,7 +796,7 @@ export class Schedule implements OnInit {
         this.api.getHospitals().subscribe({
             next: (hospitals) => {
                 this.hospitals = hospitals || [];
-                if(this.tokenPayload.role === 'UGR0005') {
+                if (this.tokenPayload.role === 'UGR0005') {
                     this.hospitals = this.hospitals.filter((h: any) => h.hospitalID === this.user.hospitalID);
                 }
                 this.logger.printLogs('i', 'Hospitals loaded', this.hospitals)
@@ -809,7 +835,7 @@ export class Schedule implements OnInit {
         }).format(date);
     }
 
-    
+
     formatTimeOnly(time: string): Date {
         const today = new Date();
         const [hours, minutes, seconds] = time.split(':').map(Number);
@@ -1673,6 +1699,14 @@ export class Schedule implements OnInit {
     openPrintDialog() {
         this.printDateRange = [];
         this.printDialogVisible = true;
+
+        if (this.isIntern()) {
+            this.slotStatusOptions = [
+                { label: 'PENDING', value: 0 },
+                { label: 'CONFIRMED', value: 1 },
+                { label: 'CANCELED', value: 4 }
+            ];
+        }
     }
 
     getSelectedSchoolName(): string | null {

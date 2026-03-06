@@ -187,17 +187,12 @@ export function aggregateSlotsByDay(
   currentHospitalID: string | null = null
 ): EventInput[] {
 
-  const isAdmin = roleID === 'UGR0001' || roleID === 'UGR0002';
-  const isSchoolCoordinator = roleID === 'UGR0004';
+  const isAdmin = roleID === 'UGR0001' || roleID === 'UGR0002'
   const isHospitalSupervisor = roleID === 'UGR0005';
-  const isStudent = roleID === 'UGR0003';
+  const isSchoolCoordinator = roleID === 'UGR0003';
+  const isStudent = roleID === 'UGR0004';
 
   let filteredSlots = slots;
-
-  // 🔹 Student → only own slots
-  if (isStudent && currentUserID) {
-    filteredSlots = slots.filter(s => s.userID === currentUserID);
-  }
 
   // 🔹 School Coordinator → only their school
   if (isSchoolCoordinator && currentSchoolID) {
@@ -225,16 +220,16 @@ export function aggregateSlotsByDay(
   dateMap.forEach((daySlots, day) => {
 
     // 🔹 Student → 1 event per day
-    if (isStudent) {
-      events.push({
-        id: day,
-        start: day,
-        allDay: true,
-        title: `${daySlots.length} Slot(s)`,
-        extendedProps: { slots: daySlots }
-      });
-      return;
-    }
+    // if (isStudent) {
+    //   events.push({
+    //     id: day,
+    //     start: day,
+    //     allDay: true,
+    //     title: `${daySlots.length}`,
+    //     extendedProps: { slots: daySlots }
+    //   });
+    //   return;
+    // }
 
     // 🔹 Admin → group by school
     // 🔹 School Coordinator → group by hospital

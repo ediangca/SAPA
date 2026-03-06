@@ -287,9 +287,13 @@
 
                 <full-calendar [options]="calendarOptions">
                     <ng-template #eventContent let-arg>
-                        <div class="text-[10px] px-1 py-[2px] rounded bg-blue-500 text-white text-center cursor-pointer"
-                            title="Click to view schedules">
-                            {{ arg.event.title }}
+                        <div class="flex flex-row justify-between items-center text-[12px] px-1 py-[2px] rounded bg-blue-500 text-white text-center cursor-pointer"
+                            [title]="'Click to view schedule(s) in '+arg.event.title">
+                            {{ arg.event.title | slice:0:20 }}{{ arg.event.title.length > 20 ? '...' : '' }}
+                    
+                            <p-badge class
+                                [value]="arg.event.extendedProps.slots.length"
+                                severity="success"></p-badge>
                         </div>
                     </ng-template>
                 </full-calendar>
