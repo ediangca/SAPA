@@ -1,12 +1,13 @@
-<div class="flex flex-col md:flex-row gap-8">
-    <div class="md:w-5/6">
-        <div class="card">
-            <p-table #dt [value]="users()" [rows]="10" [columns]="cols" [paginator]="true" [showGridlines]="true"
+<div class="flex flex-col md:flex-row gap-8"  >
+    <div class="md:w-4/5">
+        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
+            <p-table #dt [value]="users()" [rows]="100" [columns]="cols" [paginator]="true" [rowHover]="true" 
+                [showGridlines]="true"
                 [globalFilterFields]="['userID', 'email', 'rolename', 'status', 'date_created']"
-                [tableStyle]="{ 'min-width': '75rem'}" [(selection)]="selectedUsers" [rowHover]="true" dataKey="userID"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
-                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true"
-                scrollHeight="flex">
+                [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectedUsers" 
+                dataKey="userID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" 
+                paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="calc(100vh - 26rem)">
 
                 <ng-template pTemplate="caption">
                     <div class="flex row justify-center">
@@ -40,42 +41,42 @@
                         <th style="width: 3rem">
                             <p-tableHeaderCheckbox />
                         </th>
-                        <th pSortableColumn="userID" style="min-width: 3rem">User ID
+                        <th pSortableColumn="userID" style="width: 8rem">User ID
                             <p-sortIcon field="userID" />
                         </th>
-                        <th pSortableColumn="fullname" style="min-width:10rem">
+                        <th pSortableColumn="fullname">
                             Fullname
                             <p-sortIcon field="fullname" />
                         </th>
-                        <th pSortableColumn="email" style="min-width:10rem">
+                        <th pSortableColumn="email"style="width: 15rem">
                             Email
                             <p-sortIcon field="email" />
                         </th>
-                        <th pSortableColumn="rolename" style="min-width:10rem">
+                        <th pSortableColumn="rolename" style="width: 8rem">
                             Role
                             <p-sortIcon field="role" />
                         </th>
-                        <th pSortableColumn="status" style="min-width:10rem">
+                        <th pSortableColumn="status" style="width: 7rem">
                             Status
                             <p-sortIcon field="status" />
                         </th>
-                        <th pSortableColumn="date_created" style="min-width:10rem">
+                        <th pSortableColumn="date_created" style="width: 8rem">
                             Date Created
                             <p-sortIcon field="date_created" />
                         </th>
-                        <th style="min-width: 5rem">Action</th>
+                        <th style="width: 8rem">Action</th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-user>
                     <tr>
-                        <td style="width: 3rem">
+                        <td pFrozenColumn>
                             <p-tableCheckbox [value]="user" />
                         </td>
-                        <td style="min-width: 3rem">{{ user.userID }}</td>
-                        <td style="min-width: 10rem">{{ user.fullname }}</td>
-                        <td style="min-width: 10rem">{{ user.email }}</td>
-                        <td style="min-width: 10rem">{{ user.rolename }}</td>
-                        <td style="min-width: 10rem">
+                        <td>{{ user.userID }}</td>
+                        <td>{{ user.fullname }}</td>
+                        <td class="break-all">{{ user.email }}</td>
+                        <td>{{ user.rolename }}</td>
+                        <td>
                             <p-tag [value]="getStatus(user.status,'value')"
                                 [severity]="getStatus(user.status,'severirty')" styleClass="dark:bg-surface-900!" />
                             @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
@@ -90,7 +91,7 @@
                             </button>
                             }
                         </td>
-                        <td style="min-width: 10rem">{{ dateFormat(user.date_Created) }}</td>
+                        <td>{{ dateFormat(user.date_Created) }}</td>
                         <td>
                             <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
                                 pTooltip="Edit" tooltipPosition="top" (click)="edit(user)" />
@@ -108,7 +109,7 @@
         </div>
     </div>
     <!-- SUBMENU -->
-    <div class="md:w-1/6">
+    <div class="md:w-1/5">
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
             <set-users-sidebar [users]="users()" [selectedUsers]="selectedUsers"
                 (statusChanged)="onStatusChanged()"></set-users-sidebar>

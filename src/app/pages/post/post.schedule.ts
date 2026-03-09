@@ -381,6 +381,7 @@ export class Schedule implements OnInit {
                 this.loadSchools();
                 this.loadSections();
                 this.loadShifts();
+                this.buildSubComponent()
             });
     }
 
@@ -403,7 +404,6 @@ export class Schedule implements OnInit {
         //     }
         // });
 
-        this.buildSubComponent()
         this.loadSlots();
     }
 
@@ -573,7 +573,7 @@ export class Schedule implements OnInit {
         // Admin → no user filter
         // Others → pass userID
         const userID = this.isAdmin() ? null : (
-                this.isSupervisor()? null :
+            this.isSupervisor() ? null :
                 this.tokenPayload.nameid);
 
         const schoolID = this.isSchoolCoordinator() || this.isIntern() ? this.user.schoolID : null;
@@ -1697,16 +1697,32 @@ export class Schedule implements OnInit {
     }
 
     openPrintDialog() {
+        this.loadSlots
         this.printDateRange = [];
-        this.printDialogVisible = true;
 
         if (this.isIntern()) {
-            this.slotStatusOptions = [
-                { label: 'PENDING', value: 0 },
-                { label: 'CONFIRMED', value: 1 },
-                { label: 'CANCELED', value: 4 }
-            ];
+            this.selectedStatus = 1;
+            this.selectedSchoolID = this.user.schoolID;
+            this.selectedHospitalID = null;
+        } else if (this.isSchoolCoordinator()) {
+            // this.slotStatusOptions = [
+            //     { label: 'PENDING', value: 0 },
+            //     { label: 'CONFIRMED', value: 1 },
+            //     { label: 'DECLINED', value: 2 },
+            //     { label: 'CANCEL REQUEST', value: 3 },
+            //     { label: 'CANCELED', value: 4 }
+            // ];
+            this.selectedSchoolID = this.user.schoolID;
+        } else if (this.isSupervisor()) {
+            this.selectedHospitalID = this.user.hospitalID;
+        } else {
+            this.selectedStatus = null;
+            this.selectedSchoolID = null
+            this.selectedHospitalID = null;
+            this.loadHospitals();
+            this.loadSchools();
         }
+        this.printDialogVisible = true;
     }
 
     getSelectedSchoolName(): string | null {

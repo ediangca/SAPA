@@ -30,6 +30,8 @@ export class RecentSchedule implements OnInit, OnChanges {
     @Input() tokenPayload!: any;
     barData: any;
     barOptions: any;
+    pieData: any;
+    pieOptions: any;
     currentYear: number = 0;
     displayEventDialog = false;
 
@@ -56,6 +58,7 @@ export class RecentSchedule implements OnInit, OnChanges {
     ngOnChanges(changes: SimpleChanges) {
         if (changes['slots'] && this.slots) {
             this.buildChartFromSlots();
+            this.buildPieChartFromSlots();
         }
     }
 
@@ -140,6 +143,81 @@ export class RecentSchedule implements OnInit, OnChanges {
                     beginAtZero: true,
                     ticks: { color: textColorSecondary },
                     grid: { color: surfaceBorder, drawBorder: false }
+                }
+            }
+        };
+    }
+
+
+    buildPieChartFromSlots() {
+
+        if (!this.slots?.length) return;
+
+        const hospitalMap: Record<string, { name: string; count: number }> = {};
+
+        this.slots.forEach(slot => {
+
+            if (!slot.hospitalID) return;
+
+            if (!hospitalMap[slot.hospitalID]) {
+                hospitalMap[slot.hospitalID] = {
+                    name: slot.hospitalName || 'Unknown Hospital',
+                    count: 0
+                };
+            }
+
+            hospitalMap[slot.hospitalID].count++;
+        });
+
+        const labels = Object.values(hospitalMap).map(h => h.name);
+        const data = Object.values(hospitalMap).map(h => h.count);
+
+        this.initPieChart(labels, data);
+    }
+
+    initPieChart(labels: string[], data: number[]) {
+
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+
+        const colors = [
+            documentStyle.getPropertyValue('--p-indigo-500'),
+            documentStyle.getPropertyValue('--p-purple-500'),
+            documentStyle.getPropertyValue('--p-teal-500'),
+            documentStyle.getPropertyValue('--p-orange-500'),
+            documentStyle.getPropertyValue('--p-cyan-500'),
+            documentStyle.getPropertyValue('--p-pink-500'),
+            documentStyle.getPropertyValue('--p-green-500')
+        ];
+
+        const hoverColors = [
+            documentStyle.getPropertyValue('--p-indigo-400'),
+            documentStyle.getPropertyValue('--p-purple-400'),
+            documentStyle.getPropertyValue('--p-teal-400'),
+            documentStyle.getPropertyValue('--p-orange-400'),
+            documentStyle.getPropertyValue('--p-cyan-400'),
+            documentStyle.getPropertyValue('--p-pink-400'),
+            documentStyle.getPropertyValue('--p-green-400')
+        ];
+
+        this.pieData = {
+            labels,
+            datasets: [
+                {
+                    data,
+                    backgroundColor: colors.slice(0, labels.length),
+                    hoverBackgroundColor: hoverColors.slice(0, labels.length)
+                }
+            ]
+        };
+
+        this.pieOptions = {
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                        color: textColor
+                    }
                 }
             }
         };

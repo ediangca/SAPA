@@ -1,7 +1,7 @@
 <p-toast></p-toast>
-<div class="flex flex-col md:flex-row gap-8" [style]="{ height: 'calc(100vh - 12rem)'}">
+<div class="flex flex-col md:flex-row gap-8">
     <div class="md:w-4/5">
-        <div class="card">
+        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
             <div class="flex row justify-end mb-2">
                 <p-selectButton class="float-right" [options]="viewOptions" optionLabel="label" optionValue="value"
                     [(ngModel)]="tableOption" (onChange)="onChangeView($event)"
@@ -22,7 +22,7 @@
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
                 dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"
-                paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="61vh"
+                paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="calc(100vh - 26rem)"
                 (selectionChange)="onScheduleSelectionChange($event)">
 
 
@@ -306,7 +306,7 @@
 
     <!-- SUBMENU -->
     <div class="md:w-1/5">
-        <div class="card">
+        <div class="card"  [style]="{ height: 'calc(100vh - 12rem)'}">
             <div class="">
                 <h5 class="m-0">Sub Component</h5>
                 <!-- 
@@ -839,7 +839,7 @@
 </p-dialog>
 
 <!-- Manage Appointed Student -->
-<p-dialog header="Manage Students" [(visible)]="manageStudentDialog" [modal]="true" [closable]="false"  [dismissableMask]="true"
+<p-dialog header="Manage Students" [(visible)]="manageStudentDialog" [modal]="true" [closable]="true" [dismissableMask]="true"
     [style]="{ height: '50%', minHeight:'420px', maxHeight: '768px', width: '90%', minWidth: '380px', maxWidth: '1024px' }"
     contentStyleClass="flex flex-col h-full" resizable="true"
     >
@@ -915,7 +915,7 @@
 </p-dialog>
 
 <!-- Manage Appointed Student Attendance -->
-<p-dialog header="Attendance" [(visible)]="manageAttendanceDialog" [modal]="true" [closable]="false"
+<p-dialog header="Attendance" [(visible)]="manageAttendanceDialog" [modal]="true" [closable]="true"
     [style]="{ height: '100%', minHeight:'420px', width: '90%', minWidth: '380px', maxWidth: '624px' }"
     contentStyleClass="flex flex-col h-full" [resizable]="true"
     >
@@ -1026,7 +1026,7 @@
 </p-dialog>
 
 <!-- PRINT CONFIRMATION DIALOG -->
-<p-dialog header="Print Schedule" [(visible)]="printDialogVisible" [modal]="true" [dismissableMask]="true"
+<p-dialog header="Print Schedule" [(visible)]="printDialogVisible" [modal]="true" [closable]="false" [dismissableMask]="true"
     [style]="{ width: '480px' }" [breakpoints]="{ '960px': '90vw', '640px': '95vw' }">
 
     <div class="p-3">
@@ -1048,7 +1048,7 @@
         <div  *ngIf="printDateRange?.length === 2  && (printDateRange?.[0] !== null && printDateRange?.[1] !== null)" class="mt-3">
 
             <!-- SCHOOL SELECT -->
-            <div class="mb-3">
+            <div class="mb-3" *ngIf="isIntern! || !isSchoolCoordinator!">
                 <label class="block font-bold mb-2">School</label>
                 <p-select
                     styleClass="w-full"
@@ -1062,7 +1062,7 @@
             </div>
 
             <!-- HOSPITAL SELECT -->
-            <div class="mb-3">
+            <div class="mb-3"  *ngIf="isSchoolCoordinator || isIntern">
                 <label class="block font-bold mb-2">Hospital</label>
                 <p-select
                     styleClass="w-full"
@@ -1075,7 +1075,7 @@
                 </p-select>
             </div>
             
-            <div class="mb-3">
+            <div class="mb-3" *ngIf="isIntern!">
                 <label class="block font-bold mb-2">Status</label>
                 <p-select
                     styleClass="w-full"

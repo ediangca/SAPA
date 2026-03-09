@@ -85,9 +85,6 @@ import { LogsService } from '@/services/logs.service';
         </div>
     </div>
 
-
-
-
     <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="tokenPayload.role === 'UGR0005' || tokenPayload.role === 'UGR0003'">
         <!-- Pending -->
         <div class="col-span-4 lg:col-span-4 xl:col-span-6">
@@ -165,6 +162,45 @@ import { LogsService } from '@/services/logs.service';
         -->
     </div>
 
+    <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="tokenPayload.role === 'UGR0004'">
+
+        <!-- Confirmed -->
+        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+            <div class="card">
+                <div class="flex justify-between mb-4">
+                    <div>
+                <span class="block text-muted-color font-medium mb-4">Total</span>
+                        <div class="text-xl font-medium">
+                    {{ data?.confirmedSchedule }}
+                        </div>
+                    <span class="text-primary font-medium">Schedule</span>
+                    </div>
+                    <div class="flex items-center justify-center bg-blue-100 rounded-border" style="width: 2.5rem; height: 2.5rem">
+                        <i class="pi pi-calendar-plus text-blue-500 text-xl!"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students -->
+        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+            <div class="card">
+                
+                <div class="flex justify-between mb-4">
+                    <div>
+                <span class="block text-muted-color font-medium mb-4">Total</span>
+                        <div class="text-xl font-medium">
+                    {{ data?.totalAppointedStudents }}
+                        </div>
+                    <span class="text-primary font-medium">Attendance</span>
+                    </div>
+                    <div class="flex items-center justify-center bg-green-100 rounded-border" style="width: 2.5rem; height: 2.5rem">
+                    <i class="pi pi-list-check text-green-500 text-xl!"></i>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    </div>
         `
 })
 export class StatsWidget implements OnInit {
@@ -192,5 +228,4 @@ export class StatsWidget implements OnInit {
         //         this.logger.printLogs('i', ' User', this.user);
         //     });
     }
-
 }
