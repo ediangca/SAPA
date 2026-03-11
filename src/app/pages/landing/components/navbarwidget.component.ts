@@ -50,11 +50,11 @@ export class NavbarWidget {
                 icon: 'pi pi-fw pi-calendar',
                 routerLink: '/dashboard/post/schedules'
             },
-            {
-                label: 'Inbox',
-                icon: 'pi pi-fw pi-inbox'
-                // routerLink: ['']
-            },
+            // {
+            //     label: 'Inbox',
+            //     icon: 'pi pi-fw pi-inbox'
+            //     // routerLink: ['']
+            // },
             {
                 label: 'Account',
                 icon: 'pi pi-fw pi-user',

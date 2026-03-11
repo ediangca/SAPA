@@ -47,6 +47,7 @@ import { BehaviorSubject, combineLatest, filter, forkJoin, switchMap, take, tap 
 import { SkeletonModule } from 'primeng/skeleton';
 import { PickListModule } from 'primeng/picklist';
 import { BadgeModule } from 'primeng/badge';
+import { CheckboxModule } from 'primeng/checkbox';
 
 
 interface Column {
@@ -140,6 +141,7 @@ const ROLE_PERMISSIONS: Record<string, number[]> = {
         SelectButtonModule,
         FormsModule,
         ButtonModule,
+        CheckboxModule,
         // AppMenuitem,
         RippleModule,
         ToastModule,
@@ -205,7 +207,6 @@ export class Schedule implements OnInit {
 
     tokenPayload: any | null;
 
-    assignedStudents = 0;
     assignDialog: boolean = false;
     qrDialog: boolean = false;
     coordinatorID: any | null;
@@ -311,8 +312,20 @@ export class Schedule implements OnInit {
     daySlots: any[] = [];
     dayDialog: boolean = false;
 
-    sourceStudent: any[] = [];
-    targetStudent: any[] = [];
+    // sourceStudent: any[] = [];
+    // targetStudent: any[] = [];
+    // assignedStudents = 0;
+
+    sourceStudent = signal<any[]>([]);
+    targetStudent = signal<any[]>([]);
+    assignedStudents = signal(0);
+
+    allStudents!: any[];
+    filteredStudents: any[] = [];
+    selectedStudents: any[] = [];
+
+    studentSearch = "";
+    slotCapacity = 5;
 
     loadingAttendance: boolean = false;
     appointedStudents: any[] = [];
@@ -1256,61 +1269,63 @@ export class Schedule implements OnInit {
         });
     }
 
-    openMangeStudent(slot: any) {
-        // Open Dialog and add student management logic here
+
+    openManageStudent(slot: any) {
+
         this.slot = slot;
+
         this.logger.printLogs('i', 'Manage Student for Slot:', slot);
-        // this.dayDialog = false;
-        // this.displayEventDialog = false;
 
-        this.assignedStudents = 0;
-        this.sourceStudent = [];
-        this.targetStudent = [];
+        this.assignedStudents.set(0);
 
+        this.sourceStudent.set([]);
+        this.targetStudent.set([]);
 
         this.api.getAppointedStudentsBySlotID(slot.slotID).subscribe({
-            next: (appointedStudents: any) => {
-                // this.targetStudent = (appointedStudents || []).map((x: any) => ({
-                //     userID: x.userID,
-                //     fullname: x.fullname
-                // }));
 
+            next: (appointedStudents: any[]) => {
 
-                this.targetStudent = appointedStudents
-                    ? appointedStudents.map((x: any) => ({
-                        userID: x.userID,
-                        fullname: x.fullname
-                    }))
-                    : [];
+                const mapped = (appointedStudents || []).map((x: any) => ({
 
+                    userID: x.userID,
+                    fullname: x.fullname
 
-                this.assignedStudents = this.targetStudent.length;
+                }));
 
-                this.logger.printLogs('i', 'Target students (appointed)', this.targetStudent);
+                this.targetStudent.set(mapped);
 
-                // STEP 2: Load ALL users and filter students
-                this.manageStudentDialog = true;
+                this.assignedStudents.set(mapped.length);
+
+                this.logger.printLogs('i', 'Target students (appointed)', mapped);
+
                 this.loadAvailableStudents();
+
+                this.manageStudentDialog = true;
+
             },
+
             error: (err: any) => {
+
+                this.targetStudent.set([]);
+
+                this.loadAvailableStudents();
+
                 this.logger.printLogs('e', 'Failed to fetch appointed students', err);
-                this.manageStudentDialog = false;
-                this.assignedStudents = 0;
-                // this.loadAvailableStudents(); // still load source
+
+                this.manageStudentDialog = true;
+
+                this.assignedStudents.set(0);
+
             }
+
         });
+
     }
 
     trackByUserID(index: number, item: any) {
         return item.userID;
     }
-    get sourceStudents() {
-        return [...this.sourceStudent];
-    }
 
-    get targetStudents() {
-        return [...this.targetStudent];
-    }
 
     // openAttendance(slot: any, studentID: string | null = null) {
     //     // Open Dialog and add student management logic here
@@ -1375,38 +1390,90 @@ export class Schedule implements OnInit {
     }
 
 
+    // loadAvailableStudents() {
+    //     this.api.getUsers().subscribe({
+    //         next: (users) => {
+    //             const appointedUserIDs = new Set(
+    //                 this.targetStudent.map((x: any) => x.userID)
+    //             );
+
+    //             this.sourceStudent = (users || [])
+    //                 .filter((u: any) =>
+    //                     u.roleID === 'UGR0004' &&   // STUDENT
+    //                     u.schoolID === this.slot.schoolID && // Assign School of the slot
+    //                     u.status === 'A' &&      // Aprrove users only
+    //                     !appointedUserIDs.has(u.userID)
+    //                 )
+    //                 .map((u: any) => ({
+    //                     userID: u.userID,
+    //                     fullname: `${u.lastname}, ${u.firstname} ${u.middlename || ''}`.trim()
+    //                 }));
+
+    //             if (this.sourceStudent.length === 0) {
+    //                 this.messageService.add({
+    //                     severity: 'info',
+    //                     summary: 'No Available Students',
+    //                     detail: 'There are no available students to assign for this slot.',
+    //                     life: 4000
+    //                 });
+    //             }
+    //             this.logger.printLogs('i', 'Source students (available)', this.sourceStudent);
+    //         },
+    //         error: (err: any) => this.logger.printLogs('e', 'Failed to fetch users', err)
+    //     });
+    // }
+
     loadAvailableStudents() {
+
         this.api.getUsers().subscribe({
-            next: (users) => {
+
+            next: (users: any[]) => {
+
                 const appointedUserIDs = new Set(
-                    this.targetStudent.map((x: any) => x.userID)
+                    this.targetStudent().map((x: any) => x.userID)
                 );
 
-                this.sourceStudent = (users || [])
+                const availableStudents = (users || [])
                     .filter((u: any) =>
-                        u.roleID === 'UGR0004' &&   // STUDENT
-                        u.schoolID === this.slot.schoolID && // Assign School of the slot
-                        u.status === 'A' &&      // Aprrove users only
-                        !appointedUserIDs.has(u.userID)
+                        u.roleID === 'UGR0004' &&                 // STUDENT
+                        u.schoolID === this.slot.schoolID &&     // Same school
+                        u.status === 'A' &&                      // Approved only
+                        !appointedUserIDs.has(u.userID)          // Not already assigned
                     )
                     .map((u: any) => ({
                         userID: u.userID,
                         fullname: `${u.lastname}, ${u.firstname} ${u.middlename || ''}`.trim()
                     }));
 
+
+                // 🔹 IMPORTANT: clone array to trigger UI refresh
+                // this.sourceStudent = [...availableStudents];
+
+                this.sourceStudent.set(availableStudents);
+
+
                 if (this.sourceStudent.length === 0) {
+
                     this.messageService.add({
                         severity: 'info',
                         summary: 'No Available Students',
                         detail: 'There are no available students to assign for this slot.',
                         life: 4000
                     });
+
                 }
+
                 this.logger.printLogs('i', 'Source students (available)', this.sourceStudent);
+
             },
-            error: (err: any) => this.logger.printLogs('e', 'Failed to fetch users', err)
+
+            error: (err: any) =>
+                this.logger.printLogs('e', 'Failed to fetch users', err)
+
         });
+
     }
+
 
     getMaxLengthIndices(): number[] {
         const maxLength = Math.max(
@@ -1574,84 +1641,137 @@ export class Schedule implements OnInit {
 
         // this.targetStudent = [...this.targetStudent];
     }
+
     onMoveToTarget(event: any) {
-        const movedCount = event.items.length;
-        this.assignedStudents = this.assignedStudents + movedCount;
 
-        this.logger.printLogs(
-            'i',
-            'Move to Target Assigned Students:',
-            this.assignedStudents
-        );
+        this.targetStudent.set([...this.targetStudent()]);
+
+        this.sourceStudent.set([...this.sourceStudent()]);
+
+        this.assignedStudents.set(this.targetStudent().length);
+
+        this.autoSave();
+
     }
+
     onMoveAllToTarget(event: any) {
-        const movedCount = event.items.length;
-        this.assignedStudents = this.assignedStudents + movedCount;
 
-        this.logger.printLogs(
-            'i',
-            'Move All to Target Assigned Students:',
-            this.assignedStudents
-        );
+        const updatedTarget = [
+            ...this.targetStudent(),
+            ...event.items
+        ];
+
+        this.targetStudent.set(updatedTarget);
+
+        this.sourceStudent.set([]);
+
+        this.assignedStudents.set(updatedTarget.length);
+
+        this.autoSave();
+
     }
+
     onMoveToSource(event: any) {
-        const movedCount = event.items.length;
-        this.assignedStudents = this.assignedStudents - movedCount;
 
-        this.logger.printLogs(
-            'i',
-            'Move to Source Assigned Students:',
-            this.assignedStudents
-        );
+        this.targetStudent.set([...this.targetStudent()]);
+
+        this.sourceStudent.set([...this.sourceStudent()]);
+
+        this.assignedStudents.set(this.targetStudent().length);
+
+        this.autoSave();
+
     }
-    onMoveAllToSource(event: any) {
-        const movedCount = event.items.length;
-        this.assignedStudents = this.assignedStudents - movedCount;
 
-        this.logger.printLogs(
-            'i',
-            'Move All to Source Assigned Students:',
-            this.assignedStudents
-        );
+    onMoveAllToSource(event: any) {
+
+        const updatedSource = [
+            ...this.sourceStudent(),
+            ...event.items
+        ];
+
+        this.sourceStudent.set(updatedSource);
+
+        this.targetStudent.set([]);
+
+        this.assignedStudents.set(0);
+
+        this.autoSave();
+
+    }
+
+    autoSave() {
+
+        if (!this.slot) return;
+
+        const payload = {
+
+            slotID: this.slot.slotID,
+
+            userIDs: this.targetStudent().map(x => x.userID)
+
+        };
+
+        this.api.bulkReplaceAppointedStudentsBySlot(payload).subscribe();
+
     }
 
     saveAssignStudentStudent() {
 
         if (!this.slot) return;
 
-        const selected = [...this.targetStudent]; // 🔥 clone
+        const selected = [...this.targetStudent()]; // 🔥 read signal value
 
-        if (this.assignedStudents <= 0) {
+        if (selected.length <= 0) {
+
             this.messageService.add({
                 severity: 'warn',
                 summary: 'No Students Selected',
                 detail: 'Please select at least one student.',
                 life: 3000
             });
+
             return;
         }
 
         const payload = {
+
             slotID: this.slot.slotID,
+
             userIDs: selected.map(x => x.userID)
+
         };
 
         this.logger.printLogs('i', 'Saving payload:', payload);
 
         this.api.bulkReplaceAppointedStudentsBySlot(payload).subscribe({
+
             next: () => {
-                this.showErrorAlert('Successful', 'Students assigned successfully', false, 'success');
+
+                this.showErrorAlert(
+                    'Successful',
+                    'Students assigned successfully',
+                    false,
+                    'success'
+                );
+
                 this.onCloseManageStudent();
+
             },
+
             error: (err: any) => {
+
                 this.showErrorAlert(
                     'Assigning Students Failed',
                     err?.error?.message || 'Failed to assign students.',
                     false,
                     'error'
                 );
+
             }
+
         });
+
     }
 
 
@@ -1661,14 +1781,14 @@ export class Schedule implements OnInit {
     }
 
     onCloseManageStudent() {
-        this.sourceStudent = [];
-        this.targetStudent = [];
+        this.sourceStudent.set([]);
+        this.targetStudent.set([]);
         this.manageStudentDialog = false;
     }
 
     onCloseManagAttendance() {
-        this.sourceStudent = [];
-        this.targetStudent = [];
+        this.sourceStudent.set([]);
+        this.targetStudent.set([]);
         this.attendanceRecords = [];
         this.appointedStudents = [];
         this.manageAttendanceDialog = false;

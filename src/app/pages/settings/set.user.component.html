@@ -64,7 +64,7 @@
                             Date Created
                             <p-sortIcon field="date_created" />
                         </th>
-                        <th style="width: 8rem">Action</th>
+                        <th style="width: auto">Action</th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-user>
@@ -79,29 +79,28 @@
                         <td>
                             <p-tag [value]="getStatus(user.status,'value')"
                                 [severity]="getStatus(user.status,'severirty')" styleClass="dark:bg-surface-900!" />
-                            @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
-                            <button class="ml-2" (click)="resendVerification(user)" pTooltip=" Resend Verification?"
-                                tooltipPosition="top"> <i
-                                    class="fa-solid fa-paper-plane text-blue-500 hover:animate-bounce transition-colors"></i>
-                            </button>
-                            }@else if (getStatus(user.status,'value').toLowerCase() == 'pending') {
-                            <button class="ml-2" (click)="approve(user)" pTooltip=" Approve Account?"
-                                tooltipPosition="top"> <i
-                                    class="fa-solid fa-thumbs-up text-blue-500 hover:animate-bounce transition-colors"></i>
-                            </button>
-                            }
+                            
                         </td>
                         <td>{{ dateFormat(user.date_Created) }}</td>
-                        <td>
-                            <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                        <td class="flex justify-content gap-2">
+                            <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true"
                                 pTooltip="Edit" tooltipPosition="top" (click)="edit(user)" />
                             @if (user.status == 'U') {
-                            <p-button icon="pi pi-trash" class="mr-2" severity="danger" [rounded]="true"
+                            <p-button icon="pi pi-trash" severity="danger" [rounded]="true"
                                 [outlined]="true" pTooltip="Delete" tooltipPosition="top" (click)="delete(user)" />
 
                             }
                             <p-button icon="pi pi-key" severity="warn" [rounded]="true" [outlined]="true"
                                 pTooltip="Change Password" tooltipPosition="top" (click)="changePassword(user)" />
+                                
+                            @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
+                            <p-button icon="pi pi-send" severity="info" (click)="resendVerification(user)" [rounded]="true"
+                                [outlined]="true" pTooltip=" Resend Verification?"
+                                tooltipPosition="top"/>
+                            }@else if (getStatus(user.status,'value').toLowerCase() == 'pending') {
+                            <p-button  icon="pi-thumbs-up-fill" severity="info" (click)="approve(user)" pTooltip=" Approve Account?"
+                                tooltipPosition="top"/>
+                            }
                         </td>
                     </tr>
                 </ng-template>
@@ -193,11 +192,23 @@
                             <label for="hospitals" class="block font-bold mb-2">Hospitals</label>
                             <p-select id="hospitals" [options]="hospitals" optionLabel="hospitalName"
                                         optionValue="hospitalID" appendTo="body" formControlName="hospitalID"
-                                        (onChange)="getAllocationsByHospitalID($event.value)" placeholder="Select Hospital"
+                                        (onChange)="selectedHospital($event.value)" placeholder="Select Hospital"
                                         styleClass="w-full">
                             </p-select>
                             <small class="text-red-500" *ngIf="submitted && form.get('hospitalID')?.invalid">
                                 Hospital is required.
+                            </small>
+                        </div>
+                        <!-- School (conditional) -->
+                        <div *ngIf="form.get('roleID')?.value === 'UGR0003' || form.get('roleID')?.value === 'UGR0004'">
+                            <label for="schools" class="block font-bold mb-2">Schools</label>
+                            <p-select id="schools" [options]="schools" optionLabel="schoolName"
+                                        optionValue="schoolID" appendTo="body" formControlName="schoolID"
+                                        (onChange)="selectedSchool($event.value)" placeholder="Select School"
+                                        styleClass="w-full">
+                            </p-select>
+                            <small class="text-red-500" *ngIf="submitted && form.get('schoolID')?.invalid">
+                                School is required.
                             </small>
                         </div>
 

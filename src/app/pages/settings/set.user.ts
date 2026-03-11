@@ -106,6 +106,7 @@ export class Users implements OnInit {
     roles: any | [];
     allocations: any[] = [];
     hospitals: any[] = [];
+    schools: any[] = [];
     sections: any[] = [];
 
     emailPattern: string = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
@@ -132,6 +133,7 @@ export class Users implements OnInit {
             roleID: ['', Validators.required],
             email: ['', Validators.required],
             hospitalID: [null],
+            schoolID: [null],
             autoUsername: [false]
         });
     }
@@ -146,6 +148,7 @@ export class Users implements OnInit {
             roleID: ['', Validators.required],
             email: ['', Validators.required],
             hospitalID: [null],
+            schoolID: [null],
             autoUsername: [false]
         });
         this.loadData();
@@ -184,6 +187,7 @@ export class Users implements OnInit {
                 this.loadRoles();
                 this.loadUsers();
                 this.loadHospitals();
+                this.loadSchools();
             });
 
         this.cols = [
@@ -212,6 +216,17 @@ export class Users implements OnInit {
                 this.logger.printLogs('i', 'Hospitals loaded', this.hospitals)
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch hospitals', err)
+        });
+    }
+    
+
+    loadSchools() {
+        this.api.getSchools().subscribe({
+            next: (schools) => {
+                this.schools = schools || [];
+                this.logger.printLogs('i', 'Schools loaded', this.schools)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
         });
     }
 
@@ -349,6 +364,13 @@ export class Users implements OnInit {
             error: (err) => this.logger.printLogs('e', 'Failed to fetch allocations by Hospital ID', err),
         });
         this.itemDialog = true;
+    }
+
+    selectedHospital(hospitalID: any){
+        this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);  
+    }
+    selectedSchool(schoolID: any){
+        this.logger.printLogs('i', 'Selected School ID : ', schoolID);  
     }
 
     openQrZoom(): void {

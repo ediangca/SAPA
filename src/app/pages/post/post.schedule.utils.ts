@@ -239,8 +239,8 @@ export function aggregateSlotsByDay(
 
     // const titleKey =
     //   isAdmin ? 'schoolName' : 'hospitalName';
-    const titleKey = 'schoolName';
-
+    const titleKey =  isAdmin ? 'schoolName' : 'hospitalName';
+    
     const groupMap = new Map<string, any[]>();
 
     for (const slot of daySlots) {

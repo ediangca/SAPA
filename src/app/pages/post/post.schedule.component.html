@@ -215,7 +215,7 @@
                                 [severity]="getStatus(slot.slotStatus,'severirty')" />
                         </td>
                         <td>{{ dateFormat(slot.date_Created) }}</td>
-                        <td>
+                        <td class="flex justify-content gap-2">
                             <div class="flex gap-2">
                                 <p-button *ngIf="slot.slotStatus==0 && d" icon="pi pi-trash" severity="danger"
                                     [rounded]="true" [outlined]="true" (click)="delete(slot)" />
@@ -253,22 +253,18 @@
 
             }@else{
             <div class="flex flex-col md:flex-col " [style]="{ height: 'calc(100vh - 18rem)'}">
-                <div class="flex justify-end gap-4 pl-4 py-3">
-                    <!-- Morning -->
+                <!-- <div class="flex justify-end gap-4 pl-4 py-3">
                     <div class="flex items-center gap-2">
                         <p-tag severity="success" class="p-5" value="Morning" [rounded]="true" />
                     </div>
-
-                    <!-- Afternoon -->
                     <div class="flex items-center gap-2">
                         <p-tag severity="warn" class="p-5" value="Afternoon" [rounded]="true" />
                     </div>
-
-                    <!-- Evening -->
                     <div class="flex items-center gap-2">
                         <p-tag severity="secondary" class="p-5" value="Evening" [rounded]="true" />
                     </div>
-                </div>
+                </div> 
+                -->
                 <!-- <full-calendar [options]='calendarOptions()'>
                     <ng-template #eventContent let-arg>
                         <p-tag [value]="arg.event.title"
@@ -523,11 +519,11 @@
 
     <ng-template pTemplate="footer">
         @if(canManageStudent(selectedEvent)){
-            <p-button icon="pi pi-users" label="Manage Student" severity="primary"  [outlined]="true"
-                pTooltip="Manage Student" tooltipPosition="top" (click)="openMangeStudent(slot)">
+            <p-button icon="pi pi-users" label="Appoint Student" severity="primary"  [outlined]="true"
+                pTooltip="Manage Student" tooltipPosition="top" (click)="openManageStudent(selectedEvent)">
             </p-button>
         }
-        <p-button label="Attendance" icon="pi pi-list-check" severity="info" [outlined]="true"
+        <p-button *ngIf="selectedEvent.slotStatus === 1" label="Attendance" icon="pi pi-list-check" severity="info" [outlined]="true"
             pTooltip="Attendance" tooltipPosition="top" (click)="openAttendance(selectedEvent)">
         </p-button>
 
@@ -636,6 +632,18 @@
 <!-- Schedule Selected Day -->
 <p-dialog [header]="'Schedules (' + selectedDay + ')' " [(visible)]="dayDialog" modal [style]="{ width: '70vw' }"
     [resizable]="false">
+    <div class="flex justify-start gap-4 pl-4 py-3">
+        <div class="flex items-center gap-2">
+            <p-tag severity="success" class="p-5" value="Morning" [rounded]="true" />
+        </div>
+        <div class="flex items-center gap-2">
+            <p-tag severity="warn" class="p-5" value="Afternoon" [rounded]="true" />
+        </div>
+        <div class="flex items-center gap-2">
+            <p-tag severity="secondary" class="p-5" value="Evening" [rounded]="true" />
+        </div>
+    </div> 
+               
 
     <p-table [value]="daySlots" [rowHover]="true" [showGridlines]="true" responsiveLayout="stack" breakpoint="960px"
         dataKey="slotID" [loading]="loadingDaySlots" [paginator]="true" paginatorDropdownAppendTo="body" [rows]="50" [rowsPerPageOptions]="[50 ,100, 500, 1000]"
@@ -769,7 +777,7 @@
                 <td>{{ slot.dateSlot }}</td>
 
                 <td>
-                    {{ slot.shiftName }}
+                    <p-tag [severity]="getShiftSeverity(slot.shiftName)" class="p-5" [value]="slot.shiftName" [rounded]="true" />
                     <small class="block text-gray-500">
                         ({{ formatTime(slot.startTime) }} – {{ formatTime(slot.endTime) }})
                     </small>
@@ -785,7 +793,7 @@
                     <p-tag [value]="getStatus(slot.slotStatus, 'value')"
                         [severity]="getStatus(slot.slotStatus, 'severirty')" />
                 </td>
-                <td>
+                <td class="flex justify-content gap-2">
                     <!-- @if(canManageStudent(slot)){
                     <p-button icon="pi pi-users" severity="primary" [rounded]="true" [outlined]="true"
                         pTooltip="Manage student" tooltipPosition="top" (click)="openMangeStudent(slot)">
@@ -858,25 +866,23 @@
     </p>
     
                 <p-pick-list
-                    class="h-[420px]"
-                    [source]="sourceStudent"
-                    [target]="targetStudent"
-                    breakpoint="1400px"
-                    showSourceFilter="true"
-                    showTargetFilter="true"
-                    [responsive]="true"
-                    filterBy="fullname"
-                    sourceFilterPlaceholder="Search available student"
-                    targetFilterPlaceholder="Search assigned student"
-                    [style]="{ height: '100%' }"
-                    breakpoint="1400px"
-                    scrollHeight="20rem"
+                class="h-[420px]"
+                [source]="sourceStudent()"
+                [target]="targetStudent()"
+                breakpoint="1400px"
+                showSourceFilter="true"
+                showTargetFilter="true"
+                [responsive]="true"
+                filterBy="fullname"
+                sourceFilterPlaceholder="Search available student"
+                targetFilterPlaceholder="Search assigned student"
+                [style]="{ height: '100%' }"
+                scrollHeight="20rem"
 
-                    (onMoveToTarget)="onMoveToTarget($event)"
-                    (onMoveToSource)="onMoveToSource($event)"
-                    (onMoveAllToTarget)="onMoveAllToTarget($event)"
-                    (onMoveAllToSource)="onMoveAllToSource($event)"
-                    >
+                (onMoveToTarget)="onMoveToTarget($event)"
+                (onMoveToSource)="onMoveToSource($event)"
+                (onMoveAllToTarget)="onMoveAllToTarget($event)"
+                (onMoveAllToSource)="onMoveAllToSource($event)">
 
                     <ng-template #item let-selected="selected" let-item>
                         <!-- <strong>{{ item.fullname }}</strong> -->
@@ -905,7 +911,7 @@
        
     <ng-template pTemplate="footer" to>
         <!-- Add only available -->
-            <button *ngIf="assignedStudents > 0"
+            <button
                 pButton type="button" label="Save Assignments" class="p-button-primary mr-2" (click)="saveAssignStudentStudent()">
             </button>
 
