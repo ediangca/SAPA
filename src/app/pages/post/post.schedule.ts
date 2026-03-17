@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, signal, ViewChild } from '@angular/core';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
@@ -301,7 +301,7 @@ export class Schedule implements OnInit {
     ];
 
     showForceDialog: boolean = false;
-    availableSlots: any[] = [];
+    availableSlots: any[] = []
     existingSlots: any[] = [];
     blockedSlots: any[] = [];
     forceRequest: any;
@@ -349,7 +349,8 @@ export class Schedule implements OnInit {
         private api: ApiService,
         private logger: LogsService,
         private vf: ValidateForm,
-        private pdfService: PdfService
+        private pdfService: PdfService,
+        private cdr: ChangeDetectorRef
 
     ) {
     }
@@ -395,6 +396,7 @@ export class Schedule implements OnInit {
                 this.loadSections();
                 this.loadShifts();
                 this.buildSubComponent()
+                this.cdr.detectChanges();
             });
     }
 
@@ -424,8 +426,7 @@ export class Schedule implements OnInit {
 
 
     buildSubComponent() {
-
-        this.subcomponent = [
+        const menu = [
             { label: 'Print All', icon: 'fas fa-print', visible: this.p, command: () => this.openPrintDialog() },
             ...(this.tokenPayload.role === 'UGR0001'
                 ? [
@@ -436,25 +437,26 @@ export class Schedule implements OnInit {
                         disabled: !this.selectSlots || this.selectSlots.length === 0,
                         visible: this.s,
                         items: [
-                            { label: 'Pending', severity: 'warning', icon: 'fas fa-file-powerpoint', command: () => this.changeStatus(0) },
-                            { label: 'Confirm', severity: 'primary', icon: 'fas fa-clipboard-check', command: () => this.changeStatus(1) },
-                            { label: 'Request Cancel', severity: 'warning', icon: 'fas fa-file-arrow-up', command: () => this.changeStatus(3) },
-                            { label: 'Confirm Cancelation', severity: 'info', icon: 'fas fa-file-circle-xmark', command: () => this.changeStatus(4) },
-                            { label: 'Declined', severity: 'danger', icon: 'fas fa-file-excel', command: () => this.changeStatus(2) }
+                            { label: 'Pending', icon: 'fas fa-file-powerpoint', command: () => this.changeStatus(0) },
+                            { label: 'Confirm', icon: 'fas fa-clipboard-check', command: () => this.changeStatus(1) },
+                            { label: 'Request Cancel', icon: 'fas fa-file-arrow-up', command: () => this.changeStatus(3) },
+                            { label: 'Confirm Cancelation', icon: 'fas fa-file-circle-xmark', command: () => this.changeStatus(4) },
+                            { label: 'Declined', icon: 'fas fa-file-excel', command: () => this.changeStatus(2) }
                         ]
                     }
                 ]
-                :
-                [
+                : [
                     {
                         label: 'Request Cancel',
                         icon: 'fas fa-file-arrow-up',
                         disabled: !this.selectSlots || this.selectSlots.length === 0,
                         visible: this.s,
                         command: () => this.changeStatus(3)
-                    },
+                    }
                 ]),
         ];
+
+        this.subcomponent = [...menu];
     }
 
     initCols() {

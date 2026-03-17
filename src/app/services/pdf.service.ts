@@ -502,7 +502,7 @@ export class PdfService {
                   { text: item.schoolName, fontSize: 9, noWrap: false },
                   { text: item.hospitalName, fontSize: 9, noWrap: false },
                   { text: item.sectionName, fontSize: 9 },
-                  { text: item.allocation?.toString() ?? '0', fontSize: 9 },
+                  { text: (item.studentCount?.toString() ?? '0') + "/" + (item.allocation?.toString() ?? '0'), fontSize: 9 },
                   // {
                   //     text: statusIcon.text,
                   //     color: statusIcon.color,

@@ -62,6 +62,22 @@ export class RecentSchedule implements OnInit, OnChanges {
         }
     }
 
+    isAdmin(): boolean {
+        return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
+    }
+
+    isSchoolCoordinator(): boolean {
+        return this.tokenPayload.role === 'UGR0003';
+    }
+
+    isIntern(): boolean {
+        return this.tokenPayload.role === 'UGR0004';
+    }
+
+    isSupervisor(): boolean {
+        return this.tokenPayload.role === 'UGR0005';
+    }
+
     buildChartFromSlots() {
 
         // Map to store month name => shift counts
@@ -153,24 +169,36 @@ export class RecentSchedule implements OnInit, OnChanges {
 
         if (!this.slots?.length) return;
 
-        const hospitalMap: Record<string, { name: string; count: number }> = {};
+        const mapTrend: Record<string, { name: string; count: number }> = {};
 
         this.slots.forEach(slot => {
 
-            if (!slot.hospitalID) return;
+            if (this.isAdmin()  || this.isSupervisor() ) {
+                if (!slot.schoolID) return;
 
-            if (!hospitalMap[slot.hospitalID]) {
-                hospitalMap[slot.hospitalID] = {
-                    name: slot.hospitalName || 'Unknown Hospital',
-                    count: 0
-                };
+                if (!mapTrend[slot.schoolID]) {
+                    mapTrend[slot.schoolID] = {
+                        name: slot.schoolName || 'Unknown School',
+                        count: 0
+                    };
+                }
+                mapTrend[slot.schoolID].count++;
+            } else {
+                if (!slot.hospitalID) return;
+
+                if (!mapTrend[slot.hospitalID]) {
+                    mapTrend[slot.hospitalID] = {
+                        name: slot.hospitalName || 'Unknown Hospital',
+                        count: 0
+                    };
+                }
+                mapTrend[slot.hospitalID].count++;
             }
 
-            hospitalMap[slot.hospitalID].count++;
         });
 
-        const labels = Object.values(hospitalMap).map(h => h.name);
-        const data = Object.values(hospitalMap).map(h => h.count);
+        const labels = Object.values(mapTrend).map(h => h.name);
+        const data = Object.values(mapTrend).map(h => h.count);
 
         this.initPieChart(labels, data);
     }
