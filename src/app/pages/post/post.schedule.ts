@@ -499,7 +499,6 @@ export class Schedule implements OnInit {
                 // 'today,dayGridMonth,listWeek prev,next'
                 right: 'dayGridMonth,listWeek prev,next'
             },
-
             weekends: true,
             dayMaxEvents: true,        // "+X more"
             fixedWeekCount: false,
@@ -1527,9 +1526,9 @@ export class Schedule implements OnInit {
     }
 
 
-    delete(school: any) {
+    delete(slot: any) {
         this.confirmationService.confirm({
-            message: `Are you sure you want to delete ${school.schoolName}?`,
+            message: `Are you sure you want to delete ${slot.slotID}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             rejectLabel: 'Cancel',
@@ -1540,16 +1539,16 @@ export class Schedule implements OnInit {
             rejectButtonStyleClass: 'p-button-danger',
 
             accept: () => {
-                this.logger.printLogs('i', `Deleting School ${school.schoolName}`, school);
+                this.logger.printLogs('i', `Deleting Slot ${slot.slotID}`, slot);
 
-                this.api.deleteSlot(school.schoolID).subscribe({
+                this.api.deleteSlot(slot.slotID).subscribe({
                     next: (res: any) => {
-                        this.logger.printLogs('i', 'School deleted successfully', res);
+                        this.logger.printLogs('i', 'Slot deleted successfully', res);
                         this.loadSlots();
-                        this.showErrorAlert('Successful', 'School deleted successfully', false, 'success');
+                        this.showErrorAlert('Successful', 'Slot deleted successfully', false, 'success');
                     },
                     error: (err: any) => {
-                        this.logger.printLogs('e', 'Failed to delete school', err);
+                        this.logger.printLogs('e', 'Failed to delete Slot', err);
                         this.showErrorAlert('Deleting Failed', err, false, 'error');
                     }
                 });
