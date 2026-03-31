@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit, signal, ViewChild } from '@angular/core';
-import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
+import { ConfirmationService, FilterService, MenuItem, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -235,55 +235,6 @@ export class Schedule implements OnInit {
 
     INITIAL_EVENTS: any[] = [];
 
-    // calendarOptions = signal<CalendarOptions>({
-    //     // validRange: {
-    //     //     start: this.initDate()   // Disable today and past days
-    //     // },
-    //     height: '100%',       // fill parent div height
-    //     plugins: [
-    //         interactionPlugin,
-    //         dayGridPlugin,
-    //         timeGridPlugin,
-    //         listPlugin,
-    //     ],
-    //     headerToolbar: {
-    //         //today
-    //         left: 'prev,next,myCustomButton',
-    //         center: 'title',
-    //         right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-    //         //   listWeek
-    //     },
-    //     customButtons: {
-    //         myCustomButton: {
-    //             text: 'New Schedule',
-    //             click: () => {
-    //                 // This function runs when the button is clicked
-    //                 console.log('Custom button clicked!');
-    //                 // You can open a modal, add an event, etc.
-    //                 this.openNew(null);
-    //             }
-    //         }
-    //     },
-    //     initialView: 'dayGridMonth',
-    //     // initialEvents: INITIAL_EVENTS, // alternatively, use the `events` setting to fetch from a feed
-    //     // initialEvents: this.INITIAL_EVENTS,
-    //     events: [],
-    //     weekends: true,
-    //     editable: true,
-    //     selectable: true,
-    //     selectMirror: true,
-    //     dayMaxEvents: true,
-    //     eventClick: (clickInfo: any) => this.onEventClick(clickInfo),
-    //     select: this.openNew.bind(this),
-    //     // eventClick: this.handleEventClick.bind(this),
-    //     // eventsSet: this.handleEvents.bind(this)
-    //     //  you can update a remote database when these fire:
-    //     // eventAdd:
-    //     // eventChange:
-    //     // eventRemove:
-    //     // height: 'calc(100vh - 12rem)', 
-    //     // contentHeight: 'auto'
-    // });
     selectedEvent: any = null;
     dateRange: any;
     selectedDateFrom: string | null = null;
@@ -350,7 +301,8 @@ export class Schedule implements OnInit {
         private logger: LogsService,
         private vf: ValidateForm,
         private pdfService: PdfService,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        private filterService: FilterService
 
     ) {
     }
@@ -398,6 +350,44 @@ export class Schedule implements OnInit {
                 this.buildSubComponent()
                 this.cdr.detectChanges();
             });
+
+        this.filterService.register('dateRangeFilter', (value: any, filter: any): boolean => {
+            if (!filter || (Array.isArray(filter) && filter.every(f => !f))) {
+                return true; // no filter applied
+            }
+
+            if (!value) return false;
+
+            const cellDate = new Date(value);
+            cellDate.setHours(0, 0, 0, 0);
+
+            // Single date selected
+            if (!Array.isArray(filter)) {
+                const filterDate = new Date(filter);
+                filterDate.setHours(0, 0, 0, 0);
+                return cellDate.getTime() === filterDate.getTime();
+            }
+
+            const [startDate, endDate] = filter;
+
+            if (startDate && !endDate) {
+                // Only start date selected (range not yet complete)
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                return cellDate.getTime() === start.getTime();
+            }
+
+            if (startDate && endDate) {
+                // Full range selected
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+                return cellDate >= start && cellDate <= end;
+            }
+
+            return true;
+        });
     }
 
     initPrivileges() {
@@ -634,7 +624,14 @@ export class Schedule implements OnInit {
                 next: (slots) => {
                     this.logger.printLogs('i', 'Slots loaded', slots);
 
-                    this.slots.set(slots);
+                    // this.slots.set(slots);\
+
+                    this.slots.set(slots.map(slot => ({
+                        ...slot,
+                        dateSlot: new Date(slot.dateSlot),       // ✅ convert string → Date
+                        date_Created: new Date(slot.date_Created) // ✅ same for date_created if needed
+                    })));
+
                     // let filteredSlots;
                     // if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
                     //     this.slots.set(slots);
@@ -1212,6 +1209,64 @@ export class Schedule implements OnInit {
     }
 
 
+    // createSchedule(request: any, force: boolean = false) {
+    //     this.forceRequest = request;
+
+    //     this.api.createBulkSchedules(request, force).subscribe({
+    //         next: (res: any) => {
+    //             this.logger.printLogs('i', 'Create Slot Response:', res);
+
+    //             const blockedCount = res.blocked?.length || 0;
+    //             const skippedCount = res.skipped?.length || 0;
+    //             const addedCount = res.added?.length || 0;
+
+
+    //             // Show dialog if there are skipped/unconfirmed slots and not forcing
+    //             if (((skippedCount > 0 || blockedCount > 0)) && !force) {
+    //                 this.messageService.add({
+    //                     severity: 'warn',
+    //                     summary: `Existing Slots`,
+    //                     // detail: `${skippedCount + blockedCount} slot(s) already exist as unconfirmed & confirmed. Choose an action to proceed.`,
+    //                     detail: res.message || `${skippedCount + blockedCount} slot(s) already exist as unconfirmed & confirmed. Choose an action to proceed.`,
+    //                     life: 5000
+    //                 });
+
+    //                 this.availableSlots = res.added || [];
+    //                 this.blockedSlots = res.blocked || [];
+    //                 this.existingSlots = res.skipped || [];
+    //                 this.showForceDialog = true;
+
+    //                 return;
+    //             }
+
+    //             this.logger.printLogs('i', 'Count >>> ', `Added: ${addedCount}, Skipped: ${skippedCount}, Blocked: ${blockedCount}`);
+
+    //             this.logger.printLogs('i', 'Condition 1 >>> ', `${(addedCount > 0 && skippedCount > 0 && force)}`);
+
+    //             this.logger.printLogs('i', 'Condition 2 >>> ', `${(skippedCount < 1 && blockedCount < 1 && addedCount > 0 && !force)}`);
+
+    //             // Show success if any slots were created
+    //             if ((addedCount > 0 && skippedCount > 0 && force) ||
+    //                 (skippedCount < 1 && blockedCount < 1 && addedCount > 0 && !force)) {
+    //                 this.showErrorAlert('Successful', res.message, false, 'success');
+    //                 if (this.tableOption) {
+    //                     this.loadSlots();
+    //                 } else {
+    //                     this.buildCalendarEvents();
+    //                 }
+    //             }
+    //         },
+    //         error: (err: any) => {
+    //             this.messageService.add({
+    //                 severity: 'error',
+    //                 summary: 'Error',
+    //                 detail: err.message || 'Failed to save slots.',
+    //                 life: 5000
+    //             });
+    //         }
+    //     });
+    // }
+
     createSchedule(request: any, force: boolean = false) {
         this.forceRequest = request;
 
@@ -1222,15 +1277,14 @@ export class Schedule implements OnInit {
                 const blockedCount = res.blocked?.length || 0;
                 const skippedCount = res.skipped?.length || 0;
                 const addedCount = res.added?.length || 0;
+                const totalCreated = res.totalCreated || 0;
 
-
-                // Show dialog if there are skipped/unconfirmed slots and not forcing
-                if (((skippedCount > 0 || blockedCount > 0)) && !force) {
+                // Show conflict dialog only when NOT forcing and conflicts exist
+                if ((skippedCount > 0 || blockedCount > 0) && !force) {
                     this.messageService.add({
                         severity: 'warn',
-                        summary: `Existing Slots`,
-                        // detail: `${skippedCount + blockedCount} slot(s) already exist as unconfirmed & confirmed. Choose an action to proceed.`,
-                        detail: res.message || `${skippedCount + blockedCount} slot(s) already exist as unconfirmed & confirmed. Choose an action to proceed.`,
+                        summary: 'Existing Slots',
+                        detail: res.message || `${skippedCount + blockedCount} slot(s) already exist. Choose an action to proceed.`,
                         life: 5000
                     });
 
@@ -1238,25 +1292,28 @@ export class Schedule implements OnInit {
                     this.blockedSlots = res.blocked || [];
                     this.existingSlots = res.skipped || [];
                     this.showForceDialog = true;
-
                     return;
                 }
 
-                this.logger.printLogs('i', 'Count >>> ', `Added: ${addedCount}, Skipped: ${skippedCount}, Blocked: ${blockedCount}`);
-
-                this.logger.printLogs('i', 'Condition 1 >>> ', `${(addedCount > 0 && skippedCount > 0 && force)}`);
-
-                this.logger.printLogs('i', 'Condition 2 >>> ', `${(skippedCount < 1 && blockedCount < 1 && addedCount > 0 && !force)}`);
-
-                // Show success if any slots were created
-                if ((addedCount > 0 && skippedCount > 0 && force) ||
-                    (skippedCount < 1 && blockedCount < 1 && addedCount > 0 && !force)) {
+                // Success: slots were actually created
+                if (totalCreated > 0) {
                     this.showErrorAlert('Successful', res.message, false, 'success');
                     if (this.tableOption) {
                         this.loadSlots();
                     } else {
                         this.buildCalendarEvents();
                     }
+                    return;
+                }
+
+                // Nothing was created (e.g. all blocked)
+                if (totalCreated === 0 && blockedCount > 0) {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'No Slots Created',
+                        detail: 'All requested slots are confirmed/blocked and cannot be overridden.',
+                        life: 5000
+                    });
                 }
             },
             error: (err: any) => {
@@ -1270,6 +1327,105 @@ export class Schedule implements OnInit {
         });
     }
 
+
+    getMaxLengthIndices(): number[] {
+        const maxLength = Math.max(
+            this.availableSlots.length,
+            this.existingSlots.length,
+            this.blockedSlots.length
+        );
+        return Array.from({ length: maxLength }, (_, i) => i);
+    }
+
+
+    // forceAddSlots() {
+    //     this.showForceDialog = false;
+    //     if (!this.forceRequest) return;
+    //     this.createSchedule(this.forceRequest, true);
+    // }
+
+    // addAvailableOnly() {
+    //     this.showForceDialog = false;
+    //     if (!this.forceRequest) return;
+
+    //     this.logger.printLogs('i', 'Available Slots to Add:', this.availableSlots);
+
+    //     // Make a copy of the request containing only available slots
+    //     const availableRequest = {
+    //         ...this.forceRequest,
+    //         DateSlots: this.availableSlots.map(s => s.dateSlot),
+    //         ShiftIDs: this.availableSlots.map(s => s.shiftID),
+    //         HospitalID: this.availableSlots[0].hospitalID,
+    //         AllocationIDs: this.availableSlots.map(s => s.allocationID),
+    //         UserID: this.tokenPayload.nameid
+
+    //     };
+
+    //     this.createSchedule(availableRequest, true); // force = false
+    // }
+
+    // forceAddAll() {
+    //     this.showForceDialog = false;
+    //     if (!this.forceRequest) return;
+
+    //     this.createSchedule(this.forceRequest, true); // force = true, adds available + existing
+    // }
+
+    // Adds ONLY the available (non-conflicting) slots
+    addAvailableOnly() {
+        this.showForceDialog = false;
+        if (!this.forceRequest || this.availableSlots.length === 0) return;
+
+        // Use only the dates from available slots, keep original shiftIDs and allocationIDs
+        const availableDates = [...new Set(this.availableSlots.map((s: any) => s.dateSlot))];
+
+        const availableRequest = {
+            ...this.forceRequest,
+            dateSlots: availableDates, // camelCase to match original request shape
+        };
+
+        this.logger.printLogs('i', 'Add Available Only Request:', availableRequest);
+
+        // force = false: these are clean slots, no conflict expected
+        this.createSchedule(availableRequest, true);
+    }
+
+    // Adds available + unconfirmed (skipped) slots — skips only blocked
+    forceAddAll() {
+        this.showForceDialog = false;
+        if (!this.forceRequest) return;
+
+        // Only proceed if there are available or skipped slots
+        if (this.availableSlots.length === 0 && this.existingSlots.length === 0) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Nothing to Add',
+                detail: 'No available or unconfirmed slots to force add.',
+                life: 3000
+            });
+            return;
+        }
+
+        // force = true: backend will insert available + overwrite unconfirmed (skipped)
+        this.createSchedule(this.forceRequest, true);
+    }
+
+    // Optional: add ONLY unconfirmed (skipped) slots — if you want that third button
+    forceAddSkippedOnly() {
+        this.showForceDialog = false;
+        if (!this.forceRequest || this.existingSlots.length === 0) return;
+
+        const skippedDates = [...new Set(this.existingSlots.map((s: any) => s.dateSlot))];
+
+        const skippedRequest = {
+            ...this.forceRequest,
+            dateSlots: skippedDates,
+        };
+
+        this.logger.printLogs('i', 'Force Add Skipped Only Request:', skippedRequest);
+
+        this.createSchedule(skippedRequest, true);
+    }
 
     openManageStudent(slot: any) {
 
@@ -1327,20 +1483,6 @@ export class Schedule implements OnInit {
         return item.userID;
     }
 
-
-    // openAttendance(slot: any, studentID: string | null = null) {
-    //     // Open Dialog and add student management logic here
-    //     this.slot = slot;
-    //     this.logger.printLogs('i', 'Attendance for Slot:', slot);
-    //     this.dayDialog = false;
-    //     this.displayEventDialog = false;
-    //     this.manageStudentDialog = false;
-    //     this.manageAttendanceDialog = true;
-    //     this.targetStudent = [];
-    //     this.sourceStudent = [];
-
-
-    // }
 
     openAttendance(slot: any, studentID: string | null = null) {
 
@@ -1473,56 +1615,6 @@ export class Schedule implements OnInit {
 
         });
 
-    }
-
-
-    getMaxLengthIndices(): number[] {
-        const maxLength = Math.max(
-            this.availableSlots.length,
-            this.existingSlots.length,
-            this.blockedSlots.length
-        );
-        return Array.from({ length: maxLength }, (_, i) => i);
-    }
-
-
-    forceAddSlots() {
-        this.showForceDialog = false;
-        if (!this.forceRequest) return;
-        this.createSchedule(this.forceRequest, true);
-    }
-
-    addAvailableOnly() {
-        this.showForceDialog = false;
-        if (!this.forceRequest) return;
-
-        this.logger.printLogs('i', 'Available Slots to Add:', this.availableSlots);
-
-        // Make a copy of the request containing only available slots
-        const availableRequest = {
-            ...this.forceRequest,
-            DateSlots: this.availableSlots.map(s => s.dateSlot),
-            ShiftIDs: this.availableSlots.map(s => s.shiftID),
-            HospitalID: this.availableSlots[0].hospitalID,
-            AllocationIDs: this.availableSlots.map(s => s.allocationID),
-            UserID: this.tokenPayload.nameid
-
-        };
-
-        // public List<DateTime> DateSlots { get; set; } = new();
-        // public List<string> ShiftIDs { get; set; } = new();
-        // public string HospitalID { get; set; } = string.Empty;
-        // public List<string> AllocationIDs { get; set; } = new();
-        // public string UserID { get; set; } = string.Empty;
-
-        this.createSchedule(availableRequest, false); // force = false
-    }
-
-    forceAddAll() {
-        this.showForceDialog = false;
-        if (!this.forceRequest) return;
-
-        this.createSchedule(this.forceRequest, true); // force = true, adds available + existing
     }
 
 

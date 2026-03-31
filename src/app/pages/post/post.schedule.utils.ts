@@ -178,6 +178,29 @@ export function mapSlotsToEvents(slots: any[], roleID: string | null = null) {
 
 //   return events;
 // }
+// utils/abbreviation.helper.ts
+
+export function abbreviateName(fullName: string): string {
+  if (!fullName) return 'Unknown';
+
+  // Remove common suffixes/words that don't add to abbreviation
+  const skipWords = ['the', 'of', 'and', 'a', 'an', 'for', 'Inc', 'Inc.', 'Corp', 'Foundation'];
+
+  // Split by spaces, commas, dashes, and dots
+  const parts = fullName.split(/[\s,\-\.]+/);
+
+  const abbreviated = parts
+    .filter(p => p.length > 0 && !skipWords.includes(p))
+    .map(p => p[0].toUpperCase())
+    .join('');
+
+  return abbreviated;
+}
+
+// Examples:
+// "Arriesgado College Foundation, Inc - Kapalong Zone" → "ACFKZ"  (skips Inc)
+// "St. Luke's Medical Center - Quezon City"            → "SLMCQC"
+// "Jose Rizal Memorial Hospital"                       → "JRMH"
 
 export function aggregateSlotsByDay(
   slots: any[],
@@ -234,34 +257,110 @@ export function aggregateSlotsByDay(
     // 🔹 Admin → group by school
     // 🔹 School Coordinator → group by hospital
     // 🔹 Hospital Supervisor → group by hospital
-    const groupKey =
-      isAdmin ? 'schoolID' : 'hospitalID';
 
-    // const titleKey =
-    //   isAdmin ? 'schoolName' : 'hospitalName';
-    const titleKey =  isAdmin ? 'schoolName' : 'hospitalName';
-    
-    const groupMap = new Map<string, any[]>();
 
-    for (const slot of daySlots) {
-      const key = slot[groupKey];
-      if (!key) continue;
+    // const groupKey =
+    //   isAdmin ? 'schoolID' : 'hospitalID';
 
-      if (!groupMap.has(key)) {
-        groupMap.set(key, []);
+    // // const titleKey =
+    // //   isAdmin ? 'schoolName' : 'hospitalName';
+    // const titleKey = isAdmin ? 'schoolName' : 'hospitalName';
+
+    // const groupMap = new Map<string, any[]>();
+
+    // for (const slot of daySlots) {
+    //   const key = slot[groupKey];
+    //   if (!key) continue;
+
+    //   if (!groupMap.has(key)) {
+    //     groupMap.set(key, []);
+    //   }
+    //   groupMap.get(key)!.push(slot);
+    // }
+
+    // groupMap.forEach((groupSlots, key) => {
+    //   const fullTitle = groupSlots[0][titleKey] || 'Unknown';
+    //   // ✅ Build abbreviation from full name
+    //   const abbreviation = abbreviateName(fullTitle);
+
+    //   events.push({
+    //     id: `${day}-${key}`,
+    //     start: day,
+    //     allDay: true,
+    //     title: groupSlots[0][titleKey] || 'Unknown',
+    //     extendedProps: { slots: groupSlots, abbreviation }
+    //   });
+    // });
+
+
+    if (isAdmin) {
+      // ✅ Admin: group by school → then by hospital inside each school
+      const schoolMap = new Map<string, any[]>();
+      for (const slot of daySlots) {
+        const key = slot.schoolID;
+        if (!key) continue;
+        if (!schoolMap.has(key)) schoolMap.set(key, []);
+        schoolMap.get(key)!.push(slot);
       }
-      groupMap.get(key)!.push(slot);
-    }
 
-    groupMap.forEach((groupSlots, key) => {
-      events.push({
-        id: `${day}-${key}`,
-        start: day,
-        allDay: true,
-        title: groupSlots[0][titleKey] || 'Unknown',
-        extendedProps: { slots: groupSlots }
+      schoolMap.forEach((schoolSlots, schoolID) => {
+        // Group by hospital within this school
+        const hospitalMap = new Map<string, any[]>();
+        for (const slot of schoolSlots) {
+          const key = slot.hospitalID;
+          if (!key) continue;
+          if (!hospitalMap.has(key)) hospitalMap.set(key, []);
+          hospitalMap.get(key)!.push(slot);
+        }
+
+        hospitalMap.forEach((hospitalSlots, hospitalID) => {
+          const schoolName = hospitalSlots[0].schoolName || 'Unknown School';
+          const hospitalName = hospitalSlots[0].hospitalName || 'Unknown Hospital';
+          const fullTitle = `${schoolName} — ${hospitalName}`;
+          const abbreviation = `${abbreviateName(schoolName)} - ${abbreviateName(hospitalName)}`;
+
+          events.push({
+            id: `${day}-${schoolID}-${hospitalID}`,
+            start: day,
+            allDay: true,
+            title: fullTitle,
+            extendedProps: {
+              slots: hospitalSlots,
+              abbreviation,
+              schoolName,
+              hospitalName
+            }
+          });
+        });
       });
-    });
+
+    } else {
+      // ✅ School Coordinator / Hospital Supervisor / Student: group by hospital only
+      const hospitalMap = new Map<string, any[]>();
+      for (const slot of daySlots) {
+        const key = slot.hospitalID;
+        if (!key) continue;
+        if (!hospitalMap.has(key)) hospitalMap.set(key, []);
+        hospitalMap.get(key)!.push(slot);
+      }
+
+      hospitalMap.forEach((hospitalSlots, hospitalID) => {
+        const hospitalName = hospitalSlots[0].hospitalName || 'Unknown';
+        const abbreviation = abbreviateName(hospitalName);
+
+        events.push({
+          id: `${day}-${hospitalID}`,
+          start: day,
+          allDay: true,
+          title: hospitalName,
+          extendedProps: {
+            slots: hospitalSlots,
+            abbreviation,
+            hospitalName
+          }
+        });
+      });
+    }
 
   });
 

@@ -12,7 +12,7 @@ import { LogsService } from '@/services/logs.service';
     
     <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="tokenPayload.role === 'UGR0001' || tokenPayload.role === 'UGR0002'">
         <!-- Pending -->
-        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+        <div class="col-span-4 lg:col-span-4 xl:col-span-3">
             <div class="card">
                 <div class="flex justify-between mb-4">
                     <div>
@@ -30,7 +30,7 @@ import { LogsService } from '@/services/logs.service';
         </div>
 
         <!-- Confirmed -->
-        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+        <div class="col-span-4 lg:col-span-4 xl:col-span-3">
             <div class="card">
                 <div class="flex justify-between mb-4">
                     <div>
@@ -48,7 +48,7 @@ import { LogsService } from '@/services/logs.service';
         </div>
 
         <!-- Students -->
-        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+        <div class="col-span-4 lg:col-span-4 xl:col-span-3">
             <div class="card">
                 
                 <div class="flex justify-between mb-4">
@@ -67,7 +67,7 @@ import { LogsService } from '@/services/logs.service';
         </div>
 
         <!-- Revenue -->
-        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+        <div class="col-span-4 lg:col-span-4 xl:col-span-3">
             <div class="card">
                 <div class="flex justify-between mb-4">
                     <div>
@@ -87,7 +87,7 @@ import { LogsService } from '@/services/logs.service';
 
     <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="tokenPayload.role === 'UGR0005' || tokenPayload.role === 'UGR0003'">
         <!-- Pending -->
-        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+        <div class="col-span-4 lg:col-span-4 xl:col-span-4">
             <div class="card">
                 <div class="flex justify-between mb-4">
                     <div>
@@ -105,7 +105,7 @@ import { LogsService } from '@/services/logs.service';
         </div>
 
         <!-- Confirmed -->
-        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+        <div class="col-span-4 lg:col-span-4 xl:col-span-4">
             <div class="card">
                 <div class="flex justify-between mb-4">
                     <div>
@@ -123,7 +123,7 @@ import { LogsService } from '@/services/logs.service';
         </div>
 
         <!-- Students -->
-        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+        <div class="col-span-4 lg:col-span-4 xl:col-span-4">
             <div class="card">
                 
                 <div class="flex justify-between mb-4">
@@ -165,7 +165,7 @@ import { LogsService } from '@/services/logs.service';
     <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="tokenPayload.role === 'UGR0004'">
 
         <!-- Confirmed -->
-        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+        <div class="col-span-6 lg:col-span-4 xl:col-span-6">
             <div class="card">
                 <div class="flex justify-between mb-4">
                     <div>
@@ -183,7 +183,7 @@ import { LogsService } from '@/services/logs.service';
         </div>
 
         <!-- Students -->
-        <div class="col-span-4 lg:col-span-4 xl:col-span-6">
+        <div class="col-span-6 lg:col-span-4 xl:col-span-6">
             <div class="card">
                 
                 <div class="flex justify-between mb-4">

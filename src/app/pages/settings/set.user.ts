@@ -104,6 +104,7 @@ export class Users implements OnInit {
     tokenPayload: any | null;
 
     roles: any | [];
+    headStatuses: any[] = [];
     allocations: any[] = [];
     hospitals: any[] = [];
     schools: any[] = [];
@@ -199,7 +200,14 @@ export class Users implements OnInit {
             { field: 'date_create', header: 'Date Created' },
         ];
 
-
+        this.headStatuses = [
+            { label: 'Pending', value: 'P' },
+            { label: 'Approved', value: 'A' },
+            { label: 'Inactive', value: 'I' },
+            { label: 'Unverified', value: 'U' },
+            { label: 'Suspend', value: 'S' },
+        ];
+        
     }
 
     loadRoles() {

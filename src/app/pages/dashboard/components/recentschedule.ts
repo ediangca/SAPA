@@ -14,6 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { LogsService } from '@/services/logs.service';
 import { DialogModule } from 'primeng/dialog';
+import { abbreviateName } from '@/pages/post/post.schedule.utils';
 
 @Component({
     standalone: true,
@@ -30,10 +31,33 @@ export class RecentSchedule implements OnInit, OnChanges {
     @Input() tokenPayload!: any;
     barData: any;
     barOptions: any;
-    pieData: any;
-    pieOptions: any;
+
+    barHospitalStachData: any;
+    barHospitalStachOptions: any;
+
+    barSectionData: any;
+    barSectionOptions: any;
+
+    barSchoolStachData: any;
+    barSchoolStachOptions: any;
+
+
+    linearHospitalData: any;
+    linearHospitalOption: any;
+
+
+    linearSchoolData: any;
+    linearSchoolOptions: any;
+
     currentYear: number = 0;
     displayEventDialog = false;
+
+
+    pieSchoolData: any;
+    pieSchoolOptions: any;
+
+    pieHospitalData: any;
+    pieHospitalOptions: any;
 
 
     selectedEvent!: any;
@@ -57,8 +81,13 @@ export class RecentSchedule implements OnInit, OnChanges {
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes['slots'] && this.slots) {
+            this.buildStackedByHospitalShift();
             this.buildChartFromSlots();
-            this.buildPieChartFromSlots();
+            this.buildBarBySectionShift();
+            this.buildLinearBySchoolShift();
+            this.buildLinearByHospitalShift();
+            this.buildPieBySchool();
+            this.buildPieByHospital();
         }
     }
 
@@ -164,8 +193,415 @@ export class RecentSchedule implements OnInit, OnChanges {
         };
     }
 
+    buildStackedByHospitalShift() {
 
-    buildPieChartFromSlots() {
+        const hospitalMap: Record<string, {
+            morning: number,
+            afternoon: number,
+            evening: number
+        }> = {};
+
+        this.slots.forEach(slot => {
+            if (!slot.hospitalName) return;
+
+            const hospital = slot.hospitalName;
+
+            if (!hospitalMap[hospital]) {
+                hospitalMap[hospital] = {
+                    morning: 0,
+                    afternoon: 0,
+                    evening: 0
+                };
+            }
+
+            const shift = (slot.shiftName || '').toLowerCase();
+
+            if (shift.includes('morning')) {
+                hospitalMap[hospital].morning++;
+            } else if (shift.includes('afternoon')) {
+                hospitalMap[hospital].afternoon++;
+            } else if (shift.includes('evening')) {
+                hospitalMap[hospital].evening++;
+            }
+        });
+
+        const labels = Object.keys(hospitalMap);
+
+        const morningData = labels.map(h => hospitalMap[h].morning);
+        const afternoonData = labels.map(h => hospitalMap[h].afternoon);
+        const eveningData = labels.map(h => hospitalMap[h].evening);
+
+        this.initStackedChart({ labels, morningData, afternoonData, eveningData });
+    }
+
+    initStackedChart(data: {
+        labels: string[],
+        morningData: number[],
+        afternoonData: number[],
+        eveningData: number[]
+    }) {
+
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+        const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+        const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+        this.barHospitalStachData = {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Morning',
+                    backgroundColor: '#42A5F5',
+                    data: data.morningData,
+                    borderRadius: 6
+                },
+                {
+                    label: 'Afternoon',
+                    backgroundColor: '#9CCC65',
+                    data: data.afternoonData,
+                    borderRadius: 6
+                },
+                {
+                    label: 'Evening',
+                    backgroundColor: '#f73b7d',
+                    data: data.eveningData,
+                    borderRadius: 6
+                }
+            ]
+        };
+
+        this.barHospitalStachOptions = {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: textColor }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true, // 🔥 IMPORTANT
+                    ticks: { color: textColorSecondary },
+                    grid: { display: false }
+                },
+                y: {
+                    stacked: true, // 🔥 IMPORTANT
+                    beginAtZero: true,
+                    ticks: { color: textColorSecondary },
+                    grid: { color: surfaceBorder }
+                }
+            }
+        };
+    }
+
+    buildLinearByHospitalShift() {
+
+        // Map: hospital => shift counts
+        const hospitalMap: Record<string, {
+            hospitalName: string,
+            morning: number,
+            afternoon: number,
+            evening: number
+        }> = {};
+
+        this.slots.forEach(slot => {
+            if (!slot.hospitalID) return;
+
+            const hospitalID = slot.hospitalID;
+
+            if (!hospitalMap[hospitalID]) {
+                hospitalMap[hospitalID] = {
+                    hospitalName: slot.hospitalName || hospitalID,
+                    morning: 0,
+                    afternoon: 0,
+                    evening: 0
+                };
+            }
+
+            const shift = (slot.shiftName || '').toLowerCase();
+
+            if (shift.includes('morning')) {
+                hospitalMap[hospitalID].morning++;
+            }
+            else if (shift.includes('afternoon')) {
+                hospitalMap[hospitalID].afternoon++;
+            }
+            else if (shift.includes('evening')) {
+                hospitalMap[hospitalID].evening++;
+            }
+        });
+
+        // Convert to chart arrays
+        const labels = Object.values(hospitalMap).map(h => h.hospitalName);
+        const morningData = Object.values(hospitalMap).map(h => h.morning);
+        const afternoonData = Object.values(hospitalMap).map(h => h.afternoon);
+        const eveningData = Object.values(hospitalMap).map(h => h.evening);
+
+        this.initLinearHospitalChart({ labels, morningData, afternoonData, eveningData });
+    }
+
+    initLinearHospitalChart(data?: {
+        labels: string[],
+        morningData: number[],
+        afternoonData: number[],
+        eveningData: number[]
+    }) {
+
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+        const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+        const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+        this.linearHospitalData = {
+            labels: data?.labels || [],
+            datasets: [
+                {
+                    label: 'Morning',
+                    data: data?.morningData || [],
+                    fill: false,
+                    borderColor: '#42A5F5',
+                    tension: 0.4
+                },
+                {
+                    label: 'Afternoon',
+                    data: data?.afternoonData || [],
+                    fill: false,
+                    borderColor: '#9CCC65',
+                    tension: 0.4
+                },
+                {
+                    label: 'Evening',
+                    data: data?.eveningData || [],
+                    fill: false,
+                    borderColor: '#f73b7d',
+                    tension: 0.4
+                }
+            ]
+        };
+
+
+
+        this.linearHospitalOption = {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: textColor } }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColorSecondary },
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: textColorSecondary },
+                    grid: { color: surfaceBorder }
+                }
+            }
+        };
+    }
+
+    buildLinearBySchoolShift() {
+
+        const schoolMap: Record<string, {
+            morning: number,
+            afternoon: number,
+            evening: number
+        }> = {};
+
+        this.slots.forEach(slot => {
+            if (!slot.schoolName) return;
+
+            const school = abbreviateName(slot.schoolName);
+
+            if (!schoolMap[school]) {
+                schoolMap[school] = {
+                    morning: 0,
+                    afternoon: 0,
+                    evening: 0
+                };
+            }
+
+            const shift = (slot.shiftName || '').toLowerCase();
+
+            if (shift.includes('morning')) {
+                schoolMap[school].morning++;
+            }
+            else if (shift.includes('afternoon')) {
+                schoolMap[school].afternoon++;
+            }
+            else if (shift.includes('evening')) {
+                schoolMap[school].evening++;
+            }
+        });
+
+        const labels = Object.keys(schoolMap);
+
+        const morningData = labels.map(s => schoolMap[s].morning);
+        const afternoonData = labels.map(s => schoolMap[s].afternoon);
+        const eveningData = labels.map(s => schoolMap[s].evening);
+
+        this.initLinearSchoolChart({ labels, morningData, afternoonData, eveningData });
+    }
+
+    initLinearSchoolChart(data: {
+        labels: string[],
+        morningData: number[],
+        afternoonData: number[],
+        eveningData: number[]
+    }) {
+
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+        const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+        const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+
+        this.linearSchoolData = {
+            labels: data?.labels || [],
+            datasets: [
+                {
+                    label: 'Morning',
+                    data: data?.morningData || [],
+                    fill: false,
+                    borderColor: '#42A5F5',
+                    tension: 0.4
+                },
+                {
+                    label: 'Afternoon',
+                    data: data?.afternoonData || [],
+                    fill: false,
+                    borderColor: '#9CCC65',
+                    tension: 0.4
+                },
+                {
+                    label: 'Evening',
+                    data: data?.eveningData || [],
+                    fill: false,
+                    borderColor: '#f73b7d',
+                    tension: 0.4
+                }
+            ]
+        };
+
+
+
+
+        this.linearSchoolOptions = {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: textColor } }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColorSecondary },
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: textColorSecondary },
+                    grid: { color: surfaceBorder }
+                }
+            }
+        };
+    }
+
+    buildBarBySectionShift() {
+
+        const sectionMap: Record<string, {
+            morning: number,
+            afternoon: number,
+            evening: number
+        }> = {};
+
+        this.slots.forEach(slot => {
+            if (!slot.sectionName) return;
+
+            const section = slot.sectionName;
+
+            if (!sectionMap[section]) {
+                sectionMap[section] = {
+                    morning: 0,
+                    afternoon: 0,
+                    evening: 0
+                };
+            }
+
+            const shift = (slot.shiftName || '').toLowerCase();
+
+            if (shift.includes('morning')) {
+                sectionMap[section].morning++;
+            }
+            else if (shift.includes('afternoon')) {
+                sectionMap[section].afternoon++;
+            }
+            else if (shift.includes('evening')) {
+                sectionMap[section].evening++;
+            }
+        });
+
+        const labels = Object.keys(sectionMap);
+
+        const morningData = labels.map(s => sectionMap[s].morning);
+        const afternoonData = labels.map(s => sectionMap[s].afternoon);
+        const eveningData = labels.map(s => sectionMap[s].evening);
+
+        this.initSectionChart({ labels, morningData, afternoonData, eveningData });
+    }
+
+    initSectionChart(data: {
+        labels: string[],
+        morningData: number[],
+        afternoonData: number[],
+        eveningData: number[]
+    }) {
+
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+        const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+        const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+        this.barSectionData = {
+            labels: data.labels,
+            datasets: [
+                {
+                    label: 'Morning',
+                    backgroundColor: '#42A5F5',
+                    data: data.morningData
+                },
+                {
+                    label: 'Afternoon',
+                    backgroundColor: '#9CCC65',
+                    data: data.afternoonData
+                },
+                {
+                    label: 'Evening',
+                    backgroundColor: '#f73b7d',
+                    data: data.eveningData
+                }
+            ]
+        };
+
+        this.barSectionOptions = {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: textColor } }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColorSecondary },
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: textColorSecondary },
+                    grid: { color: surfaceBorder }
+                }
+            }
+        };
+    }
+
+
+    // PIE CHARTS
+    buildPieBySchool() {
 
         if (!this.slots?.length) return;
 
@@ -173,7 +609,7 @@ export class RecentSchedule implements OnInit, OnChanges {
 
         this.slots.forEach(slot => {
 
-            if (this.isAdmin()  || this.isSupervisor() ) {
+            if (this.isAdmin() || this.isSupervisor()) {
                 if (!slot.schoolID) return;
 
                 if (!mapTrend[slot.schoolID]) {
@@ -200,10 +636,10 @@ export class RecentSchedule implements OnInit, OnChanges {
         const labels = Object.values(mapTrend).map(h => h.name);
         const data = Object.values(mapTrend).map(h => h.count);
 
-        this.initPieChart(labels, data);
+        this.initPieSchoolChart(labels, data);
     }
 
-    initPieChart(labels: string[], data: number[]) {
+    initPieSchoolChart(labels: string[], data: number[]) {
 
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--text-color');
@@ -228,7 +664,7 @@ export class RecentSchedule implements OnInit, OnChanges {
             documentStyle.getPropertyValue('--p-green-400')
         ];
 
-        this.pieData = {
+        this.pieSchoolData = {
             labels,
             datasets: [
                 {
@@ -239,7 +675,82 @@ export class RecentSchedule implements OnInit, OnChanges {
             ]
         };
 
-        this.pieOptions = {
+        this.pieSchoolOptions = {
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                        color: textColor
+                    }
+                }
+            }
+        };
+    }
+
+    buildPieByHospital() {
+
+        if (!this.slots?.length) return;
+
+        const mapTrend: Record<string, { name: string; count: number }> = {};
+
+        this.slots.forEach(slot => {
+
+            if (!slot.sectionID) return;
+
+            if (!mapTrend[slot.sectionID]) {
+                mapTrend[slot.sectionID] = {
+                    name: slot.sectionName || 'Unknown Section',
+                    count: 0
+                };
+            }
+            mapTrend[slot.sectionID].count++;
+
+
+        });
+
+        const labels = Object.values(mapTrend).map(h => h.name);
+        const data = Object.values(mapTrend).map(h => h.count);
+
+        this.initPieHospitalChart(labels, data);
+    }
+
+    initPieHospitalChart(labels: string[], data: number[]) {
+
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+
+        const colors = [
+            documentStyle.getPropertyValue('--p-indigo-500'),
+            documentStyle.getPropertyValue('--p-purple-500'),
+            documentStyle.getPropertyValue('--p-teal-500'),
+            documentStyle.getPropertyValue('--p-orange-500'),
+            documentStyle.getPropertyValue('--p-cyan-500'),
+            documentStyle.getPropertyValue('--p-pink-500'),
+            documentStyle.getPropertyValue('--p-green-500')
+        ];
+
+        const hoverColors = [
+            documentStyle.getPropertyValue('--p-indigo-400'),
+            documentStyle.getPropertyValue('--p-purple-400'),
+            documentStyle.getPropertyValue('--p-teal-400'),
+            documentStyle.getPropertyValue('--p-orange-400'),
+            documentStyle.getPropertyValue('--p-cyan-400'),
+            documentStyle.getPropertyValue('--p-pink-400'),
+            documentStyle.getPropertyValue('--p-green-400')
+        ];
+
+        this.pieHospitalData = {
+            labels,
+            datasets: [
+                {
+                    data,
+                    backgroundColor: colors.slice(0, labels.length),
+                    hoverBackgroundColor: hoverColors.slice(0, labels.length)
+                }
+            ]
+        };
+
+        this.pieHospitalOptions = {
             plugins: {
                 legend: {
                     labels: {

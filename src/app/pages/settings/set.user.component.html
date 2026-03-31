@@ -3,11 +3,12 @@
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
             <p-table #dt [value]="users()" [rows]="100" [columns]="cols" [paginator]="true" [rowHover]="true" 
                 [showGridlines]="true"
-                [globalFilterFields]="['userID', 'email', 'rolename', 'status', 'date_created']"
+                [globalFilterFields]="['userID', 'email', 'roleame', 'status', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectedUsers" 
                 dataKey="userID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" 
-                paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="calc(100vh - 26rem)">
+                scrollable="true" scrollHeight="flex"
+                paginatorDropdownAppendTo="body">
 
                 <ng-template pTemplate="caption">
                     <div class="flex row justify-center">
@@ -52,13 +53,49 @@
                             Email
                             <p-sortIcon field="email" />
                         </th>
-                        <th pSortableColumn="rolename" style="width: 8rem">
-                            Role
-                            <p-sortIcon field="role" />
+                        <th pSortableColumn="roleName" style="width: 8rem">
+                            <div class="flex justify-between items-center">
+                                Role
+                                <p-columnFilter field="rolename" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Role Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="roles"
+                                            optionLabel="roleName" optionValue="roleName" placeholder="Any"
+                                            class="w-full" (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+
+                                </p-columnFilter>
+                            </div>
                         </th>
-                        <th pSortableColumn="status" style="width: 7rem">
-                            Status
-                            <p-sortIcon field="status" />
+                        <th pSortableColumn="status" style="min-width:7rem">
+                            <div class="flex justify-between items-center">
+                                Status
+                                <p-columnFilter field="slotStatus" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Status Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="headStatuses" optionLabel="label"
+                                            optionValue="value" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+
+                                </p-columnFilter>
+                            </div>
                         </th>
                         <th pSortableColumn="date_created" style="width: 8rem">
                             Date Created

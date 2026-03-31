@@ -16,19 +16,23 @@ import { CommonModule } from '@angular/common';
     selector: 'app-dashboard',
     imports: [CommonModule, StatsWidget, RecentSchedule, AnnouncementWidget, RevenueStreamWidget, NotificationsWidget],
     template: `
-        <div class="grid grid-cols-12 gap-8">
-            <div class="col-span-12 xl:col-span-6">
-                
-                <app-announcements-widget [tokenPayload]="tokenPayload" />
-                
-            </div>
-            <div class="col-span-12 xl:col-span-6">
-                
+        <div class="grid grid-cols-12">
+            <div class="col-span-12 xl:col-span-12">
                 
                 <div *ngIf="dashboardData">
                     <app-stats-widget class="contents" [data]="dashboardData" [tokenPayload]="tokenPayload"
                     />
                 </div>
+                <!-- <app-announcements-widget [tokenPayload]="tokenPayload" /> -->
+                
+            </div>
+            <div class="col-span-12 xl:col-span-12 gap-2">
+                
+                
+                <!-- <div *ngIf="dashboardData">
+                    <app-stats-widget class="contents" [data]="dashboardData" [tokenPayload]="tokenPayload"
+                    />
+                </div> -->
                 <!-- <app-revenue-stream-widget 
                 *ngIf="dashboardData"
                     [actual]="dashboardData.actualRevenue"

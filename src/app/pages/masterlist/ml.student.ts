@@ -35,6 +35,7 @@ import { TieredMenuModule } from 'primeng/tieredmenu';
 import { AppMenuitem } from '@/layout/component/app.menuitem';
 import { RouterModule } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 interface Column {
     field: string;
@@ -70,6 +71,7 @@ interface ExportColumn {
         SelectModule,
         RadioButtonModule,
         InputNumberModule,
+        MultiSelectModule,
         DialogModule,
         TagModule,
         InputIconModule,
@@ -230,7 +232,26 @@ export class Student implements OnInit {
 
         this.buildSubComponent()
         this.loadStudents();
+        this.loadSchools();
+
     }
+
+    isAdmin(): boolean {
+        return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
+    }
+
+    isSchoolCoordinator(): boolean {
+        return this.tokenPayload.role === 'UGR0003';
+    }
+
+    isIntern(): boolean {
+        return this.tokenPayload.role === 'UGR0004';
+    }
+
+    isSupervisor(): boolean {
+        return this.tokenPayload.role === 'UGR0005';
+    }
+
 
     loadStudents() {
         if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
@@ -251,6 +272,19 @@ export class Student implements OnInit {
                 error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
             });
         }
+    }
+
+    loadSchools() {
+        this.api.getSchools().subscribe({
+            next: (schools) => {
+                this.schools = schools || [];
+                if (this.isSchoolCoordinator()) {
+                    this.schools = this.schools.filter((s: any) => s.schoolID === this.user.schoolID);
+                }
+                this.logger.printLogs('i', 'Schools loaded', this.schools)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
+        });
     }
 
     exportCSV() {

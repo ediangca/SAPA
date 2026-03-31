@@ -572,9 +572,18 @@ export class ApiService {
     return this.handleRequest<any[]>('get', 'Slots/is-confirmed', { id: slotID, logAction: 'Fetching Slots' });
   }
 
+  validateSlots(slots: any[]) {
+    return this.handleRequest('post', 'Slots/bulk/validate', { body: slots, logAction: 'Validating Slots' });
+  }
+
+  confirmSlots(request: any, force = false) {
+    return this.handleRequest('post', `Slots/bulk/confirm/${force}`, { body: request, logAction: 'Confirming Slots' });
+  }
+
   createBulkSlots(slots: any) {
     return this.handleRequest('post', 'Slots/bulk', { body: slots, logAction: 'Creating Bulk Slots' });
   }
+
   createBulkSchedules(slots: any, force = false) {
     return this.handleRequest('post', `Slots/bulk/${force}`, { body: slots, logAction: 'Creating Bulk Slots' });
   }

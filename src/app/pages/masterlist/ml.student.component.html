@@ -2,12 +2,13 @@
 <div class="flex flex-col md:flex-row gap-8">
     <!-- SECTION TABLE -->
     <div class="md:w-4/5">
-        <div class="card">
-            <p-table #dt [value]="users()" [rows]="10" [columns]="cols" [paginator]="true" [showGridlines]="true"
+        <div class="card"  [style]="{ height: 'calc(100vh - 12rem)'}">
+            <p-table #dt [value]="users()" [rows]="100" [columns]="cols" [paginator]="true" [showGridlines]="true"
                 [globalFilterFields]="['userID', 'email']" [tableStyle]="{ 'min-width': '75rem'}"
                 [(selection)]="selectUsers" [rowHover]="true" dataKey="userID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
-                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"  
+                scrollable="true" scrollHeight="flex"
                 (selectionChange)="onStudentSelectionChange($event)">
 
                 <ng-template pTemplate="caption">
@@ -42,7 +43,7 @@
                         <th style="width: 3rem">
                             <p-tableHeaderCheckbox />
                         </th>
-                        <th pSortableColumn="userID" style="min-width: 3rem">User ID
+                        <th pSortableColumn="userID" style="min-width: 7rem">User ID
                             <p-sortIcon field="userID" />
                         </th>
                         <th pSortableColumn="fullname" style="min-width:10rem">
@@ -53,9 +54,30 @@
                             Email
                             <p-sortIcon field="email" />
                         </th>
-                        <th pSortableColumn="rolename" style="min-width:10rem">
-                            Role
-                            <p-sortIcon field="role" />
+                        <th pSortableColumn="schoolName" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                School
+                                <div>
+                                <p-sortIcon field="schoolName" />
+                                    <p-columnFilter field="schoolName" matchMode="in" display="menu"
+                                        [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+
+                                        <ng-template #header>
+                                            <div class="px-3 pt-3 pb-0">
+                                                <span class="font-bold">School Picker</span>
+                                            </div>
+                                        </ng-template>
+
+                                        <ng-template #filter let-value let-filter="filterCallback">
+                                            <p-multiSelect [ngModel]="value" [options]="schools" optionLabel="schoolName"
+                                                optionValue="schoolName" placeholder="Any" class="w-full"
+                                                (onChange)="filter($event.value)">
+                                            </p-multiSelect>
+                                        </ng-template>
+
+                                    </p-columnFilter>
+                                </div>
+                            </div>
                         </th>
                         <th pSortableColumn="status" style="min-width:10rem">
                             Status
@@ -73,10 +95,10 @@
                         <td style="width: 3rem">
                             <p-tableCheckbox [value]="user" />
                         </td>
-                        <td style="min-width: 3rem">{{ user.userID }}</td>
+                        <td style="min-width: 7rem">{{ user.userID }}</td>
                         <td style="min-width: 10rem">{{ user.fullname }}</td>
                         <td style="min-width: 10rem">{{ user.email }}</td>
-                        <td style="min-width: 10rem">{{ user.rolename }}</td>
+                        <td style="min-width: 10rem">{{ user.schoolName }}</td>
                         <td style="min-width: 10rem">
                             <p-tag [value]="getStatus(user.status,'value')"
                                 [severity]="getStatus(user.status,'severity')" styleClass="dark:bg-surface-900!" />

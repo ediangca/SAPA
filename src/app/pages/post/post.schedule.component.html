@@ -72,9 +72,43 @@
                         <!-- <th pSortableColumn="slotID" style="max-width: 1rem">Slot ID
                             <p-sortIcon field="slotID" />
                         </th> -->
-                        <th pSortableColumn="dateSlot" style="min-width:3rem">
-                            Date Slot
-                            <p-sortIcon field="dateSlot" />
+                        
+                        <!-- <th pSortableColumn="dateSlot" style="min-width:3rem">
+                            <div class="flex justify-between items-center">
+                                Date Slot
+                                <p-sortIcon field="dateSlot" />
+                                <p-columnFilter field="dateSlot" matchMode="dateRangeFilter" display="menu" 
+                                placeholder="mm/dd/yyyy" [showMatchModes]="false" [showOperator]="false" [showAddButton]="false" >
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Date Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-datepicker
+                                            [ngModel]="value"
+                                            [showIcon]="true"
+                                            [showButtonBar]="true"
+                                            selectionMode="range"
+                                            display="menu" placeholder="mm/dd/yyyy"
+                                            class="w-full"
+                                            (onSelect)="filter($event)"
+                                            (onClearClick)="filter(null)">
+                                        </p-datepicker>
+                                    </ng-template>
+
+                                </p-columnFilter>
+                            </div>
+                        </th> -->
+                        
+                        <th pSortableColumn="dateSlot" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                Date
+                                <p-sortIcon field="dateSlot" />
+                                <p-columnFilter type="date" field="dateSlot" display="menu" placeholder="yyyy-MM-dd"></p-columnFilter>
+                            </div>
                         </th>
                         <th pSortableColumn="shiftName" style="min-width:10rem">
                             <div class="flex justify-between items-center">
@@ -200,7 +234,7 @@
                         <td pFrozenColumn style="width: 3rem" *ngIf="isAdmin() || isSchoolCoordinator()">
                             <p-tableCheckbox [value]="slot" />
                         </td>
-                        <td>{{ slot.dateSlot }}</td>
+                        <td>{{ slot.dateSlot | date: 'yyyy-MM-dd'}}</td>
                         <td>
                             {{ slot.shiftName }}
                             <small class="block text-gray-500">
@@ -285,8 +319,11 @@
                     <ng-template #eventContent let-arg>
                         <div class="flex flex-row justify-between items-center text-[12px] px-1 py-[2px] rounded bg-blue-500 text-white text-center cursor-pointer"
                             [title]="'Click to view schedule(s) in '+arg.event.title">
-                            {{ arg.event.title | slice:0:20 }}{{ arg.event.title.length > 20 ? '...' : '' }}
-                    
+                            <!-- {{ arg.event.title | slice:0:20 }}{{ arg.event.title.length > 20 ? '...' : '' }} -->
+                            <span class="truncate">
+                                {{ arg.event.extendedProps.abbreviation || (arg.event.title | slice:0:10) }}
+                            </span>
+
                             <p-badge class
                                 [value]="arg.event.extendedProps.slots.length"
                                 severity="success"></p-badge>
@@ -615,17 +652,37 @@
     </div>
 
     <ng-template pTemplate="footer">
-        <!-- Add only available -->
+        <!--
         <button *ngIf="availableSlots.length > 0" pButton type="button" label="Add Available Slot Only"
             class="p-button-primary mr-2" (click)="addAvailableOnly()"></button>
-
-        <!-- Force add all -->
         <button *ngIf="existingSlots.length > 0" pButton type="button"
             [label]="'Force Add' + (availableSlots.length > 0? ' both Available and ':' ') + 'Unconfirmed Slot' "
             class="p-button-success mr-2" (click)="forceAddAll()"></button>
+        <button pButton type="button" label="Cancel" class="p-button-text" (click)="showForceDialog=false"></button>
+    -->
+    
+        <!-- Add only available -->
+        <button *ngIf="availableSlots.length > 0 && existingSlots.length === 0"
+            pButton type="button" label="Add Available Only"
+            class="p-button-primary mr-2" (click)="addAvailableOnly()">
+        </button>
+
+        <!-- Force add available + unconfirmed -->
+        <button *ngIf="availableSlots.length > 0 && existingSlots.length > 0"
+            pButton type="button" label="Add Available + Unconfirmed"
+            class="p-button-success mr-2" (click)="forceAddAll()">
+        </button>
+
+        <!-- Force add unconfirmed only -->
+        <button *ngIf="existingSlots.length > 0"
+            pButton type="button" label="Add Unconfirmed Only"
+            class="p-button-warning mr-2" (click)="forceAddSkippedOnly()">
+        </button>
 
         <!-- Cancel -->
-        <button pButton type="button" label="Cancel" class="p-button-text" (click)="showForceDialog=false"></button>
+        <button pButton type="button" label="Cancel"
+            class="p-button-text" (click)="showForceDialog = false">
+        </button>
     </ng-template>
 </p-dialog>
 
