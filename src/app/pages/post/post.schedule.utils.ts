@@ -293,7 +293,7 @@ export function aggregateSlotsByDay(
     // });
 
 
-    if (isAdmin) {
+    if (isAdmin || isHospitalSupervisor) {
       // ✅ Admin: group by school → then by hospital inside each school
       const schoolMap = new Map<string, any[]>();
       for (const slot of daySlots) {

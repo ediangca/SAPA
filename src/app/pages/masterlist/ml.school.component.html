@@ -3,13 +3,13 @@
 
     <div class="md:w-4/5">
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
-            <p-table #dt [value]="schools()" [rows]="10" [columns]="cols" [paginator]="true" [showGridlines]="true"
+            <p-table #dt [value]="schools()" [rows]="100" [columns]="cols" [paginator]="true" [showGridlines]="true"
                 [globalFilterFields]="['schoolID', 'schoolName', 'address', 'createdBy', 'status', 'code', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSchools"
                 [rowHover]="true" dataKey="schoolID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} schools"
-                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]" scrollable="true" scrollHeight="flex"
-                (selectionChange)="onSchoolSelectionChange($event)">
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" scrollable="true" scrollHeight="flex"
+                paginatorDropdownAppendTo="body" (selectionChange)="onSchoolSelectionChange($event)">
 
                 <ng-template pTemplate="caption">
 

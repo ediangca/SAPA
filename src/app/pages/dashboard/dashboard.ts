@@ -38,7 +38,7 @@ import { CommonModule } from '@angular/common';
                     [actual]="dashboardData.actualRevenue"
                     [potential]="dashboardData.potentialRevenue">
                 </app-revenue-stream-widget> -->
-                <app-recent-analytics-widget [slots]="slots" [recentSchedules]="recentSchedules" [tokenPayload]="tokenPayload"/>
+                <app-recent-analytics-widget [slots]="slots" [recentSchedules]="recentSchedules" [tokenPayload]="tokenPayload"  (yearChange)="onYearSelected($event)"/>
                 <!-- <app-notifications-widget /> -->
             </div>
         </div>
@@ -60,7 +60,7 @@ export class Dashboard implements OnInit, OnDestroy {
     private destroy$ = new Subject<void>();
 
 
-    currentYear: number = 0;
+    year: number = 0;
 
     constructor(
         public store: StoreService,
@@ -102,7 +102,7 @@ export class Dashboard implements OnInit, OnDestroy {
         //         this.loadRecentSchedules();
         //     });
 
-        this.currentYear = new Date().getFullYear()
+        this.year = new Date().getFullYear()
 
 
         this.store.getUserPayload()
@@ -174,26 +174,35 @@ export class Dashboard implements OnInit, OnDestroy {
         const userID = this.tokenPayload.nameid;
         const hospitalID = this.user.hospitalID;
 
+
+
         if (role === 'UGR0001' || role === 'UGR0002') {
-            this.api.getSlots(this.currentYear)
+            this.logger.printLogs('i', ' On Slot Selected year', this.year);
+            this.api.getSlots(this.year)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(res => this.processSlots(res));
         } else if (role === 'UGR0003') {
-            this.api.getSlotsByUserID(userID, this.currentYear)
+            this.logger.printLogs('i', ' On Slot Selected year', this.year);
+            this.api.getSlotsByUserID(userID, this.year)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(res => this.processSlots(res));
         } else if (role === 'UGR0004') {
-            this.api.GetSlotsByAppointUserID(userID, this.currentYear)
+            this.api.GetSlotsByAppointUserID(userID, this.year)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(res => this.processSlots(res));
         } else if (role === 'UGR0005') {
-            this.api.getSlotsByHospitalID(hospitalID, this.currentYear)
+            this.api.getSlotsByHospitalID(hospitalID, this.year)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(res => this.processSlots(res));
+            this.logger.printLogs('i', ' On Slot Selected year', this.year);
+            this.logger.printLogs('i', ' On Slot Selected year', this.year);
         }
     }
 
     processSlots(data: any[]) {
+
+        this.recentSchedules = [];
+        this.slots = [];
 
         if (!data) return;
 
@@ -210,6 +219,12 @@ export class Dashboard implements OnInit, OnDestroy {
             .slice(0, 10);
 
         this.logger.printLogs('i', 'Recent Schedules', this.recentSchedules);
+    }
+
+    onYearSelected(year: number) {
+        this.year = year;
+        this.logger.printLogs('i', ' On Year Selected', year);
+        this.loadRecentSchedules(); // 🔥 reload with new year
     }
 
     ngOnDestroy() {

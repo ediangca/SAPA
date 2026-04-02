@@ -2,13 +2,15 @@
 <div class="flex flex-col md:flex-row gap-8">
     <!-- HOSPITAL TABLE -->
     <div class="md:w-4/5">
-        <div class="card"  [style]="{ height: 'calc(100vh - 12rem)'}">
-            <p-table #dt [value]="hospitals()" [rows]="10" [columns]="cols" [paginator]="true"
-                [showGridlines]="true", [loading]="loading", 
+        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
+            <p-table #dt [value]="hospitals()" [rows]="100" [columns]="cols" [paginator]="true" [showGridlines]="true", [loading]="loading", 
                 [globalFilterFields]="['hospitalID', 'hospitalName', 'address', 'sections.sectionName']"
-                [tableStyle]="{ 'min-width': '75rem' }" [(selection)]="selectHospitals" [rowHover]="true"
-                dataKey="hospitalID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} hospitals"
-                [showCurrentPageReport]="true" [rowsPerPageOptions]="[10, 20, 30]">
+                [tableStyle]="{ 'min-width': '60rem' }" [(selection)]="selectHospitals" 
+                [rowHover]="true" dataKey="hospitalID" 
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} hospitals"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" scrollable="true" scrollHeight="flex"
+                paginatorDropdownAppendTo="body" scrollHeight="flex"> 
+                
 
                 <ng-template pTemplate="caption">
                     <div class="flex row justify-center">

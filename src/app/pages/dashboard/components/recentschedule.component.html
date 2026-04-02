@@ -111,41 +111,224 @@
 </div> 
 -->
 
-<div class="grid grid-cols-12 gap-4" *ngIf="slots?.length !== 0">
+<div *ngIf="loading" class="grid grid-cols-12 gap-4">
 
+    <!-- LEFT SIDE -->
     <div class="col-span-4 lg:col-span-4 xl:col-span-8">
+        <div class="grid grid-cols-12 gap-4">
 
-        <div class="grid grid-cols-12 gap-4" *ngIf="slots?.length !== 0">
+            <!-- MAIN LARGE CHART CARD -->
+            <div class="col-span-12">
+                <div class="card space-y-4">
+                    <p-skeleton width="60%" height="1.5rem"></p-skeleton>
+
+                    <!-- Chart Skeleton -->
+                    <p-skeleton height="300px" styleClass="w-full"></p-skeleton>
+
+                    <p-skeleton width="70%" height="1.5rem"
+                        class="mt-6"></p-skeleton>
+                    <p-skeleton height="300px" styleClass="w-full"></p-skeleton>
+                </div>
+            </div>
+
+            <!-- LINE CHART 1 -->
+            <div class="col-span-12 xl:col-span-6">
+                <div class="card space-y-4">
+                    <p-skeleton width="80%" height="1.5rem"></p-skeleton>
+                    <p-skeleton height="250px"></p-skeleton>
+                </div>
+            </div>
+
+            <!-- LINE CHART 2 -->
+            <div class="col-span-12 xl:col-span-6">
+                <div class="card space-y-4">
+                    <p-skeleton width="80%" height="1.5rem"></p-skeleton>
+                    <p-skeleton height="250px"></p-skeleton>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="col-span-4 lg:col-span-4 xl:col-span-4">
+        <div class="grid grid-cols-12 gap-4">
+
+            <!-- PIE 1 -->
+            <div class="col-span-12">
+                <div class="card space-y-4">
+                    <p-skeleton width="70%" height="1.5rem"></p-skeleton>
+
+                    <div class="flex justify-center">
+                        <p-skeleton shape="circle" size="200px"></p-skeleton>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PIE 2 -->
+            <div class="col-span-12">
+                <div class="card space-y-4">
+                    <p-skeleton width="70%" height="1.5rem"></p-skeleton>
+
+                    <div class="flex justify-center">
+                        <p-skeleton shape="circle" size="200px"></p-skeleton>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-12 gap-4 mb-4" *ngIf="!loading">
+    <div class="col-span-12">
+        <div
+            class="flex flex row justify-between font-bold text-primary text-xl">
+            Analysis of Schedules as of {{ currentYear }} 
+
+            <div class="flex flex-wrap gap-2">
+
+                <p-select
+                    [options]="years"
+                    [(ngModel)]="currentYear"
+                    placeholder="Select Year"
+                    optionLabel="label"
+                    optionValue="value"
+                    (onChange)="onYearChange($event)"
+                    styleClass="w-32">
+                </p-select>
+
+                <p-button *ngIf="recentSchedules?.length"
+                    type="button"
+                    label="Show Recent Schedules"
+                    (click)="toggleDataTable(op2, $event)" />
+                <p-popover #op2 id="overlay_panel"
+                    [style]="{ width: '650px' }">
+
+                    <p-table
+                        [value]="recentSchedules"
+                        selectionMode="single"
+                        [(selection)]="selectedEvent"
+                        dataKey="slotID"
+                        [showGridlines]="true"
+                        [rows]="10"
+                        [paginator]="false"
+                        [scrollable]="true" scrollHeight="40vh"
+                        (onRowSelect)="onScheduleSelect(op2, $event)">
+
+                        <ng-template #header>
+                            <tr>
+                                <th>Date</th>
+                                <th>School</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template #body let-slot>
+                            <tr [pSelectableRow]="slot">
+                                <td>{{ slot.dateSlot |
+                                    date:'mediumDate'
+                                    }}</td>
+                                <td>{{ slot.schoolName }}</td>
+                                <td>{{
+                                    slot.hospitalName}}({{slot.sectionName}})
+                                    - {{slot.shiftName}}</td>
+                                <td>
+                                    <p-tag
+                                        [value]="getStatus(slot.slotStatus,'value')"
+                                        [severity]="getStatus(slot.slotStatus,'severirty')" />
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                    </p-table>
+
+                    <ng-template #empty>
+                        <div *ngIf="!recentSchedules?.length"
+                            class="text-center p-4 text-muted-color">
+                            No recent schedules found.
+                        </div>
+                    </ng-template>
+
+                </p-popover>
+                <p-toast />
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-12 gap-4" *ngIf="!loading">
+
+    <div class="col-span-12 lg:col-span-12 xl:col-span-8">
+
+        <div class="grid grid-cols-12 gap-4">
 
             <div class="col-span-12 lg:col-span-12 xl:col-span-12">
 
-                <div class="card" *ngIf="isAdmin() || isSupervisor() || isSchoolCoordinator()">
-                    @if(isAdmin() || isSchoolCoordinator()){
+                <div class="card">
+
+                    <!-- @if(isAdmin() || isSchoolCoordinator()){ -->
                     <div class="font-semibold text-xl">Trend Hospital Zone by
-                        shift
-                        as
-                        of {{ currentYear }}</div>
-                    <p-chart type="bar"
-                        [data]="barHospitalStachData"
-                        [options]="barHospitalStachOptions" />
-                    }
+                        shift as of {{ currentYear }}</div>
 
-                    @if(isAdmin() || isSupervisor() || isSchoolCoordinator()){
-                    <div class="font-semibold text-xl mt-10"> Trend Shift by
-                        Department
-                        as of {{ currentYear }}</div>
+                    <ng-container
+                        *ngIf="barHospitalStackData?.datasets?.[0]?.data?.length > 0; else emptyBarHospital">
 
-                    <p-chart
-                        type="bar"
-                        [data]="barSectionData"
-                        [options]="barSectionOptions">
-                    </p-chart>
-                    }
+                        <p-chart
+                            type="bar"
+                            [data]="barHospitalStackData"
+                            [options]="barHospitalStackOptions">
+                        </p-chart>
+
+                    </ng-container>
+
+                    <ng-template #emptyBarHospital>
+                        <div
+                            class="text-center text-gray-500 h-[200px] flex flex-col items-center justify-center">
+                            <i class="pi pi-chart-bar text-4xl mb-2"></i>
+                            <div>No data available for {{ currentYear
+                                }}</div>
+                        </div>
+                    </ng-template>
+
+                    <!-- } -->
+
+                    <!-- @if(isAdmin() || isSupervisor() || isSchoolCoordinator()){ -->
+                    <div class="font-semibold text-xl mt-10"> Trend Department
+                        by
+                        Shift as of {{ currentYear }}</div>
+
+                    <ng-container
+                        *ngIf="barSectionData?.datasets?.[0]?.data?.length > 0; else emptyBarSection">
+
+                        <p-chart
+                            type="bar"
+                            [data]="barSectionData"
+                            [options]="barSectionOptions">
+                        </p-chart>
+
+                    </ng-container>
+
+                    <ng-template #emptyBarSection>
+                        <div
+                            class="text-center text-gray-500 h-[200px] flex flex-col items-center justify-center">
+                            <i class="pi pi-chart-bar text-4xl mb-2"></i>
+                            <div>No data available for {{ currentYear
+                                }}</div>
+                        </div>
+                    </ng-template>
+                    
+                    <!-- } -->
+
                 </div>
 
             </div>
 
-            <div *ngIf="isAdmin()" class="col-span-12 lg:col-span-12 xl:col-span-6">
+            <div
+                *ngIf="isAdmin() && linearHospitalData?.datasets?.[0]?.data?.length > 0"
+                class="col-span-12 lg:col-span-12 xl:col-span-6">
                 <div class="card">
                     <div class="font-semibold text-xl"> Trend Shift by
                         Hospital
@@ -159,7 +342,9 @@
                     </p-chart>
                 </div>
             </div>
-            <div *ngIf="isAdmin()" class="col-span-12 lg:col-span-12 xl:col-span-6">
+            <div
+                *ngIf="isAdmin()  && linearSchoolData?.datasets?.[0]?.data?.length > 0"
+                class="col-span-12 lg:col-span-12 xl:col-span-6">
                 <div class="card">
                     <div class="font-semibold text-xl">Trend Shift by
                         School as
@@ -173,96 +358,13 @@
                 </div>
             </div>
 
-            <!--
-            <div class="col-span-12 lg:col-span-12 xl:col-span-6">
-
-                <div class="card">
-                    <div class="font-semibold text-xl">Trend Hospital Zone by
-                        shift
-                        as
-                        of {{ currentYear }}</div>
-                    <p-chart type="bar"
-                        [data]="barHospitalStachData"
-                        [options]="barHospitalStachOptions" />
-
-                </div>
-
-                <div class="card">
-                    <div class="font-semibold text-xl"> Trend Shift by
-                        Department
-                        as of {{ currentYear }}</div>
-
-                    <p-chart
-                        type="bar"
-                        [data]="barSectionData"
-                        [options]="barSectionOptions">
-                    </p-chart>
-                </div>
-            </div>
-            <div class="col-span-12 lg:col-span-12 xl:col-span-6">
-
-                <div class="card">
-                    <div class="font-semibold text-xl">Trend School by shift as
-                        of {{ currentYear }}</div>
-
-                    <p-chart
-                        type="bar"
-                        [data]="schoolData"
-                        [options]="schoolOptions">
-                    </p-chart>
-                </div>
-
-                <div class="card">
-                    <div class="font-semibold text-xl"> Schedule Trend by
-                        Hospital
-                        as
-                        of {{ currentYear }}</div>
-
-                    <p-chart
-                        type="bar"
-                        [data]="barData"
-                        [options]="barOptions">
-                    </p-chart>
-
-                </div>
-
-            </div>
-            -->
-
         </div>
 
     </div>
 
-    <div class="col-span-4 lg:col-span-4 xl:col-span-4">
+    <div class="col-span-12 lg:col-span-12 xl:col-span-4">
 
         <div class="grid grid-cols-12 gap-4">
-            <!--
-            <div class="col-span-12 lg:col-span-12 xl:col-span-12">
-                <div class="card">
-                    <div class="font-semibold text-xl"> Trend Shift by
-                        Hospital
-                        as
-                        of {{ currentYear }}</div>
-
-                    <p-chart
-                        type="line"
-                        [data]="linearHospitalData"
-                        [options]="linearHospitalOption">
-                    </p-chart>
-
-                    <div class="font-semibold text-xl mt-10">Trend Shift by
-                        School as
-                        of {{ currentYear }}</div>
-
-                    <p-chart
-                        type="line"
-                        [data]="linearSchoolData"
-                        [options]="linearSchoolOptions">
-                    </p-chart>
-                </div>
-
-            </div>
-            -->
 
             <div class="col-span-12 lg:col-span-12 xl:col-span-12">
                 <div class="card">
@@ -271,12 +373,22 @@
                         Distribution as of {{ currentYear }}
                     </div>
 
-                    <div class="w-full flex justify-center">
+                    <div class="relative w-full flex justify-center">
+
                         <p-chart
                             type="pie"
                             [data]="pieSchoolData"
                             [options]="pieSchoolOptions">
                         </p-chart>
+
+                        <div *ngIf="!pieSchoolData?.datasets?.[0]?.data?.length"
+                            class="absolute inset-0 flex flex-col items-center justify-center bg-white/70 dark:bg-black/40 rounded">
+
+                            <i class="pi pi-chart-pie text-3xl mb-2"></i>
+                            <span>No data for {{ currentYear }}</span>
+
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -287,12 +399,22 @@
                         Section Distribution as of {{ currentYear }}
                     </div>
 
-                    <div class="w-full flex justify-center">
+                    <div class="relative w-full flex justify-center">
+
                         <p-chart
                             type="pie"
                             [data]="pieHospitalData"
                             [options]="pieHospitalOptions">
                         </p-chart>
+
+                        <div *ngIf="!pieSchoolData?.datasets?.[0]?.data?.length"
+                            class="absolute inset-0 flex flex-col items-center justify-center bg-white/70 dark:bg-black/40 rounded">
+
+                            <i class="pi pi-chart-pie text-3xl mb-2"></i>
+                            <span>No data for {{ currentYear }}</span>
+
+                        </div>
+
                     </div>
                 </div>
             </div>

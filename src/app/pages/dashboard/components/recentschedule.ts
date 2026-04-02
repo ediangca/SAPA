@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { RippleModule } from 'primeng/ripple';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -15,11 +15,14 @@ import { MessageService } from 'primeng/api';
 import { LogsService } from '@/services/logs.service';
 import { DialogModule } from 'primeng/dialog';
 import { abbreviateName } from '@/pages/post/post.schedule.utils';
+import { SkeletonModule } from 'primeng/skeleton';
+import { SelectModule } from 'primeng/select';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     standalone: true,
     selector: 'app-recent-analytics-widget',
-    imports: [CommonModule, TableModule, ButtonModule, RippleModule, TagModule, ChartModule, PopoverModule, ToastModule, DialogModule],
+    imports: [CommonModule, FormsModule, TableModule, ButtonModule, SelectModule, RippleModule, TagModule, ChartModule, PopoverModule, ToastModule, DialogModule, SkeletonModule],
     templateUrl: './recentschedule.component.html',
     styleUrl: './css/dashboard.css',
     providers: [MessageService]
@@ -29,17 +32,27 @@ export class RecentSchedule implements OnInit, OnChanges {
     @Input() slots: any[] = [];
     @Input() recentSchedules: any[] = [];
     @Input() tokenPayload!: any;
+
+
+    public loading: boolean = true;
+
+    @Output() yearChange = new EventEmitter<number>(); // 🔥 IMPORTANT
+    years: { label: string; value: number }[] = [];
+    currentYear: number = 0;
+
     barData: any;
     barOptions: any;
 
-    barHospitalStachData: any;
-    barHospitalStachOptions: any;
+
+
+    barHospitalStackData: any;
+    barHospitalStackOptions: any;
 
     barSectionData: any;
     barSectionOptions: any;
 
-    barSchoolStachData: any;
-    barSchoolStachOptions: any;
+    barSchoolStackData: any;
+    barSchoolStackOptions: any;
 
 
     linearHospitalData: any;
@@ -49,7 +62,6 @@ export class RecentSchedule implements OnInit, OnChanges {
     linearSchoolData: any;
     linearSchoolOptions: any;
 
-    currentYear: number = 0;
     displayEventDialog = false;
 
 
@@ -74,21 +86,28 @@ export class RecentSchedule implements OnInit, OnChanges {
 
     ngOnInit() {
         // this.productService.getProductsSmall().then((data) => (this.products = data));
-
-        this.currentYear = new Date().getFullYear()
         this.initChart();
+        this.initYears();
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes['slots'] && this.slots) {
-            this.buildStackedByHospitalShift();
-            this.buildChartFromSlots();
-            this.buildBarBySectionShift();
-            this.buildLinearBySchoolShift();
-            this.buildLinearByHospitalShift();
-            this.buildPieBySchool();
-            this.buildPieByHospital();
+            this.analytics()
         }
+    }
+
+    initYears() {
+        const currentYear = new Date().getFullYear();
+
+        this.years = Array.from({ length: 5 }, (_, i) => {
+            const year = currentYear - i;
+            return {
+                label: year.toString(),
+                value: year
+            };
+        });
+
+        this.currentYear = currentYear; // default selected
     }
 
     isAdmin(): boolean {
@@ -106,6 +125,29 @@ export class RecentSchedule implements OnInit, OnChanges {
     isSupervisor(): boolean {
         return this.tokenPayload.role === 'UGR0005';
     }
+
+    analytics() {
+        this.buildStackedByHospitalShift();
+        this.buildChartFromSlots();
+        this.buildBarBySectionShift();
+        this.buildLinearBySchoolShift();
+        this.buildLinearByHospitalShift();
+        this.buildPieBySchool();
+        this.buildPieByHospital();
+        this.loading = false;
+    }
+
+    onYearChange(event: any) {
+        
+        this.loading = true;
+        const year = event.value;
+        this.currentYear = year;
+
+        this.logger.printLogs('i', ' Year', year);
+        this.logger.printLogs('i', ' Selected Year', this.currentYear);
+        this.yearChange.emit(year);
+    }
+    
 
     buildChartFromSlots() {
 
@@ -246,7 +288,7 @@ export class RecentSchedule implements OnInit, OnChanges {
         const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
         const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
 
-        this.barHospitalStachData = {
+        this.barHospitalStackData = {
             labels: data.labels,
             datasets: [
                 {
@@ -270,7 +312,7 @@ export class RecentSchedule implements OnInit, OnChanges {
             ]
         };
 
-        this.barHospitalStachOptions = {
+        this.barHospitalStackOptions = {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
@@ -603,8 +645,6 @@ export class RecentSchedule implements OnInit, OnChanges {
     // PIE CHARTS
     buildPieBySchool() {
 
-        if (!this.slots?.length) return;
-
         const mapTrend: Record<string, { name: string; count: number }> = {};
 
         this.slots.forEach(slot => {
@@ -688,8 +728,6 @@ export class RecentSchedule implements OnInit, OnChanges {
     }
 
     buildPieByHospital() {
-
-        if (!this.slots?.length) return;
 
         const mapTrend: Record<string, { name: string; count: number }> = {};
 

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnInit, signal, SimpleChanges, ViewChild } from '@angular/core';
 import { ConfirmationService, FilterService, MenuItem, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
@@ -172,7 +172,7 @@ const ROLE_PERMISSIONS: Record<string, number[]> = {
     styleUrl: './css/post.css',
     providers: [MessageService, ProductService, ConfirmationService]
 })
-export class Schedule implements OnInit {
+export class Schedule implements OnInit, OnChanges {
 
     user: any = null;
 
@@ -301,7 +301,6 @@ export class Schedule implements OnInit {
         private logger: LogsService,
         private vf: ValidateForm,
         private pdfService: PdfService,
-        private cdr: ChangeDetectorRef,
         private filterService: FilterService
 
     ) {
@@ -312,6 +311,12 @@ export class Schedule implements OnInit {
         this.initDate();
         this.initData();
         this.initCols();
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes['tokenPayload']?.currentValue) {
+            // this.buildSubComponent();
+        }
     }
 
     initForm() {
@@ -335,7 +340,10 @@ export class Schedule implements OnInit {
         this.store.getUserPayload()
             .pipe(
                 filter(Boolean),
-                tap(p => this.tokenPayload = p),
+                tap(p => {
+                    this.tokenPayload = p;
+                    // this.buildSubComponent();
+                }),
                 switchMap(() => this.store.getPrivilegesLoaded()),
                 switchMap(() => this.store.getUser().pipe(take(1)))
             )
@@ -343,12 +351,11 @@ export class Schedule implements OnInit {
                 this.user = user;
                 this.logger.printLogs('i', ' User', this.user);
                 this.initPrivileges();
+                this.buildSubComponent(); 
                 this.loadHospitals();
                 this.loadSchools();
                 this.loadSections();
                 this.loadShifts();
-                this.buildSubComponent()
-                this.cdr.detectChanges();
             });
 
         this.filterService.register('dateRangeFilter', (value: any, filter: any): boolean => {
@@ -448,6 +455,7 @@ export class Schedule implements OnInit {
 
         this.subcomponent = [...menu];
     }
+
 
     initCols() {
         this.cols = [

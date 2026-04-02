@@ -507,38 +507,28 @@ export class ApiService {
   /*----------------------- SLOTS -----------------------*/
 
   getSlots(year?: number) {
-    const params: any = { logAction: 'Fetching Slots' };
-    if (year) params.year = year;
-
-    return this.handleRequest<any[]>('get', 'Slots', params);
+    this.logger.printLogs('i', ' On getSlots Selected year', year);
+    return this.handleRequest<any[]>('get', 'Slots', year ? { params: { year }, logAction: 'Fetching Slots' } : { logAction: 'Fetching Slots' });
   }
 
   getSlotsByUserID(userID: string, year?: number) {
-    const params: any = { id: userID, logAction: 'Fetching Slots by User' };
-    if (year) params.year = year;
-
-    return this.handleRequest<any[]>('get', 'Slots/user', params);
+    this.logger.printLogs('i', ' On getSlotsByUserID Selected year', year);
+    return this.handleRequest<any[]>('get', 'Slots/user', year ? { id: userID, params: { year }, logAction: 'Fetching Slots By User' } : { id: userID, logAction: 'Fetching Slots By User' });
   }
 
   getSlotsByHospitalID(hospitalID: string, year?: number) {
-    const params: any = { id: hospitalID, logAction: 'Fetching Slots by Hospital' };
-    if (year) params.year = year;
-
-    return this.handleRequest<any[]>('get', 'Slots/hospital', params);
+    this.logger.printLogs('i', ' On getSlotsByHospitalID Selected year', year);
+    return this.handleRequest<any[]>('get', 'Slots/hospital', year ? { id: hospitalID, params: { year }, logAction: 'Fetching Slots By Hospital' } : { id: hospitalID, logAction: 'Fetching Slots By Hospital' });
   }
 
   getSlotsBySchoolID(schoolID: string, year?: number) {
-    const params: any = { id: schoolID, logAction: 'Fetching Slots by School' };
-    if (year) params.year = year;
-
-    return this.handleRequest<any[]>('get', 'Slots/school', params); // fixed typo: 'shool' → 'school'
+    this.logger.printLogs('i', ' On getSlotsBySchoolID Selected year', year);
+    return this.handleRequest<any[]>('get', 'Slots/school', year ? { id: schoolID, params: { year }, logAction: 'Fetching Slots By School' } : { id: schoolID, logAction: 'Fetching Slots By School' });
   }
 
   GetSlotsByAppointUserID(userID: string, year?: number) {
-    const params: any = { id: userID, logAction: 'Fetching Slots by User' };
-    if (year) params.year = year;
-
-    return this.handleRequest<any[]>('get', 'Slots/user/appointed', params);
+    this.logger.printLogs('i', ' On GetSlotsByAppointUserID Selected year', year);
+    return this.handleRequest<any[]>('get', 'Slots/user/appointed', year ? { id: userID, params: { year }, logAction: 'Fetching Appointed Slots By User' } : { id: userID, logAction: 'Fetching Appointed Slots By User' });
   }
 
   // getSlotsByRange(start: string, end: string) {

@@ -22,7 +22,7 @@
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
                 dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"
-                paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="calc(100vh - 26rem)"
+                paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="calc(100vh - 28rem)"
                 (selectionChange)="onScheduleSelectionChange($event)">
 
 
@@ -249,7 +249,7 @@
                                 [severity]="getStatus(slot.slotStatus,'severirty')" />
                         </td>
                         <td>{{ dateFormat(slot.date_Created) }}</td>
-                        <td class="flex justify-content gap-2">
+                        <td>
                             <div class="flex gap-2">
                                 <p-button *ngIf="slot.slotStatus==0 && d" icon="pi pi-trash" severity="danger"
                                     [rounded]="true" [outlined]="true" (click)="delete(slot)" />
@@ -844,7 +844,10 @@
 
                 <td *ngIf="isAdmin">{{ slot.schoolName }}</td>
 
-                <td>{{ slot.sectionName }}</td>
+                <td>{{ slot.sectionName }}
+                    
+                    <p-tag severity="info" class="p-5" [value]="slot.studentCount+' / ' + slot.allocation" [rounded]="true" />
+                </td>
 
                 <td>
                     <p-tag [value]="getStatus(slot.slotStatus, 'value')"
