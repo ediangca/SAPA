@@ -104,6 +104,7 @@ export class Student implements OnInit {
 
     exportColumns!: ExportColumn[];
 
+    headStatuses: any[] = [];
     cols!: Column[];
     schools: any[] = [];
 
@@ -153,7 +154,7 @@ export class Student implements OnInit {
     }
 
     buildSubComponent() {
-        this.subcomponent = [
+       const menu  = [
             {
                 id: 'p', label: 'Print All', visible: this.p, icon: 'fas fa-print', command: () => this.printAll()
             },
@@ -180,6 +181,9 @@ export class Student implements OnInit {
                 ]
             },
         ];
+        
+        
+        this.subcomponent = [...menu];
     }
 
     loadData() {
@@ -202,6 +206,16 @@ export class Student implements OnInit {
             { field: 'role', header: 'Role' },
             { field: 'status', header: 'Status' },
         ];
+
+        
+        this.headStatuses = [
+            { label: 'Pending', value: 'P' },
+            { label: 'Approved', value: 'A' },
+            { label: 'Inactive', value: 'I' },
+            { label: 'Unverified', value: 'U' },
+            { label: 'Suspend', value: 'S' },
+        ];
+        
     }
 
     loadRoles() {
@@ -471,6 +485,41 @@ export class Student implements OnInit {
             rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.logger.printLogs('i', `Approving Account of Mr./Ms. ${user.fullname}`, user);
+
+                this.api.approve(user.email).subscribe({
+                    next: (res: any) => {
+                        this.logger.printLogs('i', 'Approved Account', res);
+                        this.loadStudents();
+                        this.showErrorAlert('Account Approved', res.message, false, 'success');
+                    },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed to approve account', err);
+                        this.showErrorAlert('Failed to approve account', err, false, 'error');
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to approve account',
+                            life: 3000
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    inactive(user: any) {
+        this.confirmationService.confirm({
+            message: `Do you really want to inactive <br> Mr./Ms. ${user.fullname}?`,
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.logger.printLogs('i', `Inactivating Account of Mr./Ms. ${user.fullname}`, user);
 
                 this.api.approve(user.email).subscribe({
                     next: (res: any) => {

@@ -79,9 +79,27 @@
                                 </div>
                             </div>
                         </th>
-                        <th pSortableColumn="status" style="min-width:10rem">
-                            Status
-                            <p-sortIcon field="status" />
+                        <th pSortableColumn="status" style="min-width:7rem">
+                            <div class="flex justify-between items-center">
+                                Status
+                                <p-columnFilter field="slotStatus" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Status Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="headStatuses" optionLabel="label"
+                                            optionValue="value" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+
+                                </p-columnFilter>
+                            </div>
                         </th>
                         <th pSortableColumn="date_Created" style="min-width:10rem">
                             Date Created
@@ -121,14 +139,15 @@
                                 (click)="edit(user)" />
 
                             @if (user.status === 'U') {
-                            <p-button *ngIf="d"  class="mr-2" icon="pi pi-trash" severity="danger" pTooltip="Delete" tooltipPosition="top"
+                                <p-button *ngIf="d"  class="mr-2" icon="pi pi-trash" severity="danger" pTooltip="Delete" tooltipPosition="top"
                                 [rounded]="true" [outlined]="true" (click)="delete(user)" />
-                            <p-button class="mr-2" icon="fa fa-paper-plane" severity="info" pTooltip="Resend Verification"
+                                <p-button class="mr-2" icon="fa fa-paper-plane" severity="info" pTooltip="Resend Verification"
                                 tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="resendVerification(user)" />
                             }@else if(user.status === 'P'){
-                            <p-button class="mr-2" icon="fa fa-thumbs-up" severity="info" pTooltip="Approve Account"
+                                <p-button class="mr-2" icon="fa fa-thumbs-up" severity="info" pTooltip="Approve Account"
                                 tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="approve(user)" />
                             }
+
                         </td>
                     </tr>
                 </ng-template>
@@ -148,7 +167,7 @@
                     </ng-container>
                 </ul>
                  -->
-                <p-panelmenu [model]="subcomponent" />
+                <p-panelmenu [model]="subcomponent"></p-panelmenu>
             </div>
             <!-- 
             <div class="h-1/2">
