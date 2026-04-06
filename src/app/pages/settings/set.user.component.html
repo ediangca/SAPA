@@ -237,7 +237,7 @@
                             </small>
                         </div>
                         <!-- School (conditional) -->
-                        <div *ngIf="form.get('roleID')?.value === 'UGR0003' || form.get('roleID')?.value === 'UGR0004'">
+                        <div *ngIf="form.get('roleID')?.value === 'UGR0003' || form.get('roleID')?.value === 'UGR0004'  || form.get('roleID')?.value === 'UGR0006'">
                             <label for="schools" class="block font-bold mb-2">Schools</label>
                             <p-select id="schools" [options]="schools" optionLabel="schoolName"
                                         optionValue="schoolID" appendTo="body" formControlName="schoolID"

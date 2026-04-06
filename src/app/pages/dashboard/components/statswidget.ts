@@ -85,7 +85,7 @@ import { LogsService } from '@/services/logs.service';
         </div>
     </div>
 
-    <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="tokenPayload.role === 'UGR0005' || tokenPayload.role === 'UGR0003'">
+    <div class="grid grid-cols-12 gap-3 mb-4" *ngIf="tokenPayload.role === 'UGR0005' || tokenPayload.role === 'UGR0003' || tokenPayload.role === 'UGR0006'">
         <!-- Pending -->
         <div class="col-span-4 lg:col-span-4 xl:col-span-4">
             <div class="card">

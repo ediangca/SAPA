@@ -230,7 +230,7 @@
                         <!-- STATUS -->
                         <td class="text-center">
                             <ng-container
-                                *ngIf="['MOD0004', 'MOD0005', 'MOD0006','MOD0007','MOD0008','MOD0009','MOD0010','MOD0013'].includes(p.moduleID)">
+                                *ngIf="['MOD0004', 'MOD0005', 'MOD0006','MOD0007','MOD0008','MOD0009','MOD0010','MOD0013','MOD0017'].includes(p.moduleID)">
                                 <p-checkbox [ngModel]="p.s" binary="true"
                                     (onChange)="toggleSelection('status', p, $event)"
                                     [disabled]="!p.isActive"></p-checkbox>
@@ -240,7 +240,7 @@
                         <!-- PRINT -->
                         <td class="text-center">
                             <ng-container
-                                *ngIf="['MOD0002','MOD0003','MOD0005','MOD0006','MOD0007','MOD0008','MOD0009','MOD0010','MOD0013'].includes(p.moduleID)">
+                                *ngIf="['MOD0002','MOD0003','MOD0005','MOD0006','MOD0007','MOD0008','MOD0009','MOD0010','MOD0013', 'MOD0014', 'MOD0017' ].includes(p.moduleID)">
                                 <p-checkbox [ngModel]="p.pa" binary="true"
                                     (onChange)="toggleSelection('printall', p, $event)"
                                     [disabled]="!p.isActive"></p-checkbox>

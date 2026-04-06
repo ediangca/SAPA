@@ -42,6 +42,7 @@ export class AppMenu implements OnInit {
                     { id: "MOD0002", label: 'Hospitals', icon: 'fas fa-hospital', routerLink: ['/dashboard/masterlist/hospitals'] },
                     { id: "MOD0005", label: 'Schools', icon: 'fas fa-school', routerLink: ['/dashboard/masterlist/schools'] },
                     { id: "MOD0006", label: 'Students', icon: 'fas fa-users-line', class: 'rotated-icon', routerLink: ['/dashboard/masterlist/students'] },
+                    { id: "MOD0017", label: 'Clinical Instructors', icon: 'fas fa-users', class: 'rotated-icon', routerLink: ['/dashboard/masterlist/clinical-instructors'] },
                     { id: "MOD0007", label: 'Appointments', icon: 'fas fa-calendar-check', class: 'rotated-icon', routerLink: ['/dashboard/masterlist/appointments'] },
                     ]
             },

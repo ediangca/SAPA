@@ -142,7 +142,7 @@ export class Dashboard implements OnInit, OnDestroy {
     loadDashboard() {
 
         if (!this.tokenPayload) return;
-
+        
         const roleId = this.tokenPayload.role;
         const userId = this.tokenPayload.nameid;
 
@@ -192,6 +192,12 @@ export class Dashboard implements OnInit, OnDestroy {
                 .subscribe(res => this.processSlots(res));
         } else if (role === 'UGR0005') {
             this.api.getSlotsByHospitalID(hospitalID, this.year)
+                .pipe(takeUntil(this.destroy$))
+                .subscribe(res => this.processSlots(res));
+            this.logger.printLogs('i', ' On Slot Selected year', this.year);
+            this.logger.printLogs('i', ' On Slot Selected year', this.year);
+        } else if (role === 'UGR0006') {
+            this.api.getSlotsByCI(userID, this.year)
                 .pipe(takeUntil(this.destroy$))
                 .subscribe(res => this.processSlots(res));
             this.logger.printLogs('i', ' On Slot Selected year', this.year);

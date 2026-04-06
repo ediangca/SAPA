@@ -417,6 +417,10 @@ export class ApiService {
     return this.handleRequest<any[]>('get', 'Users/GetStudentBySchoolCoordinatorID', { id: coordinatorID, logAction: `Fetching Students By School Coordinator ID ${coordinatorID}` });
   }
 
+  GetClinicalInstructorBySchoolCoordinatorID(coordinatorID: string): Observable<any> {
+    return this.handleRequest<any[]>('get', 'Users/GetClinicalInstructorBySchoolCoordinatorID', { id: coordinatorID, logAction: `Fetching Clinical Instructors By School Coordinator ID ${coordinatorID}` });
+  }
+
   createUser(section: any) {
     return this.handleRequest('post', 'Users', { body: section, logAction: 'Creating User' });
   }
@@ -515,6 +519,11 @@ export class ApiService {
     this.logger.printLogs('i', ' On getSlotsByUserID Selected year', year);
     return this.handleRequest<any[]>('get', 'Slots/user', year ? { id: userID, params: { year }, logAction: 'Fetching Slots By User' } : { id: userID, logAction: 'Fetching Slots By User' });
   }
+  
+  getSlotsByCI(CIID: string, year?: number) {
+    this.logger.printLogs('i', ' On getSlotsByCI Selected year', year);
+    return this.handleRequest<any[]>('get', 'Slots/ci', year ? { id: CIID, params: { year }, logAction: 'Fetching Slots By CI' } : { id: CIID, logAction: 'Fetching Slots By CI' });
+  }
 
   getSlotsByHospitalID(hospitalID: string, year?: number) {
     this.logger.printLogs('i', ' On getSlotsByHospitalID Selected year', year);
@@ -553,7 +562,6 @@ export class ApiService {
     );
   }
 
-
   getSlotsByAllocationIDs(payload: { AllocationID: string[] }) {
     return this.handleRequest<any[]>('post', 'Slots/byAllocation', { body: payload, logAction: 'Fetching Slots By AllocationIDs' });
   }
@@ -577,6 +585,15 @@ export class ApiService {
   createBulkSchedules(slots: any, force = false) {
     return this.handleRequest('post', `Slots/bulk/${force}`, { body: slots, logAction: 'Creating Bulk Slots' });
   }
+
+  assignClinicalInstructor(CIID: string, SlotIDs: string[]): Observable<any> {
+    return this.handleRequest<any>('put', 'Slots/assignClinicalInstructor', {
+      id: CIID,
+      body: SlotIDs,
+      logAction: 'Assign Clinical Instructor'
+    });
+  }
+
 
   updateSlotStatus(status: number, slotIDs: string[]) {
     return this.handleRequest('put', `Slots/status/${status}`, {

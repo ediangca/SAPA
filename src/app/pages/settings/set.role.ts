@@ -270,10 +270,10 @@ export class Roles implements OnInit {
 
                 this.modules.forEach(m => {
                     const matched = this.privileges?.find(p => p.moduleID === m.moduleID);
-                    if (matched.privilegeID) {
+                    // if (matched.privilegeID) {
                         updatedPrivileges.push({
                             // ...(matched?.privilegeID && { privilegeID: matched.privilegeID }), // only include if matched
-                            privilegeID: matched.privilegeID ?? null,
+                            privilegeID: matched?.privilegeID ?? null,
                             roleID: this.role.roleID,
                             moduleID: m.moduleID,
                             moduleName: m.moduleName,
@@ -285,7 +285,7 @@ export class Roles implements OnInit {
                             s: matched?.s ?? false,
                             pa: matched?.pa ?? false
                         });
-                    }
+                    // }
                 });
 
                 this.privileges = updatedPrivileges;
@@ -378,11 +378,11 @@ export class Roles implements OnInit {
                 item.isActive = isChecked;
 
                 // status
-                if (['MOD0004', 'MOD0005', 'MOD0006', 'MOD0007', 'MOD0008', 'MOD0009', 'MOD0010', 'MOD0013'].includes(item.moduleID)) {
+                if (['MOD0004', 'MOD0005', 'MOD0006', 'MOD0007', 'MOD0008', 'MOD0009', 'MOD0010', 'MOD0013', 'MOD0017'].includes(item.moduleID)) {
                     item.s = isChecked;
                 }
                 // printAll
-                if (['MOD0002', 'MOD0003', 'MOD0005', 'MOD0006', 'MOD0007', 'MOD0008', 'MOD0009', 'MOD0010', 'MOD0013'].includes(item.moduleID)) {
+                if (['MOD0002', 'MOD0003', 'MOD0005', 'MOD0006', 'MOD0007', 'MOD0008', 'MOD0009', 'MOD0010', 'MOD0013', 'MOD0014', 'MOD0017'].includes(item.moduleID)) {
                     item.pa = isChecked;
                 }
             }

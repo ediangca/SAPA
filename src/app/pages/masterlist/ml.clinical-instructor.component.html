@@ -13,7 +13,7 @@
 
                 <ng-template pTemplate="caption">
                     <div class="flex row justify-center">
-                        <h5 class="m-0 text-primary-900">Manage Students</h5>
+                        <h5 class="m-0 text-primary-900">Manage Clinical Instructors</h5>
                     </div>
                     <div class="flex items-center justify-between">
                         <div class="flex row">
@@ -33,7 +33,7 @@
                             <p-button label="Export" class="mx-2" icon="pi pi-upload" severity="info" rounded="true"
                                 pTooltip="Export" (onClick)="exportCSV()" />
                             <p-button icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
-                                (click)="loadStudents()" />
+                                (click)="loadClinicalInstructors()" />
                         </p-iconfield>
 
                     </div>
@@ -101,11 +101,11 @@
                                 </p-columnFilter>
                             </div>
                         </th>
-                        <th *ngIf="r || s" pSortableColumn="date_Created" style="min-width:10rem">
+                        <th pSortableColumn="date_Created" style="min-width:10rem">
                             Date Created
                             <p-sortIcon field="date_Created" />
                         </th>
-                        <th style="min-width: 7rem">Action</th>
+                        <th *ngIf="r || s" style="min-width: 5rem">Action</th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-user>
@@ -134,7 +134,6 @@
                         </td>
                         <td style="min-width: 10rem">{{dateFormat(user.date_Created)}}</td>
                         <td *ngIf="r || s" >
-                            
                             <div class="flex flex-row gap-2">
                                 <p-button *ngIf="r" class="mr-2 hover:animate-bounce transition-colors" icon="pi pi-pencil" 
                                 pTooltip="Edit" tooltipPosition="top" [rounded]="true" [outlined]="true"
@@ -150,7 +149,6 @@
                                     tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="approve(user)" />
                                 }
                             </div>
-
                         </td>
                     </tr>
                 </ng-template>
@@ -170,7 +168,7 @@
                     </ng-container>
                 </ul>
                  -->
-                <p-panelmenu [model]="subcomponent"/>
+                <p-panelmenu [model]="subcomponent"></p-panelmenu>
             </div>
             <!-- 
             <div class="h-1/2">
@@ -222,6 +220,21 @@
                         *ngIf="submitted && (!form.value['email'] || isEmailInvalid())"> Valid
                         Email is
                         required.</small>
+                    
+                    <!-- School (conditional) -->
+                    <div *ngIf="form.get('roleID')?.value === 'UGR0003' || form.get('roleID')?.value === 'UGR0004' || form.get('roleID')?.value === 'UGR0006'">
+                        <label for="schools" class="block font-bold mb-2">Schools</label>
+                        <p-select id="schools" [options]="schools" optionLabel="schoolName"
+                                    optionValue="schoolID" appendTo="body" formControlName="schoolID"
+                                    [(ngModel)]="selectedSchoolID"
+                                    (onChange)="selectedSchool($event.value)" placeholder="Select School"
+                                    styleClass="w-full">
+                        </p-select>
+                        <small class="text-red-500" *ngIf="submitted && form.get('schoolID')?.invalid">
+                            School is required.
+                        </small>
+                    </div>
+
 
                     <div class="flex flex-row gap-2 item-center justify-end mt-2">
                         <p-check-box id="autoUsername" formControlName="autoUsername"
@@ -237,20 +250,6 @@
                     <small class="flex flex-row w-full justify-end text-red-500"
                         *ngIf="submitted && !form.value['username']"> Username is
                         required.</small>
-
-                    <!-- School (conditional) -->
-                    <div *ngIf="form.get('roleID')?.value === 'UGR0003' || form.get('roleID')?.value === 'UGR0004' || form.get('roleID')?.value === 'UGR0006'">
-                        <label for="schools" class="block font-bold mb-2">Schools</label>
-                        <p-select id="schools" [options]="schools" optionLabel="schoolName"
-                                    optionValue="schoolID" appendTo="body" formControlName="schoolID"
-                                    [(ngModel)]="selectedSchoolID"
-                                    (onChange)="selectedSchool($event.value)" placeholder="Select School"
-                                    styleClass="w-full">
-                        </p-select>
-                        <small class="text-red-500" *ngIf="submitted && form.get('schoolID')?.invalid">
-                            School is required.
-                        </small>
-                    </div>
 
                     <input type="text" pInputText id="roleID" name="roleID" formControlName="roleID" hidden />
 

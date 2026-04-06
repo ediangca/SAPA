@@ -34,7 +34,7 @@ import { MenuModule } from 'primeng/menu';
 import { TieredMenuModule } from 'primeng/tieredmenu';
 import { AppMenuitem } from '@/layout/component/app.menuitem';
 import { RouterModule } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs';
+import { filter, switchMap, take, tap } from 'rxjs';
 import { MultiSelectModule } from 'primeng/multiselect';
 
 interface Column {
@@ -92,6 +92,7 @@ export class Student implements OnInit {
 
     itemDialog: boolean = false;
 
+    loggedUser!: any;
     users = signal<any[]>([]);
     user!: any;
     selectUsers!: any[] | null;
@@ -107,6 +108,7 @@ export class Student implements OnInit {
     headStatuses: any[] = [];
     cols!: Column[];
     schools: any[] = [];
+    selectedSchoolID: string | null = null;
 
     // model: MenuItem[] = [];
     filter: string = '';
@@ -143,7 +145,9 @@ export class Student implements OnInit {
             firstname: ['', Validators.required],
             middlename: ['', Validators.required],
             email: ['', Validators.required],
-            username: ['', Validators.required]
+            username: ['', Validators.required],
+            schoolID: ['', Validators.required],
+            autoUsername: [false]
         });
     }
 
@@ -154,7 +158,7 @@ export class Student implements OnInit {
     }
 
     buildSubComponent() {
-       const menu  = [
+        this.subcomponent = [
             {
                 id: 'p', label: 'Print All', visible: this.p, icon: 'fas fa-print', command: () => this.printAll()
             },
@@ -181,21 +185,27 @@ export class Student implements OnInit {
                 ]
             },
         ];
-        
-        
-        this.subcomponent = [...menu];
+
     }
 
     loadData() {
+
         this.store.getUserPayload()
             .pipe(
                 filter(Boolean),
                 tap(p => this.tokenPayload = p),
-                switchMap(() => this.store.getPrivilegesLoaded())
+                switchMap(() => this.store.getPrivilegesLoaded()),
+                switchMap(() => this.store.getUser().pipe(take(1)))
             )
-            .subscribe(() => {
+            .subscribe((user) => {
+                this.user = user;
+                this.loggedUser = user;
+                this.logger.printLogs('i', ' User', this.user);
                 this.initPrivileges();
+                this.buildSubComponent();
                 this.loadRoles();
+                this.loadSchools();
+                this.loadStudents();
             });
 
 
@@ -207,7 +217,7 @@ export class Student implements OnInit {
             { field: 'status', header: 'Status' },
         ];
 
-        
+
         this.headStatuses = [
             { label: 'Pending', value: 'P' },
             { label: 'Approved', value: 'A' },
@@ -215,7 +225,7 @@ export class Student implements OnInit {
             { label: 'Unverified', value: 'U' },
             { label: 'Suspend', value: 'S' },
         ];
-        
+
     }
 
     loadRoles() {
@@ -244,9 +254,6 @@ export class Student implements OnInit {
             }
         });
 
-        this.buildSubComponent()
-        this.loadStudents();
-        this.loadSchools();
 
     }
 
@@ -266,26 +273,36 @@ export class Student implements OnInit {
         return this.tokenPayload.role === 'UGR0005';
     }
 
+    selectedSchool(schoolID: any) {
+        this.logger.printLogs('i', 'Selected School ID : ', schoolID);
+    }
+
 
     loadStudents() {
-        if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
-            this.api.getUsers().subscribe({
-                next: (users) => {
+        this.api.getUsers().subscribe({
+            next: (users) => {
+                if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
+
                     this.logger.printLogs('i', 'Students loaded', users)
                     this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
                     this.logger.printLogs('i', 'Students loaded for AdminSys | SAP Admin', this.users)
-                },
-                error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
-            });
-        } else {
-            this.api.GetStudentBySchoolCoordinatorID(this.tokenPayload.nameid).subscribe({
-                next: (users) => {
-                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
-                    this.logger.printLogs('i', 'Students loaded for Others', this.users)
-                },
-                error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
-            });
-        }
+
+
+                } else {
+                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004' && user.schoolID === this.loggedUser.schoolID))
+                    this.logger.printLogs('i', 'Students loaded under School', this.loggedUser.schoolID)
+                    // this.api.GetStudentBySchoolCoordinatorID(this.tokenPayload.nameid).subscribe({
+                    //     next: (users) => {
+                    //         this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
+                    //         this.logger.printLogs('i', 'Students loaded for Others', this.users)
+                    //     },
+                    //     error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+                    // });
+                }
+            }
+            ,
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+        });
     }
 
     loadSchools() {
@@ -293,7 +310,8 @@ export class Student implements OnInit {
             next: (schools) => {
                 this.schools = schools || [];
                 if (this.isSchoolCoordinator()) {
-                    this.schools = this.schools.filter((s: any) => s.schoolID === this.user.schoolID);
+                    this.schools = this.schools.filter((s: any) => s.schoolID === this.loggedUser.schoolID);
+                    this.selectedSchoolID = this.loggedUser.schoolID;
                 }
                 this.logger.printLogs('i', 'Schools loaded', this.schools)
             },

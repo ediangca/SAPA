@@ -191,6 +191,8 @@ export class Schedule implements OnInit, OnChanges {
 
     form!: FormGroup;
 
+    users: any[] = [];
+
     submitted: boolean = false;
 
     @ViewChild('dt') dt!: Table;
@@ -204,12 +206,14 @@ export class Schedule implements OnInit, OnChanges {
 
     filter: string = '';
     coordinators: any[] = [];
+    cis: any[] = [];
 
     tokenPayload: any | null;
 
     assignDialog: boolean = false;
     qrDialog: boolean = false;
-    coordinatorID: any | null;
+    // coordinatorID: any | null;
+    CIID: any | null;
     manageStudentDialog: boolean = false;
 
     manageAttendanceDialog: boolean = false;
@@ -232,6 +236,7 @@ export class Schedule implements OnInit, OnChanges {
     hospitals: any[] = [];
     sections: any[] = [];
     schools: any[] = [];
+    schoolCoordinators: any[] = [];
 
     INITIAL_EVENTS: any[] = [];
 
@@ -241,6 +246,8 @@ export class Schedule implements OnInit, OnChanges {
     selectedDateTo: string | null = null;
     printDateRange: Date[] = [];
     selectedSchoolID: number | null = null;
+    selectedSchoolCoorID: number | null = null;
+    selectedCIID: number | null = null;
     selectedHospitalID: number | null = null;
     selectedStatus: number | null = null;
     slotStatusOptions = [
@@ -326,7 +333,8 @@ export class Schedule implements OnInit, OnChanges {
             hospitalID: ['', Validators.required],
             shiftID: [[], Validators.required],
             allocationID: [[], Validators.required],
-            userID: ['', Validators.required]
+            userID: ['', Validators.required],
+            CIID: ['', Validators.required]
         });
     }
 
@@ -342,7 +350,6 @@ export class Schedule implements OnInit, OnChanges {
                 filter(Boolean),
                 tap(p => {
                     this.tokenPayload = p;
-                    // this.buildSubComponent();
                 }),
                 switchMap(() => this.store.getPrivilegesLoaded()),
                 switchMap(() => this.store.getUser().pipe(take(1)))
@@ -351,9 +358,9 @@ export class Schedule implements OnInit, OnChanges {
                 this.user = user;
                 this.logger.printLogs('i', ' User', this.user);
                 this.initPrivileges();
-                this.buildSubComponent(); 
-                this.loadHospitals();
                 this.loadSchools();
+                this.loadSchoolsCoor();
+                this.loadHospitals();
                 this.loadSections();
                 this.loadShifts();
             });
@@ -415,15 +422,15 @@ export class Schedule implements OnInit, OnChanges {
         //         default: return true;
         //     }
         // });
-
         this.loadSlots();
+        this.buildSubComponent();
     }
 
     // then, given those routes please help proceed with my logic to play with bar section,
 
 
     buildSubComponent() {
-        const menu = [
+        this.subcomponent = [
             { label: 'Print All', icon: 'fas fa-print', visible: this.p, command: () => this.openPrintDialog() },
             ...(this.tokenPayload.role === 'UGR0001'
                 ? [
@@ -451,9 +458,17 @@ export class Schedule implements OnInit, OnChanges {
                         command: () => this.changeStatus(3)
                     }
                 ]),
+            ...(this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002' || this.tokenPayload.role === 'UGR0003' ? [
+                {
+                    id: 'reasign',
+                    label: 'Re-assign Clinical Intructor',
+                    icon: 'pi pi-user-edit',
+                    command: () => this.reAssignDialog()
+                }
+            ] : [])
+
         ];
 
-        this.subcomponent = [...menu];
     }
 
 
@@ -607,12 +622,28 @@ export class Schedule implements OnInit, OnChanges {
         });
     }
 
+    selectedSchool(schoolID: any) {
+        this.logger.printLogs('i', 'Selected School ID : ', schoolID);
+    }
+
+    setSelectedSchoolCoorID(coorID: any) {
+        this.logger.printLogs('i', 'Selected Coord ID : ', coorID);
+    }
+
+    setSelectedCIID(CIID: any) {
+        this.logger.printLogs('i', 'Selected CI ID : ', CIID);
+    }
+
     isAdmin(): boolean {
         return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
     }
 
     isSchoolCoordinator(): boolean {
         return this.tokenPayload.role === 'UGR0003';
+    }
+
+    isClinicalInstructor(): boolean {
+        return this.tokenPayload.role === 'UGR0006';
     }
 
     isIntern(): boolean {
@@ -622,7 +653,6 @@ export class Schedule implements OnInit, OnChanges {
     isSupervisor(): boolean {
         return this.tokenPayload.role === 'UGR0005';
     }
-
 
     loadSlots() {
         this.loading = true;
@@ -668,6 +698,19 @@ export class Schedule implements OnInit, OnChanges {
             });
         } else if (this.isSchoolCoordinator()) {
             this.api.getSlotsByUserID(this.tokenPayload.nameid).subscribe({
+                next: (slots) => {
+                    this.slots.set(slots);
+                    this.loading = false;
+                    this.buildCalendarEvents();
+                },
+                error: (err) => {
+                    this.loading = false;
+                    this.slots.set([]);
+                    this.logger.printLogs('e', 'Failed to fetch slots', err)
+                }
+            });
+        } else if (this.isClinicalInstructor()) {
+            this.api.getSlotsByCI(this.tokenPayload.nameid).subscribe({
                 next: (slots) => {
                     this.slots.set(slots);
                     this.loading = false;
@@ -811,6 +854,36 @@ export class Schedule implements OnInit, OnChanges {
         });
     }
 
+    loadSchoolsCoor() {
+        this.api.getUsers().subscribe({
+            next: (users) => {
+                if (this.isAdmin()) {
+                    this.schools = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A') || []; //Role ID - Clinical Instructor
+                } else {
+                    this.schools = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A' && user.schoolID === this.user.schoolID) || []; //Role ID - Clinical Instructor
+                }
+
+                this.logger.printLogs('i', 'CI Users loaded', this.coordinators)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch CI users', err)
+        });
+    }
+
+    loadClinicalInstructors() {
+        this.api.getUsers().subscribe({
+            next: (users) => {
+                if (this.isAdmin()) {
+                    this.cis = users.filter((user: any) => user.roleID === 'UGR0006' && user.status === 'A') || []; //Role ID - Clinical Instructor
+                } else {
+                    this.cis = users.filter((user: any) => user.roleID === 'UGR0006' && user.status === 'A' && user.schoolID === this.user.schoolID) || []; //Role ID - Clinical Instructor
+                }
+
+                this.logger.printLogs('i', 'CI Users loaded', this.coordinators)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch CI users', err)
+        });
+    }
+
     loadHospitals() {
         this.api.getHospitals().subscribe({
             next: (hospitals) => {
@@ -939,10 +1012,12 @@ export class Schedule implements OnInit, OnChanges {
 
         this.printDateRange = [];
 
+        this.CIID = null;
+
         this.loadHospitals();
         this.loadSchools();
         this.loadSections();
-        this.loadShifts();
+        this.loadClinicalInstructors();
 
         if (selectInfo) {
             const start = new Date(selectInfo.start);
@@ -967,14 +1042,18 @@ export class Schedule implements OnInit, OnChanges {
             return;
         }
 
+        this.selectedSchoolCoorID = this.isSchoolCoordinator() ? this.tokenPayload.nameid : null
+
         this.form.reset({
             slotID: null,
             date: this.printDateRange,   // ✅ ARRAY for multiple mode
             hospitalID: null,
             shiftID: [],
             allocationID: [],
-            userID: this.tokenPayload.nameid
+            userID: this.selectedSchoolCoorID,
+            CIID: this.selectedCIID
         });
+
 
         this.allocations = [];
         this.submitted = false;
@@ -1161,6 +1240,22 @@ export class Schedule implements OnInit, OnChanges {
         });
     }
 
+    reAssignDialog() {
+        if (!this.selectSlots || this.selectSlots.length === 0) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected Slots',
+                detail: 'Please select at least one slot first!',
+                life: 3000
+            });
+            return;
+        }
+
+        this.loadClinicalInstructors();
+        this.assignDialog = true;
+        this.CIID = null;
+    }
+
     canManageStudent(slot: any): boolean {
         return (
             (this.tokenPayload.role === 'UGR0001' ||
@@ -1199,6 +1294,9 @@ export class Schedule implements OnInit, OnChanges {
             return;
         }
 
+
+        this.selectedSchoolCoorID = this.isSchoolCoordinator() ? this.tokenPayload.nameid : null
+
         const request = {
             // dateSlot: this.toLocalDateString(this.form.value.date),
             dateSlots: this.form.value.date.map((d: Date) =>
@@ -1207,8 +1305,10 @@ export class Schedule implements OnInit, OnChanges {
             shiftIDs: this.form.value.shiftID ?? [],
             hospitalID: this.form.value.hospitalID,
             allocationIDs: this.form.value.allocationID ?? [],
-            userID: this.form.value.userID
+            userID: this.selectedSchoolCoorID,
+            CIID: this.selectedCIID
         };
+
 
         this.logger.printLogs('i', 'Create Slot Request : ', request);
 
@@ -1216,64 +1316,6 @@ export class Schedule implements OnInit, OnChanges {
         this.createSchedule(request);
     }
 
-
-    // createSchedule(request: any, force: boolean = false) {
-    //     this.forceRequest = request;
-
-    //     this.api.createBulkSchedules(request, force).subscribe({
-    //         next: (res: any) => {
-    //             this.logger.printLogs('i', 'Create Slot Response:', res);
-
-    //             const blockedCount = res.blocked?.length || 0;
-    //             const skippedCount = res.skipped?.length || 0;
-    //             const addedCount = res.added?.length || 0;
-
-
-    //             // Show dialog if there are skipped/unconfirmed slots and not forcing
-    //             if (((skippedCount > 0 || blockedCount > 0)) && !force) {
-    //                 this.messageService.add({
-    //                     severity: 'warn',
-    //                     summary: `Existing Slots`,
-    //                     // detail: `${skippedCount + blockedCount} slot(s) already exist as unconfirmed & confirmed. Choose an action to proceed.`,
-    //                     detail: res.message || `${skippedCount + blockedCount} slot(s) already exist as unconfirmed & confirmed. Choose an action to proceed.`,
-    //                     life: 5000
-    //                 });
-
-    //                 this.availableSlots = res.added || [];
-    //                 this.blockedSlots = res.blocked || [];
-    //                 this.existingSlots = res.skipped || [];
-    //                 this.showForceDialog = true;
-
-    //                 return;
-    //             }
-
-    //             this.logger.printLogs('i', 'Count >>> ', `Added: ${addedCount}, Skipped: ${skippedCount}, Blocked: ${blockedCount}`);
-
-    //             this.logger.printLogs('i', 'Condition 1 >>> ', `${(addedCount > 0 && skippedCount > 0 && force)}`);
-
-    //             this.logger.printLogs('i', 'Condition 2 >>> ', `${(skippedCount < 1 && blockedCount < 1 && addedCount > 0 && !force)}`);
-
-    //             // Show success if any slots were created
-    //             if ((addedCount > 0 && skippedCount > 0 && force) ||
-    //                 (skippedCount < 1 && blockedCount < 1 && addedCount > 0 && !force)) {
-    //                 this.showErrorAlert('Successful', res.message, false, 'success');
-    //                 if (this.tableOption) {
-    //                     this.loadSlots();
-    //                 } else {
-    //                     this.buildCalendarEvents();
-    //                 }
-    //             }
-    //         },
-    //         error: (err: any) => {
-    //             this.messageService.add({
-    //                 severity: 'error',
-    //                 summary: 'Error',
-    //                 detail: err.message || 'Failed to save slots.',
-    //                 life: 5000
-    //             });
-    //         }
-    //     });
-    // }
 
     createSchedule(request: any, force: boolean = false) {
         this.forceRequest = request;
@@ -1434,6 +1476,74 @@ export class Schedule implements OnInit, OnChanges {
 
         this.createSchedule(skippedRequest, true);
     }
+
+    abbreviateName(fullName: string): string {
+        if (!fullName) return 'Unknown';
+
+        // Remove common suffixes/words that don't add to abbreviation
+        const skipWords = ['the', 'of', 'and', 'a', 'an', 'for', 'Inc', 'Inc.', 'Corp', 'Foundation'];
+
+        // Split by spaces, commas, dashes, and dots
+        const parts = fullName.split(/[\s,\-\.]+/);
+
+        const abbreviated = parts
+            .filter(p => p.length > 0 && !skipWords.includes(p))
+            .map(p => p[0].toUpperCase())
+            .join('');
+
+        return abbreviated;
+    }
+
+    saveAssignCI() {
+        const slotIDs = this.selectSlots?.map((slot: any) => slot.slotID) ?? [];
+        const slots = this.selectSlots?.map((slot: any) => (slot.dateSlot + "(" + slot.shiftName + ") - " + slot.schoolname + "-" + slot.hospitalName + "(" + slot.sectionName + ")")) ?? [];
+
+        if (this.CIID == null) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected Clinical Instructor',
+                detail: 'Please select at least one clinical instructor first!',
+                life: 3000
+            });
+            return
+        }
+        // Find the selected coordinator object
+        const ci = this.cis?.find(
+            (c: any) => c.userID === this.CIID
+        );
+
+        const ciName = ci?.fullname || ci?.lastname || 'Unknown';
+
+        this.logger.printLogs('s', `Assign selected slotIDs  [${slotIDs}] to clinical instructor : `, ciName);
+
+        this.confirmationService.confirm({
+            message: `Are you sure you want to assign the selected school(s):<br><br>${slots.join('<br>')}<br><br>to <b>${ciName}</b>?`,
+            header: 'Assign Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-success',
+            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+
+            accept: () => {
+                this.selectSlots = [];
+
+                this.api.assignClinicalInstructor(this.CIID, slotIDs).subscribe({
+                    next: (res) => {
+                        this.logger.printLogs('s', 'Clinical instructor assigned successfully', res);
+                        this.loadSlots();
+                    },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed to assign clinical instructor', err);
+                    }
+                });
+                this.assignDialog = false;
+            }
+        });
+    }
+
 
     openManageStudent(slot: any) {
 
@@ -1624,7 +1734,6 @@ export class Schedule implements OnInit, OnChanges {
         });
 
     }
-
 
     delete(slot: any) {
         this.confirmationService.confirm({
@@ -1947,6 +2056,11 @@ export class Schedule implements OnInit, OnChanges {
     }
 
     getSelectedSchoolName(): string | null {
+        return this.schools?.find(s => s.schoolID === this.selectedSchoolID)?.schoolName || null;
+    }
+
+
+    getSelectedCoorSchoolName(): string | null {
         return this.schools?.find(s => s.schoolID === this.selectedSchoolID)?.schoolName || null;
     }
 

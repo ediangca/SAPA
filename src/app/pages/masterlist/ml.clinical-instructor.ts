@@ -24,13 +24,18 @@ import ValidateForm from '@/helper/validator/validateForm';
 import Swal from 'sweetalert2';
 import { StoreService } from '@/services/store.service';
 import { ToastModule } from 'primeng/toast';
-import { UsersProperties } from "./set.user.sidebar";
-import { TooltipModule } from "primeng/tooltip";
+import { ToastrService } from 'ngx-toastr';
+import { NgToastService, ToastIconDirective } from 'ng-angular-popup';
+import { Tooltip, TooltipModule } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { CheckboxModule } from "primeng/checkbox";
-import { PasswordModule } from "primeng/password";
+import { PdfService } from '@/services/pdf.service';
+import { MenuModule } from 'primeng/menu';
+import { TieredMenuModule } from 'primeng/tieredmenu';
+import { AppMenuitem } from '@/layout/component/app.menuitem';
+import { RouterModule } from '@angular/router';
+import { filter, switchMap, take, tap } from 'rxjs';
 import { MultiSelectModule } from 'primeng/multiselect';
-import { QRCodeComponent } from 'angularx-qrcode';
 
 interface Column {
     field: string;
@@ -44,22 +49,25 @@ interface ExportColumn {
 }
 
 @Component({
-    selector: 'settings-users',
+    selector: 'ml-clinical-instructor',
     standalone: true,
     imports: [
         CommonModule,
+        MenuModule,
+        TieredMenuModule,
         TableModule,
         FormsModule,
+        TooltipModule,
         ButtonModule,
-        RippleModule,
         CheckboxModule,
+        // AppMenuitem,
+        PanelMenuModule,
+        RippleModule,
         ToastModule,
         ToolbarModule,
         RatingModule,
         InputTextModule,
-        PasswordModule,
         TextareaModule,
-        ToggleSwitchModule,
         SelectModule,
         RadioButtonModule,
         InputNumberModule,
@@ -69,25 +77,25 @@ interface ExportColumn {
         InputIconModule,
         IconFieldModule,
         ConfirmDialogModule,
-        PanelMenuModule,
         ReactiveFormsModule,
-        UsersProperties,
-        TooltipModule,
-        QRCodeComponent,
+        FormsModule,
+        RouterModule,
     ],
-    templateUrl: './set.user.component.html',
+    templateUrl: './ml.clinical-instructor.component.html',
     providers: [MessageService, ConfirmationService],
-    styleUrl: './css/set.css'
+    styleUrl: './css/masterlist.scss'
 })
+export class ClinicalInstructor implements OnInit {
 
-export class Users implements OnInit {
+    subcomponent: MenuItem[] = [];
+    properties: MenuItem[] = [];
 
     itemDialog: boolean = false;
-    changePassDialog: boolean = false;
 
+    loggedUser!: any;
     users = signal<any[]>([]);
     user!: any;
-    selectedUsers!: any[] | null;
+    selectUsers!: any[] | null;
 
     form!: FormGroup;
 
@@ -97,25 +105,28 @@ export class Users implements OnInit {
 
     exportColumns!: ExportColumn[];
 
+    headStatuses: any[] = [];
     cols!: Column[];
-    filter: string = '';
+    schools: any[] = [];
+    selectedSchoolID: string | null = null;
 
-    model: MenuItem[] = [];
+    // model: MenuItem[] = [];
+    filter: string = '';
     tokenPayload: any | null;
 
     roles: any | [];
-    headStatuses: any[] = [];
-    allocations: any[] = [];
-    hospitals: any[] = [];
-    schools: any[] = [];
-    sections: any[] = [];
 
     emailPattern: string = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
-    autoUsername: boolean = false;
-    newPassword: string = '';
+    assignDialog: boolean = false;
+    schoolID: any | null;
 
-    showQrModal = false;
+    c: boolean = false;
+    r: boolean = false;
+    u: boolean = false;
+    d: boolean = false;
+    s: boolean = false;
+    p: boolean = false;
 
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
@@ -124,71 +135,73 @@ export class Users implements OnInit {
         private api: ApiService,
         private logger: LogsService,
         private vf: ValidateForm,
+        private pdfService: PdfService
     ) {
+
         this.form = this.fb.group({
             userID: [null],
-            username: ['', Validators.required],
+            roleID: [null],
             lastname: ['', Validators.required],
             firstname: ['', Validators.required],
             middlename: ['', Validators.required],
-            roleID: ['', Validators.required],
             email: ['', Validators.required],
-            hospitalID: [null],
-            schoolID: [null],
+            username: ['', Validators.required],
+            schoolID: ['', Validators.required],
             autoUsername: [false]
         });
     }
 
     ngOnInit() {
-        this.form = this.fb.group({
-            userID: [null],
-            username: ['', Validators.required],
-            lastname: ['', Validators.required],
-            firstname: ['', Validators.required],
-            middlename: ['', Validators.required],
-            roleID: ['', Validators.required],
-            email: ['', Validators.required],
-            hospitalID: [null],
-            schoolID: [null],
-            autoUsername: [false]
-        });
         this.loadData();
+    }
 
-        this.model = [
+    buildSubComponent() {
+        this.subcomponent = [
             {
+                id: 'p', label: 'Print All', visible: this.p, icon: 'fas fa-print', command: () => this.printAll()
+            },
+            {
+                id: 's',
+                label: 'Status',
+                icon: 'fas fa-layer-group',
+                disabled: !this.selectUsers || this.selectUsers.length === 0,
+                visible: this.s,
                 items: [
-                    { label: 'Users', icon: 'fas fa-table-columns' },
+                    ...(this.tokenPayload.role === 'UGR0001' ?
+                        [
+                            { label: 'Unverified', icon: 'fas fa-clock', command: () => this.changeStatus('U') },
+                            { label: 'Pending', icon: 'fas fa-clock', command: () => this.changeStatus('P') },
+                            { label: 'Approve', icon: 'fas fa-check', command: () => this.changeStatus('A') },
+                            { label: 'Suspend', icon: 'fas fa-pause-circle', command: () => this.changeStatus('S') },
+                            { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus('I') },
+                        ] : [
+                            { label: 'Approve', icon: 'fas fa-check', command: () => this.changeStatus('A') },
+                            { label: 'Inactive', icon: 'fas fa-ban', command: () => this.changeStatus('I') },
+                        ]
+                    ),
 
                 ]
-            }
+            },
         ];
 
-
-        this.form.get('roleID')?.valueChanges.subscribe(role => {
-
-            const hospitalControl = this.form.get('hospitalID');
-
-            if (role === 'UGR0005') {
-                hospitalControl?.setValidators([Validators.required]);
-            } else {
-                hospitalControl?.clearValidators();
-                hospitalControl?.setValue(null); // clear hospital if not supervisor
-            }
-
-            hospitalControl?.updateValueAndValidity();
-        });
     }
 
     loadData() {
         this.store.getUserPayload()
-            .subscribe(res => {
-                this.tokenPayload = res;
-                this.logger.printLogs('i', "Token Payload : ", this.tokenPayload)
-
+            .pipe(
+                filter(Boolean),
+                tap(p => this.tokenPayload = p),
+                switchMap(() => this.store.getPrivilegesLoaded()),
+                switchMap(() => this.store.getUser().pipe(take(1)))
+            )
+            .subscribe((user) => {
+                this.loggedUser = user;
+                this.logger.printLogs('i', ' User', this.user);
+                this.initPrivileges();
+                this.buildSubComponent();
                 this.loadRoles();
-                this.loadUsers();
-                this.loadHospitals();
                 this.loadSchools();
+                this.loadClinicalInstructors()
             });
 
         this.cols = [
@@ -197,8 +210,8 @@ export class Users implements OnInit {
             { field: 'email', header: 'Email' },
             { field: 'role', header: 'Role' },
             { field: 'status', header: 'Status' },
-            { field: 'date_create', header: 'Date Created' },
         ];
+
 
         this.headStatuses = [
             { label: 'Pending', value: 'P' },
@@ -207,7 +220,7 @@ export class Users implements OnInit {
             { label: 'Unverified', value: 'U' },
             { label: 'Suspend', value: 'S' },
         ];
-        
+
     }
 
     loadRoles() {
@@ -217,30 +230,78 @@ export class Users implements OnInit {
         });
     }
 
-    loadHospitals() {
-        this.api.getHospitals().subscribe({
-            next: (hospitals) => {
-                this.hospitals = hospitals || [];
-                this.logger.printLogs('i', 'Hospitals loaded', this.hospitals)
-            },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch hospitals', err)
+    initPrivileges() {
+        const moduleID = 'MOD0017';
+        this.c = this.store.isAllowedAction(moduleID, 'create');
+        this.r = this.store.isAllowedAction(moduleID, 'retrieve');
+        this.u = this.store.isAllowedAction(moduleID, 'update');
+        this.d = this.store.isAllowedAction(moduleID, 'delete');
+        this.s = this.store.isAllowedAction(moduleID, 'status');
+        this.p = this.store.isAllowedAction(moduleID, 'printall');
+
+
+        this.subcomponent = this.subcomponent.filter((item: any) => {
+            this.logger.printLogs('i', `Component Accessability: s${this.s}, p${this.p}`, item);
+            switch (item.id) {
+                case 's': return this.s;
+                case 'p': return this.p;
+                default: return true;
+            }
         });
     }
-    
+
+    isAdmin(): boolean {
+        return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
+    }
+
+    isSchoolCoordinator(): boolean {
+        return this.tokenPayload.role === 'UGR0003';
+    }
+
+    isIntern(): boolean {
+        return this.tokenPayload.role === 'UGR0004';
+    }
+
+    isSupervisor(): boolean {
+        return this.tokenPayload.role === 'UGR0005';
+    }
+
+    selectedSchool(schoolID: any) {
+        this.logger.printLogs('i', 'Selected School ID : ', schoolID);
+    }
+
+    loadClinicalInstructors() {
+        this.api.getUsers().subscribe({
+            next: (users) => {
+                if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
+
+                    this.logger.printLogs('i', 'Clinical Instructors loaded', users)
+                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0006'))
+                    this.logger.printLogs('i', 'Clinical Instructors loaded for AdminSys | SAP Admin', this.users)
+                } else {
+                     this.users.set(users.filter((user: any) => user.roleID === 'UGR0006' && user.schoolID === this.loggedUser.schoolID))
+                            this.logger.printLogs('i', 'Clinical Instructors loaded under School', this.loggedUser.schoolID)
+                }
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+        });
+
+    }
 
     loadSchools() {
         this.api.getSchools().subscribe({
             next: (schools) => {
                 this.schools = schools || [];
+
+                this.logger.printLogs('i', 'Loading Schools under User', this.user)
+                if (this.isSchoolCoordinator()) {
+                    this.schools = this.schools.filter((s: any) => s.schoolID === this.loggedUser.schoolID);
+                    this.selectedSchoolID = this.loggedUser.schoolID;
+                }
                 this.logger.printLogs('i', 'Schools loaded', this.schools)
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch schools', err)
         });
-    }
-
-    onStatusChanged() {
-        this.selectedUsers = [];
-        this.loadUsers();
     }
 
     exportCSV() {
@@ -251,8 +312,8 @@ export class Users implements OnInit {
             return;
         }
         const csv = [
-            ['User ID', 'FullName', 'Email', 'User Role', 'Status', 'Date Created'],
-            ...users.map(u => [u.userID, u.fullname, u.email, u.rolename, this.getStatus(u.status, 'value'), u.date_created])
+            ['Student ID', 'FullName', 'Email', 'Status'],
+            ...users.map(u => [u.userID, u.fullname, u.email, this.getStatus(u.status, 'value')])
         ]
             .map(row => row.map(v => `"${v}"`).join(','))
             .join('\n');
@@ -260,11 +321,18 @@ export class Users implements OnInit {
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.setAttribute('download', `users_export_${new Date().getTime()}.csv`);
+        link.setAttribute('download', `students_export_${new Date().getTime()}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
+
+    onStudentSelectionChange(selected: any[]) {
+        this.logger.printLogs('i', "Select users : ", selected)
+        this.selectUsers = selected;
+        this.buildSubComponent()
+    }
+
 
     onGlobalFilter(table: Table) {
         table.filterGlobal(this.filter, 'contains');
@@ -336,7 +404,6 @@ export class Users implements OnInit {
         }
     }
 
-
     filterSpace() {
         const usernameControl = this.form.get('username');
         if (usernameControl) {
@@ -347,7 +414,6 @@ export class Users implements OnInit {
             }
         }
     }
-
     isEmailInvalid(): boolean {
         const emailControl = this.form.get('email');
         if (emailControl) {
@@ -358,42 +424,16 @@ export class Users implements OnInit {
         return false;
     }
 
-    getAllocationsByHospitalID(hospitalID: any) {
-        this.itemDialog = false;
-        this.allocations = []; // Clear previous allocations
-        this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);
-        this.api.getAllocationsByHospitalID(hospitalID).subscribe({
-            next: (res) => {
-                this.allocations = res || [];
-                this.allocations = this.allocations.filter(a => a.status == true);
-                this.logger.printLogs('i', 'Allocations loaded by Hospital ID', this.allocations)
-                this.itemDialog = true;
-            },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch allocations by Hospital ID', err),
-        });
-        this.itemDialog = true;
-    }
-
-    selectedHospital(hospitalID: any){
-        this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);  
-    }
-    
-    selectedSchool(schoolID: any){
-        this.logger.printLogs('i', 'Selected School ID : ', schoolID);  
-    }
-
-    openQrZoom(): void {
-        this.showQrModal = true;
-    }
-
     openNew() {
         this.form.reset({
             email: '',
+            roleID: 'UGR0006',
             userID: this.tokenPayload.nameid
         });
         this.user = {};
         this.submitted = false;
         this.itemDialog = true;
+
     }
 
     openNewDialog() {
@@ -403,20 +443,22 @@ export class Users implements OnInit {
 
     resendVerification(user: any) {
         this.confirmationService.confirm({
-            message: `Are you sure you really want to resend email verification to <b>${user.email}</b>?`,
+            message: `Do you really want to resend email verification to ${user.email}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             rejectLabel: 'Cancel',
             acceptLabel: "Yes! I'm Sure",
-            acceptButtonStyleClass: 'p-button-success',
-            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.logger.printLogs('i', `Resending Email verification to ${user.email}`, user);
 
                 this.api.resendVerification(user.email).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'Verification sent', res);
-                        this.loadUsers();
+                        this.loadClinicalInstructors();
                         this.showErrorAlert('Vefification Sent', 'Verification Successfully sent!', false, 'success');
                     },
                     error: (err) => {
@@ -436,22 +478,57 @@ export class Users implements OnInit {
 
     approve(user: any) {
         this.confirmationService.confirm({
-            message: `Are you sure you really want to approve <br> Mr./Ms. ${user.fullname}?`,
+            message: `Do you really want to approve <br> Mr./Ms. ${user.fullname}?`,
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
-            rejectIcon: 'pi pi-times',
-            acceptIcon: 'pi pi-check',
             rejectLabel: 'Cancel',
             acceptLabel: "Yes! I'm Sure",
-            acceptButtonStyleClass: 'p-button-success',
-            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.logger.printLogs('i', `Approving Account of Mr./Ms. ${user.fullname}`, user);
 
                 this.api.approve(user.email).subscribe({
                     next: (res: any) => {
                         this.logger.printLogs('i', 'Approved Account', res);
-                        this.loadUsers();
+                        this.loadClinicalInstructors();
+                        this.showErrorAlert('Account Approved', res.message, false, 'success');
+                    },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed to approve account', err);
+                        this.showErrorAlert('Failed to approve account', err, false, 'error');
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to approve account',
+                            life: 3000
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    inactive(user: any) {
+        this.confirmationService.confirm({
+            message: `Do you really want to inactive <br> Mr./Ms. ${user.fullname}?`,
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                this.logger.printLogs('i', `Inactivating Account of Mr./Ms. ${user.fullname}`, user);
+
+                this.api.approve(user.email).subscribe({
+                    next: (res: any) => {
+                        this.logger.printLogs('i', 'Approved Account', res);
+                        this.loadClinicalInstructors();
                         this.showErrorAlert('Account Approved', res.message, false, 'success');
                     },
                     error: (err) => {
@@ -485,11 +562,11 @@ export class Users implements OnInit {
             acceptLabel: "Yes! I'm Sure",
             rejectIcon: 'pi pi-times',
             acceptIcon: 'pi pi-check',
-            acceptButtonStyleClass: 'p-button-success',
-            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
-                this.users.set(this.users().filter((val) => !this.selectedUsers?.includes(val)));
-                this.selectedUsers = null;
+                this.users.set(this.users().filter((val) => !this.selectUsers?.includes(val)));
+                this.selectUsers = null;
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Successful',
@@ -500,22 +577,63 @@ export class Users implements OnInit {
         });
     }
 
-    changePassword(user: any) {
-        this.user = user
-        this.changePassDialog = true;
-    }
-
-
     hideDialog() {
         this.itemDialog = false;
         this.submitted = false;
-        this.changePassDialog = false;
     }
 
-    loadUsers() {
-        this.api.getUsers().subscribe({
-            next: (users) => this.users.set(users),
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+    hideAssignDialog() {
+        this.assignDialog = false;
+        this.submitted = false;
+    }
+
+    changeStatus(status: any) {
+        const userIDs = this.selectUsers?.map((user: any) => user.userID) ?? [];
+
+        if (!userIDs.length) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Selected USer',
+                detail: 'Please select at least one Student first!',
+                life: 3000
+            });
+            return;
+        }
+
+        this.confirmationService.confirm({
+            message: `Are you sure you want to change the status of selected Student to  <b>${this.getStatus(status, 'value')}</b>?`,
+            header: 'Confirm Status Update',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: "Yes! I'm Sure",
+            rejectLabel: 'Cancel',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+
+            accept: () => {
+                this.api.updateUserStatus(status, userIDs).subscribe({
+                    next: (res: any) => {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: res.message,
+                            life: 3000
+                        });
+
+                        this.logger.printLogs('s', 'Status updated successfully', res);
+                        this.loadClinicalInstructors();
+                        this.selectUsers = [];
+                    },
+                    error: (err) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: 'Failed to update school status.',
+                            life: 3000
+                        });
+                        this.logger.printLogs('e', 'Failed to update status', err);
+                    }
+                });
+            }
         });
     }
 
@@ -525,7 +643,7 @@ export class Users implements OnInit {
         if (!this.form.valid) {
             this.messageService.add({
                 severity: 'warning',
-                summary: 'Warning',
+                summary: 'Incomplete Fields',
                 detail: 'Please complete all required fields before proceeding!',
                 life: 3000
             });
@@ -534,15 +652,13 @@ export class Users implements OnInit {
         }
 
 
-
-
         /**
          * Validate valid email format
          */
         if (this.isEmailInvalid()) {
             this.messageService.add({
                 severity: 'warning',
-                summary: 'Warning',
+                summary: 'Invalid Email',
                 detail: 'Please enter a valid email address!',
                 life: 3000
             });
@@ -559,11 +675,11 @@ export class Users implements OnInit {
             this.api.updateUser(id, this.user).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'User updated successfully', res);
-                    this.loadUsers(); // reload list
+                    this.loadClinicalInstructors(); // reload list
                     this.showErrorAlert('User Updated', 'User has been Successfully updated!', false, 'success');
                 },
                 error: (err) => {
-                    this.showErrorAlert('Updating Failed', err, false, 'error');
+                    this.showErrorAlert('Updating Failed', err, true, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -575,11 +691,11 @@ export class Users implements OnInit {
             this.api.createUser(this.user).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'User created successfully', res);
-                    this.loadUsers(); // reload list
+                    this.loadClinicalInstructors(); // reload list
                     this.closeDialog();
                 },
                 error: (err) => {
-                    this.showErrorAlert('Saving Failed', err, false, 'error');
+                    this.showErrorAlert('Saving Failed', err, true, 'error');
                 },
                 complete: () => {
                     this.submitted = false;
@@ -597,20 +713,20 @@ export class Users implements OnInit {
             acceptLabel: "Yes! I'm Sure",
             rejectIcon: 'pi pi-times',
             acceptIcon: 'pi pi-check',
-            acceptButtonStyleClass: 'p-button-success',
-            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
             accept: () => {
                 this.logger.printLogs('i', `Deleting User ${user.email}`, user);
 
                 this.api.deleteUser(user.userID).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'User deleted', res);
-                        this.loadUsers();
+                        this.loadClinicalInstructors();
                         this.showErrorAlert('User Deleted', 'User has been Successfully deleted!', false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to delete user', err);
-                        this.showErrorAlert('Deleting Failed', err, false, 'error');
+                        this.showErrorAlert('Deleting Failed', err, true, 'error');
                         this.messageService.add({
                             severity: 'error',
                             summary: 'Error',
@@ -623,55 +739,10 @@ export class Users implements OnInit {
         });
     }
 
-    isPasswordInvalid(): boolean {
-        return this.submitted && (!this.newPassword || this.newPassword.trim() === '');
+    printAll() {
+        this.pdfService.generateUserReport(this.users(), 'LIST OF STUDENTS');
     }
 
-    updatePassword() {
-        this.submitted = true;
-        if (!this.newPassword) {
-            this.messageService.add({
-                severity: 'warning',
-                summary: 'Warning',
-                detail: 'Password is required!',
-                life: 3000
-            });
-            return;
-        }
-
-        this.confirmationService.confirm({
-            message: `Are you sure you want to change password for <b>${this.user.email}</b>?`,
-            header: 'Confirm',
-            icon: 'pi pi-exclamation-triangle',
-            rejectLabel: 'Cancel',
-            acceptLabel: "Yes! I'm Sure",
-            rejectIcon: 'pi pi-times',
-            acceptIcon: 'pi pi-check',
-            acceptButtonStyleClass: 'p-button-success',
-            rejectButtonStyleClass: 'p-button-outlined p-button-secondary',
-            accept: () => {
-                this.logger.printLogs('i', `Changing password for ${this.user.email}`, this.newPassword);
-
-                this.changePassDialog = false;
-
-                this.api.changePassword(this.user.userID, this.newPassword).subscribe({
-                    next: () => {
-                        this.showErrorAlert('Password changed', 'Password updated & email sent to user!', false, 'success');
-                        this.newPassword = '';
-                    },
-                    error: (err) => {
-                        this.changePassDialog = false;
-                        this.logger.printLogs('e', 'Failed to change password', err);
-                        this.showErrorAlert('Change Password Failed', err, true, 'error');
-                    },
-                    complete: () => {
-                        this.submitted = false;
-                    }
-                });
-            }
-        });
-
-    }
 
 
     private showErrorAlert(title: string, message: any, dialogOpen: boolean, severity: 'success' | 'error' | 'warning' | 'info' | 'question' | undefined = 'info') {

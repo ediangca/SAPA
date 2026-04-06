@@ -408,6 +408,8 @@
                     }
                     @if(allocations.length > 0)
                     {
+                        
+
                     <div *ngIf="allocations.length > 0">
                         <label for="shifts" class="block font-bold mb-3">Sections</label>
                         <p-multiSelect styleClass="w-full" formControlName="allocationID" [options]="allocations"
@@ -459,10 +461,39 @@
 
                         </p-multiSelect>
                     </div>
+
+                    <!-- School (conditional) -->
+                    <div >
+                        <label for="schools" class="block font-bold mb-2">Schools</label>
+                        <p-select id="schools" [options]="schools" optionLabel="schoolName"
+                                    optionValue="userID" appendTo="body" formControlName="userID"
+                                    [(ngModel)]="selectedSchoolCoorID"
+                                    (onChange)="setSelectedSchoolCoorID($event.value)" placeholder="Select School"
+                                    styleClass="w-full">
+                        </p-select>
+                        <small class="text-red-500" *ngIf="submitted && form.get('userID')?.invalid">
+                            School is required.
+                        </small>
+                    </div>
+
+                    <!-- School Clincal Instructor (conditional) -->
+                    <div >
+                        <label for="cis" class="block font-bold mb-2">Clincal Instructor</label>
+                        <p-select id="cis" [options]="cis" optionLabel="fullname"
+                                    optionValue="userID" appendTo="body" formControlName="CIID"
+                                    [(ngModel)]="selectedCIID"
+                                    (onChange)="setSelectedCIID($event.value)" placeholder="Select CI"
+                                    styleClass="w-full">
+                        </p-select>
+                        <small class="text-red-500" *ngIf="submitted && form.get('CIID')?.invalid">
+                            CI is required.
+                        </small>
+                    </div>
+                    
                     }
 
                     <div>
-                        <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
+                        <!-- <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden /> -->
                     </div>
                 </div>
 
@@ -513,6 +544,15 @@
                     class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Coordinator</span>
                 <span class="text-gray-800 dark:text-surface-300 font-bold">{{
                     `${selectedEvent.fullname}` }}</span>
+            </div>
+            
+            <div
+                class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-100">
+                <i class="fas fa-user mr-2 text-secondary-500"></i>
+                <span
+                    class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Clinical Instructor</span>
+                <span class="text-gray-800 dark:text-surface-300 font-bold">{{
+                    `${selectedEvent.ci_fullname || 'No CI assigned' }` }}</span>
             </div>
 
             <!-- Title -->
@@ -977,6 +1017,41 @@
 
         <!-- Cancel -->
         <button pButton type="button" label="Cancel" class="p-button-text" (click)="onCloseManageStudent()"></button>
+    </ng-template>
+</p-dialog>
+
+<p-dialog [(visible)]="assignDialog" header="Assign Coordinator" [modal]="true" [style]="{width: '25vw',}"
+    [closable]="true" [draggable]="true" [contentStyle]="{'height':'calc(100% - 60px)', 'overflow':'auto'}">
+
+    <ng-template #content>
+        <div class="flex flex-row gap-4">
+
+            <div class="flex flex-wrap gap-2" *ngIf="selectSlots.length > -1; else noSelection">
+                <ng-container id="slots" name="slots" *ngFor="let slot of selectSlots">
+                    <!-- School name -->
+                    <p-tag [value]="(abbreviateName(slot.schoolName) +' - '+ (slot.dateSlot | date: 'yyyy-MM-dd') + ' (' + slot.shiftName + ') - ' + slot.hospitalName + '(' + slot.sectionName + ')')" class="mr-2 mb-2 px-3 py-2 rounded-2xl shadow-lg bg-slate-100"
+                        severity="success">
+                    </p-tag>
+                </ng-container>
+
+                <p-select [options]="cis" filter="true" optionLabel="fullname" optionValue="userID"
+                    placeholder="Select Clinical Instructor" [(ngModel)]="CIID" appendTo="body"
+                    class="w-full"></p-select>
+            </div>
+
+            <ng-template #noSelection>
+                <p class="text-center text-gray-500 italic">No schools selected.</p>
+            </ng-template>
+        </div>
+    </ng-template>
+
+
+    <!-- Footer -->
+    <ng-template pTemplate="footer">
+        <div class="flex justify-end gap-3 w-full">
+            <p-button label="Cancel" severity="secondary" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Assign" icon="pi pi-check" (click)="saveAssignCI()" />
+        </div>
     </ng-template>
 </p-dialog>
 
