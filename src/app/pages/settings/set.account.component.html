@@ -20,7 +20,7 @@
                 </div>
 
                 <!-- Right: QR Code -->
-                <div *ngIf="tokenPayload.role === 'UGR0004'" class="shrink-0 text-center" (click)="openQrZoom()">
+                <div *ngIf="tokenPayload.role === 'UGR0004' || tokenPayload.role === 'UGR0006'" class="shrink-0 text-center" (click)="openQrZoom()">
                     <qrcode
                         [qrdata]="user.userID"
                         [width]="120"

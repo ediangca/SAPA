@@ -1496,7 +1496,7 @@ export class Schedule implements OnInit, OnChanges {
 
     saveAssignCI() {
         const slotIDs = this.selectSlots?.map((slot: any) => slot.slotID) ?? [];
-        const slots = this.selectSlots?.map((slot: any) => (slot.dateSlot + "(" + slot.shiftName + ") - " + slot.schoolname + "-" + slot.hospitalName + "(" + slot.sectionName + ")")) ?? [];
+        const slots = this.selectSlots?.map((slot: any) => (slot.dateSlot + "(" + slot.shiftName + ") - " + this.abbreviateName(slot.schoolName) + "-" + this.abbreviateName(slot.hospitalName)  + "(" + slot.sectionName + ")")) ?? [];
 
         if (this.CIID == null) {
             this.messageService.add({
@@ -1534,16 +1534,17 @@ export class Schedule implements OnInit, OnChanges {
                     next: (res) => {
                         this.logger.printLogs('s', 'Clinical instructor assigned successfully', res);
                         this.loadSlots();
+                        this.showErrorAlert('Successful', res.message, false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to assign clinical instructor', err);
+                        this.showErrorAlert('Assignment Failed', err, false, 'error');
                     }
                 });
                 this.assignDialog = false;
             }
         });
     }
-
 
     openManageStudent(slot: any) {
 
