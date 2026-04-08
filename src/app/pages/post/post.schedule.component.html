@@ -1109,6 +1109,11 @@
                         Attendance
                         </div>
                     </th>
+                    <th>
+                        <div class="flex justify-center items-center">
+                        Time
+                        </div>
+                    </th>
                 </tr>
             </ng-template>
 
@@ -1131,13 +1136,24 @@
                         <i *ngIf="student.hasAttendance"
                         class="pi pi-check-circle text-green-500 text-xl">
                         </i>
-
                         <!-- No Record -->
                         <i *ngIf="!student.hasAttendance"
                         class="pi pi-times-circle text-red-400 text-xl">
                         </i>
                     </div>
                 </td>
+                <td class="text-center">
+                    <div class="flex justify-center items-center">
+                     <span *ngIf="student.hasAttendance">
+                        {{ student.date_created | date:'h:mm a' }}
+                    </span>
+
+                    <span *ngIf="!student.hasAttendance"
+                        class="text-xs text-gray-400">
+                        No record
+                    </span></div>
+                </td>
+
 
                 </tr>
             </ng-template>

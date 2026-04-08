@@ -674,9 +674,9 @@ export class ClinicalInstructor implements OnInit {
             this.logger.printLogs('i', 'user details', this.user);
             this.api.updateUser(id, this.user).subscribe({
                 next: (res) => {
-                    this.logger.printLogs('i', 'User updated successfully', res);
+                    this.logger.printLogs('i', 'Clinical Instructor updated successfully', res);
                     this.loadClinicalInstructors(); // reload list
-                    this.showErrorAlert('User Updated', 'User has been Successfully updated!', false, 'success');
+                    this.showErrorAlert('Clinical Instructor Updated', 'Clinical Instructor has been Successfully updated!', false, 'success');
                 },
                 error: (err) => {
                     this.showErrorAlert('Updating Failed', err, true, 'error');
@@ -690,9 +690,9 @@ export class ClinicalInstructor implements OnInit {
             // ✅ CREATE user
             this.api.createUser(this.user).subscribe({
                 next: (res) => {
-                    this.logger.printLogs('i', 'User created successfully', res);
+                    this.logger.printLogs('i', 'Clinical Instructor created successfully', res);
                     this.loadClinicalInstructors(); // reload list
-                    this.closeDialog();
+                    this.showErrorAlert('Clinical Instructor Created', 'Clinical Instructor has been Successfully created!', false, 'success');
                 },
                 error: (err) => {
                     this.showErrorAlert('Saving Failed', err, true, 'error');

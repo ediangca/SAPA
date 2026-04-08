@@ -688,9 +688,9 @@ export class Student implements OnInit {
             this.logger.printLogs('i', 'user details', this.user);
             this.api.updateUser(id, this.user).subscribe({
                 next: (res) => {
-                    this.logger.printLogs('i', 'User updated successfully', res);
+                    this.logger.printLogs('i', 'Student updated successfully', res);
                     this.loadStudents(); // reload list
-                    this.showErrorAlert('User Updated', 'User has been Successfully updated!', false, 'success');
+                    this.showErrorAlert('Student Updated', 'Student has been Successfully updated!', false, 'success');
                 },
                 error: (err) => {
                     this.showErrorAlert('Updating Failed', err, true, 'error');
@@ -704,9 +704,9 @@ export class Student implements OnInit {
             // ✅ CREATE user
             this.api.createUser(this.user).subscribe({
                 next: (res) => {
-                    this.logger.printLogs('i', 'User created successfully', res);
+                    this.logger.printLogs('i', 'Student created successfully', res);
                     this.loadStudents(); // reload list
-                    this.closeDialog();
+                    this.showErrorAlert('Student Created', 'Student has been Successfully created!', false, 'success');
                 },
                 error: (err) => {
                     this.showErrorAlert('Saving Failed', err, true, 'error');

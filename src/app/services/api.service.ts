@@ -335,6 +335,13 @@ export class ApiService {
     return this.handleRequest('put', 'Allocations/sections', { id, body: allocations, logAction: 'Updating Allocations' });
   }
 
+//   updateAllocationsBulk(hospitalId: string, allocations: any[]) {
+//   return this.http.put(
+//     `${this.apiUrl}Allocations/sections/${hospitalId}`,
+//     allocations
+//   );
+// }
+  
   updateAllocation(id: number, allocation: any) {
     return this.handleRequest('put', 'Allocations', { id, body: allocation, logAction: 'Updating Allocation' });
   }

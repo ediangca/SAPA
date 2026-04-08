@@ -437,10 +437,6 @@ export class Hospital implements OnInit {
     onSectionsChange() {
         const selectedSections = this.form.value.sections;
         this.logger.printLogs('i', 'Selected sections:', selectedSections);
-
-        // ✅ If you only want their IDs:
-        const sectionIDs = selectedSections.map((s: any) => s.sectionID);
-        this.logger.printLogs('i', 'Selected section IDs:', sectionIDs);
     }
 
     save() {
@@ -463,15 +459,26 @@ export class Hospital implements OnInit {
         const selectedSections = this.form.value['sections'] || [];
 
 
+        // 🔁 Map sections to API format
+        const allocationPayload = selectedSections.map((sec: any) => ({
+            sectionID: sec.sectionID || sec, // depends on your dropdown structure
+            allocation: sec.allocation || 0, // adjust if needed
+            status: sec.status || 'Active',
+            userId: this.tokenPayload.nameid
+        }));
+
         if (this.hospital?.hospitalID) {
 
-            let hospitalID = this.hospital.hospitalID
+            let hospitalID = this.hospital.hospitalID;
 
             this.logger.printLogs('i', 'Hospital details', this.hospital);
+
             this.api.updateHospital(hospitalID, this.hospital).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'Hospital updated successfully', this.hospital);
+
                     this.saveAllocatedSections(hospitalID, selectedSections);
+
                     this.closeDialog();
                     this.showAlert('Update Successful', 'Hospital has been updated successfully.', false, 'success');
                 },
@@ -490,6 +497,7 @@ export class Hospital implements OnInit {
                     const hospitalID = res.hospitalID;
 
                     this.saveAllocatedSections(hospitalID, selectedSections);
+
                     this.closeDialog();
                     this.showAlert('Creation Successful', 'Hospital has been created successfully.', false, 'success');
                 },
@@ -527,6 +535,7 @@ export class Hospital implements OnInit {
             }
         });
     }
+
 
     openAllocatedSections(hospital: any) {
         this.hospital = hospital;

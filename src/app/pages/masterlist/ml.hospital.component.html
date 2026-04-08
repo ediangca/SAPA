@@ -209,7 +209,7 @@
 
     <ng-template #footer>
         <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
-        <p-button *ngIf="" label="Save" icon="pi pi-check" (click)="save()" />
+        <p-button *ngIf="s || u" label="Save" icon="pi pi-check" (click)="save()" />
     </ng-template>
 </p-dialog>
 

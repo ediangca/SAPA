@@ -1496,7 +1496,7 @@ export class Schedule implements OnInit, OnChanges {
 
     saveAssignCI() {
         const slotIDs = this.selectSlots?.map((slot: any) => slot.slotID) ?? [];
-        const slots = this.selectSlots?.map((slot: any) => (slot.dateSlot + "(" + slot.shiftName + ") - " + this.abbreviateName(slot.schoolName) + "-" + this.abbreviateName(slot.hospitalName)  + "(" + slot.sectionName + ")")) ?? [];
+        const slots = this.selectSlots?.map((slot: any) => (slot.dateSlot + "(" + slot.shiftName + ") - " + this.abbreviateName(slot.schoolName) + "-" + this.abbreviateName(slot.hospitalName) + "(" + slot.sectionName + ")")) ?? [];
 
         if (this.CIID == null) {
             this.messageService.add({
@@ -1630,24 +1630,29 @@ export class Schedule implements OnInit, OnChanges {
 
                 // 🔥 Merge logic
                 this.appointedStudents = res.students.map(student => {
+                    ;
 
-                    const hasAttendance = this.attendanceRecords
-                        .some(a => a.userID === student.userID);
+                    const attendance = this.attendanceRecords
+                        .find(a => a.userID === student.userID);
 
-                    return {
-                        ...student,
-                        hasAttendance,
-                        // attendanceStatus: hasAttendance?.status ?? null
-                    };
-                });
+                    this.logger.printLogs('i', 'Attendance record for student', attendance);
 
-                this.logger.printLogs('i', 'Merged Attendance View', this.appointedStudents);
-                this.loadingAttendance = false;
-            },
-            error: (err) => {
-                this.logger.printLogs('e', 'Failed loading attendance view', err);
-                this.loadingAttendance = false;
-            }
+                        return {
+                            ...student,
+                            hasAttendance: !!attendance,
+                            date_created: attendance?.dateCreated ?? null
+                            // attendanceStatus: hasAttendance?.status ?? null
+                        };
+                    });
+
+                    this.logger.printLogs('i', 'Merged Attendance View', this.appointedStudents);
+                    this.logger.printLogs('i', 'Merged Attendance View', this.appointedStudents);
+                    this.loadingAttendance = false;
+                },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed loading attendance view', err);
+                        this.loadingAttendance = false;
+                    }
         });
     }
 
