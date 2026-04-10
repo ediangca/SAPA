@@ -234,7 +234,9 @@
                         <td pFrozenColumn style="width: 3rem" *ngIf="isAdmin() || isSchoolCoordinator()">
                             <p-tableCheckbox [value]="slot" />
                         </td>
-                        <td>{{ slot.dateSlot | date: 'yyyy-MM-dd'}}</td>
+                        <td>
+                            {{ slot.dateSlot | date: 'yyyy-MM-dd'}}
+                        </td>
                         <td>
                             {{ slot.shiftName }}
                             <small class="block text-gray-500">

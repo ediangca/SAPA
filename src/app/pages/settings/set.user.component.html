@@ -130,13 +130,12 @@
                             <p-button icon="pi pi-key" severity="warn" [rounded]="true" [outlined]="true"
                                 pTooltip="Change Password" tooltipPosition="top" (click)="changePassword(user)" />
                                 
-                            @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
-                            <p-button icon="pi pi-send" severity="info" (click)="resendVerification(user)" [rounded]="true"
-                                [outlined]="true" pTooltip=" Resend Verification?"
-                                tooltipPosition="top"/>
-                            }@else if (getStatus(user.status,'value').toLowerCase() == 'pending') {
-                            <p-button  icon="pi-thumbs-up-fill" severity="info" (click)="approve(user)" pTooltip=" Approve Account?"
-                                tooltipPosition="top"/>
+                            @if (user.status == 'U') {
+                            <p-button icon="pi pi-send" severity="info" [rounded]="true" [outlined]="true" (click)="resendVerification(user)"
+                                pTooltip=" Resend Verification?" tooltipPosition="top"/>
+                            }@else if (user.status == 'P') {
+                            <p-button  icon="pi pi-thumbs-up-fill" severity="info" [rounded]="true" [outlined]="true" (click)="approve(user)" 
+                                pTooltip=" Approve Account?" tooltipPosition="top"/>
                             }
                         </td>
                     </tr>

@@ -662,7 +662,7 @@ export class Schedule implements OnInit, OnChanges {
                 next: (slots) => {
                     this.logger.printLogs('i', 'Slots loaded', slots);
 
-                    // this.slots.set(slots);\
+                    // this.slots.set(slots);
 
                     this.slots.set(slots.map(slot => ({
                         ...slot,

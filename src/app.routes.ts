@@ -18,6 +18,7 @@ import { Angular } from '@/pages/temp/angular';
 
 export const appRoutes: Routes = [
     { path: '', component: Landing },
+    // { path: '', component: Maintenance },
     {
         path: 'dashboard',
         component: AppLayout,
