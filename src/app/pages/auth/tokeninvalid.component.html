@@ -6,36 +6,36 @@ bg-cover bg-top bg-no-repeat bg-surface-50 dark:bg-surface-950 flex items-center
 
     <div
         class="bg-white shadow-lg z-10 rounded-2xl p-8 max-w-md text-center animate-fadeIn bg-gradient-to-br from-green-50 to-green-100">
-        <!-- Animated Check Icon -->
+        <!-- Error Icon -->
         <div class="flex justify-center mb-6">
-            <div class="w-20 h-20 flex items-center justify-center rounded-full bg-green-100 animate-bounce">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-600" viewBox="0 0 20 20"
+            <div class="w-20 h-20 flex items-center justify-center rounded-full bg-red-100 animate-pulse">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-600" viewBox="0 0 20 20"
                     fill="currentColor">
                     <path fill-rule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-7.364 7.364a1 1 0 01-1.414 0L3.293 9.414a1 1 0 011.414-1.414L8.5 11.793l6.793-6.793a1 1 0 011.414 0z"
+                        d="M10 8.586L15.293 3.293a1 1 0 111.414 1.414L11.414 10l5.293 5.293a1 1 0 01-1.414 1.414L10 11.414l-5.293 5.293a1 1 0 01-1.414-1.414L8.586 10 3.293 4.707A1 1 0 014.707 3.293L10 8.586z"
                         clip-rule="evenodd" />
                 </svg>
             </div>
         </div>
 
-        <!-- Greeting & Success Text -->
+        <!-- Error Message -->
         <h1 class="text-2xl font-bold text-gray-800 mb-2">
-            Welcome! 🎉 Your Email Has Been Verified
+            Verification/Confirmation Failed ❌
         </h1>
         <div class="text-gray-600 mb-6 leading-relaxed">
             <p>
-                Thank you for verifying your email.
+                Verification or confirmation failed. Please contact support if the issue persists.
             </p>
             <p class="mt-2">
-                Kindly wait for confirmation from superrior to approve your account or 
-                contact the
-                <a href="mailto:peedo.admin@davaodelnorte.gov.ph" class="font-semibold text-green-700 hover:underline">
-                    SAPA admin
-                </a>
-                before you can access your account.
+                The token provided is either <span class="font-semibold text-red-600">invalid</span> or 
+                <span class="font-semibold text-red-600">expired</span>.
             </p>
-            <p class="mt-4 font-medium text-gray-800">
-                We’re excited to have you on board! 🎉
+            <p class="mt-4">
+                Please contact your superior or 
+                request a new verification email or contact the 
+                <a href="mailto:peedo.admin@davaodelnorte.gov.ph" class="font-semibold text-red-700 hover:underline">
+                    SAPA admin
+                </a>.
             </p>
         </div>
 

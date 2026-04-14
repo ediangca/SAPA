@@ -6,6 +6,7 @@ import { Error } from './error';
 import { VerifySuccess } from './verify.success';
 import { loginGuard } from '@/helper/guard/login.guard';
 import { registerGuard } from '@/helper/guard/register.guard';
+import { TokenInvalid } from './tokeninvalid';
 
 // export default [
 //     { path: 'access', component: Access },
@@ -19,5 +20,6 @@ export const authRoutes: Routes = [
   { path: 'register', component: Register, canActivate: [registerGuard] },
   { path: 'access', component: Access },
   { path: 'error', component: Error },
-  { path: 'verify-success', component: VerifySuccess }
+  { path: 'verify-success', component: VerifySuccess },
+  { path: 'token-invalid', component: TokenInvalid }
 ];

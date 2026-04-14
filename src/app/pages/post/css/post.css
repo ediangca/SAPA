@@ -50,3 +50,11 @@
 :host ::ng-deep .p-picklist-list {
   height: 100%;
 }
+
+:host ::ng-deep {
+  .hide-move-controls {
+    .p-picklist-controls {
+      display: none !important;
+    }
+  }
+}

@@ -966,50 +966,51 @@
             ({{ slot?.shiftName ?? 'Shift Name' }})
         </span>.
     </p>
-    
-                <p-pick-list
-                class="h-[420px]"
-                [source]="sourceStudent()"
-                [target]="targetStudent()"
-                breakpoint="1400px"
-                showSourceFilter="true"
-                showTargetFilter="true"
-                [responsive]="true"
-                filterBy="fullname"
-                sourceFilterPlaceholder="Search available student"
-                targetFilterPlaceholder="Search assigned student"
-                [style]="{ height: '100%' }"
-                scrollHeight="20rem"
+        <div [class.hide-move-controls]="isPastOrToday(slot?.dateSlot)">
+            <p-pick-list
+            class="h-[420px]"
+            [source]="sourceStudent()"
+            [target]="targetStudent()"
+            breakpoint="1400px"
+            showSourceFilter="true"
+            showTargetFilter="true"
+            responsive="true"
+            filterBy="fullname"
+            sourceFilterPlaceholder="Search available student"
+            targetFilterPlaceholder="Search assigned student"
+            scrollHeight="20rem"
+            [style]="{ height: '100%' }" 
 
-                (onMoveToTarget)="onMoveToTarget($event)"
-                (onMoveToSource)="onMoveToSource($event)"
-                (onMoveAllToTarget)="onMoveAllToTarget($event)"
-                (onMoveAllToSource)="onMoveAllToSource($event)">
+            (onMoveToTarget)="onMoveToTarget($event)"
+            (onMoveToSource)="onMoveToSource($event)"
+            (onMoveAllToTarget)="onMoveAllToTarget($event)"
+            (onMoveAllToSource)="onMoveAllToSource($event)">
 
-                    <ng-template #item let-selected="selected" let-item>
-                        <!-- <strong>{{ item.fullname }}</strong> -->
-                        <!-- <div class="text-sm text-gray-500">{{ item.userID }}</div> -->
-                        <div class="flex flex-wrap p-1 items-center gap-4 w-full">
-                            <!-- <img class="w-12 shrink-0 rounded" src="https://primefaces.org/cdn/primeng/images/demo/product/{{ item.image }}" [alt]="item.fullname" /> -->
-                            <!-- <i class="fa-solid fa-user-nurse"></i> -->
-                             
-                            <p-button icon="pi pi-user" severity="primary" rounded />
-                            <div class="flex-1 flex flex-col">
-                                <span class="text-sm text-gray-500"
-                                    [ngClass]="{
-                                        'text-surface-500': !selected,
-                                        'dark:text-surface-400': !selected,
-                                        'text-inherit': selected
-                                    }"
-                                    >{{ item.userID }}</span>
-                                <span class="font-medium text-sm">{{ item.fullname }}</span>
-                            </div>
-                            <button p-button icon="pi pi-list-check" severity="info" rounded outlined="true" 
-                            pTooltip="Attendance" (click)="openAttendance(slot, item.userID)"></button>
+                <ng-template #item let-selected="selected" let-item>
+                    <!-- <strong>{{ item.fullname }}</strong> -->
+                    <!-- <div class="text-sm text-gray-500">{{ item.userID }}</div> -->
+                    <div class="flex flex-wrap p-1 items-center gap-4 w-full">
+                        <!-- <img class="w-12 shrink-0 rounded" src="https://primefaces.org/cdn/primeng/images/demo/product/{{ item.image }}" [alt]="item.fullname" /> -->
+                        <!-- <i class="fa-solid fa-user-nurse"></i> -->
+                         
+                        <p-button icon="pi pi-user" severity="primary" rounded />
+                        <div class="flex-1 flex flex-col">
+                            <span class="text-sm text-gray-500"
+                                [ngClass]="{
+                                    'text-surface-500': !selected,
+                                    'dark:text-surface-400': !selected,
+                                    'text-inherit': selected
+                                }"
+                                >{{ item.userID }}</span>
+                            <span class="font-medium text-sm">{{ item.fullname }}</span>
                         </div>
-                    </ng-template>
+                        <button p-button icon="pi pi-list-check" severity="info" rounded outlined="true" 
+                        pTooltip="Attendance" (click)="openAttendance(slot, item.userID)"></button>
+                    </div>
+                </ng-template>
 
-                </p-pick-list>
+            </p-pick-list>
+        </div>
        
     <ng-template pTemplate="footer" to>
         <!-- Add only available -->

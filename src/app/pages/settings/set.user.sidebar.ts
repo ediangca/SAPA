@@ -12,6 +12,7 @@ import { NgToastService } from 'ng-angular-popup';
 import { StoreService } from '@/services/store.service';
 import { ApiService } from '@/services/api.service';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import Swal from 'sweetalert2';
 
 
 @Component({
@@ -172,6 +173,8 @@ export class UsersProperties implements OnInit, OnChanges {
                         this.logger.printLogs('s', 'Status updated successfully', res);
                         // this.loadStudents();
                         this.selectedUsers = [];
+                        this.showErrorAlert('User(s) Updated', res.message, false, 'success');
+
                     },
                     error: (err) => {
                         this.messageService.add({
@@ -180,6 +183,8 @@ export class UsersProperties implements OnInit, OnChanges {
                             detail: 'Failed to update school status.',
                             life: 3000
                         });
+                        this.showErrorAlert('User(s) Failed to update', err.message, false, 'error');
+
                         this.logger.printLogs('e', 'Failed to update status', err);
                     }
                 });
@@ -201,4 +206,32 @@ export class UsersProperties implements OnInit, OnChanges {
         this.toast.warning("No Record found to print.", 'No Record', 3000);
     }
 
+    private showErrorAlert(title: string, message: any, dialogOpen: boolean, severity: 'success' | 'error' | 'warning' | 'info' | 'question' | undefined = 'info') {
+
+        this.logger.printLogs(severity, title, message);
+
+        this.messageService.add({
+            severity: severity,
+            summary: title,
+            detail: message,
+            life: 3000
+        });
+
+        Swal.fire({
+            title: title,
+            text: message,
+            icon: severity,
+            showCancelButton: false,
+            confirmButtonText: 'OK',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.assignDialog = dialogOpen;
+            }
+        });
+    }
+
+    // helper to reset and close
+    private closeDialog() {
+        this.assignDialog = false;
+    }
 }

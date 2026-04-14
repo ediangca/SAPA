@@ -3,7 +3,7 @@
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
             <p-table #dt [value]="users()" [rows]="100" [columns]="cols" [paginator]="true" [rowHover]="true" 
                 [showGridlines]="true"
-                [globalFilterFields]="['userID', 'email', 'roleame', 'status', 'date_created']"
+                [globalFilterFields]="['userID',  'fullname', 'email', 'roleame', 'status', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectedUsers" 
                 dataKey="userID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" 

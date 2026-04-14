@@ -215,6 +215,7 @@ export class Schedule implements OnInit, OnChanges {
     // coordinatorID: any | null;
     CIID: any | null;
     manageStudentDialog: boolean = false;
+    isSlotEditable: boolean = true;
 
     manageAttendanceDialog: boolean = false;
 
@@ -1550,6 +1551,15 @@ export class Schedule implements OnInit, OnChanges {
 
         this.slot = slot;
 
+        // const today = new Date();
+        // const slotDate = new Date(slot.dateSlot);
+        // // Normalize (remove time)
+        // today.setHours(0, 0, 0, 0);
+        // slotDate.setHours(0, 0, 0, 0);
+
+        // // TRUE = editable, FALSE = disable moving
+        // this.isSlotEditable = slotDate > today;
+
         this.logger.printLogs('i', 'Manage Student for Slot:', slot);
 
         this.assignedStudents.set(0);
@@ -1598,6 +1608,18 @@ export class Schedule implements OnInit, OnChanges {
 
     }
 
+    isPastOrToday(date: any): boolean {
+        const today = new Date();
+        const d = new Date(date);
+
+        today.setHours(0, 0, 0, 0);
+        d.setHours(0, 0, 0, 0);
+
+        this.logger.printLogs('i', 'isPastOrToday:'+d+' >>>', d <= today);
+
+        return d <= today;
+    }
+
     trackByUserID(index: number, item: any) {
         return item.userID;
     }
@@ -1637,22 +1659,22 @@ export class Schedule implements OnInit, OnChanges {
 
                     this.logger.printLogs('i', 'Attendance record for student', attendance);
 
-                        return {
-                            ...student,
-                            hasAttendance: !!attendance,
-                            date_created: attendance?.dateCreated ?? null
-                            // attendanceStatus: hasAttendance?.status ?? null
-                        };
-                    });
+                    return {
+                        ...student,
+                        hasAttendance: !!attendance,
+                        date_created: attendance?.dateCreated ?? null
+                        // attendanceStatus: hasAttendance?.status ?? null
+                    };
+                });
 
-                    this.logger.printLogs('i', 'Merged Attendance View', this.appointedStudents);
-                    this.logger.printLogs('i', 'Merged Attendance View', this.appointedStudents);
-                    this.loadingAttendance = false;
-                },
-                    error: (err) => {
-                        this.logger.printLogs('e', 'Failed loading attendance view', err);
-                        this.loadingAttendance = false;
-                    }
+                this.logger.printLogs('i', 'Merged Attendance View', this.appointedStudents);
+                this.logger.printLogs('i', 'Merged Attendance View', this.appointedStudents);
+                this.loadingAttendance = false;
+            },
+            error: (err) => {
+                this.logger.printLogs('e', 'Failed loading attendance view', err);
+                this.loadingAttendance = false;
+            }
         });
     }
 
