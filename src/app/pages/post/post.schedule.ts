@@ -484,14 +484,12 @@ export class Schedule implements OnInit, OnChanges {
             { field: 'date_created', header: 'Date Created' },
         ];
 
-        this.headStatuses = [
-            { label: 'Unposted |Unconfirmed', value: 0 },
-            { label: 'Posted | Confirmed', value: 1 },
-            { label: 'Declined', value: 2 },
-            { label: 'Cancel Request', value: 3 },
-            { label: 'Cancelled', value: 4 },
-        ];
-
+        this.headStatuses = [{ label: 'Unposted | Unconfirmed', value: 0, color: 'contrast' }, 
+            { label: 'Posted | Confirmed', value: 1, color: 'info' }, 
+            { label: 'Declined', value: 2, color: 'secondary' }, 
+            { label: 'Cancel Request', value: 3, color: 'warning' }, 
+            { label: 'Cancelled', value: 4, color: 'danger' },];
+            
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
 
     }
@@ -984,7 +982,7 @@ export class Schedule implements OnInit, OnChanges {
     }
 
     onScheduleSelectionChange(selected: any[]) {
-        this.logger.printLogs('i', "Select slots : ", selected)
+        this.logger.printLogs('i', "Selected Slots : ", selected)
         this.selectSlots = selected; // optional, if you want to keep it synced manually
         this.buildSubComponent();
     }
@@ -1615,7 +1613,7 @@ export class Schedule implements OnInit, OnChanges {
         today.setHours(0, 0, 0, 0);
         d.setHours(0, 0, 0, 0);
 
-        this.logger.printLogs('i', 'isPastOrToday:'+d+' >>>', d <= today);
+        this.logger.printLogs('i', 'isPastOrToday:' + d + ' >>>', d <= today);
 
         return d <= today;
     }

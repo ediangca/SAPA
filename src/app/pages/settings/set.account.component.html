@@ -20,7 +20,9 @@
                 </div>
 
                 <!-- Right: QR Code -->
-                <div *ngIf="tokenPayload.role === 'UGR0004' || tokenPayload.role === 'UGR0006'" class="shrink-0 text-center" (click)="openQrZoom()">
+                <div
+                    *ngIf="tokenPayload.role === 'UGR0004' || tokenPayload.role === 'UGR0006'"
+                    class="shrink-0 text-center" (click)="openQrZoom()">
                     <qrcode
                         [qrdata]="user.userID"
                         [width]="120"
@@ -47,7 +49,8 @@
                 <div>
                     <label
                         class="text-gray-600">Username</label>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
+                    <div
+                        class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
                         {{ user.username }}
                     </div>
                 </div>
@@ -56,7 +59,8 @@
                 <div>
                     <label
                         class="text-gray-600">Email</label>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
+                    <div
+                        class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
                         {{ user.email }}
                     </div>
                 </div>
@@ -81,7 +85,8 @@
                 <div>
                     <label class="text-gray-600">Full
                         Name</label>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
+                    <div
+                        class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
                         {{ user.fullname }}
                     </div>
                 </div>
@@ -90,33 +95,39 @@
                 <div>
                     <label
                         class="text-gray-600">Role</label>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
+                    <div
+                        class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
                         {{ user.rolename }}
                     </div>
                 </div>
 
                 <!-- School -->
-                <div *ngIf="tokenPayload.role === 'UGR0003' || tokenPayload.role === 'UGR0004'">
+                <div
+                    *ngIf="tokenPayload.role === 'UGR0003' || tokenPayload.role === 'UGR0004'">
                     <label
                         class="text-sm font-medium text-gray-600">School</label>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
-                        {{ (tokenPayload.role === 'UGR0003'? user.coorSchoolName +
-                        ' ('+user.coorSchoolCode+')' :
+                    <div
+                        class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
+                        {{ (tokenPayload.role === 'UGR0003'? user.coorSchoolName :
                         user.schoolName) || 'N/A' }}
-                        <p-button *ngIf="tokenPayload.role === 'UGR0003'" icon="pi pi-copy" [rounded]="true"
+                        <!-- <p-button *ngIf="tokenPayload.role === 'UGR0003'"
+                            icon="pi pi-copy" [rounded]="true"
                             [outlined]="false" pTooltip="Copy Code"
                             value="user.coorSchoolCode"
                             tooltipPosition="top" severity="secondary"
-                            (click)="copyCode(user.coorSchoolCode)" />
+                            (click)="copyCode(user.coorSchoolCode)" /> -->
                     </div>
                 </div>
 
-                <!-- School -->
+                <!-- Supervisor -->
                 <div *ngIf="tokenPayload.role === 'UGR0005'">
                     <label
                         class="text-gray-600">Hospital</label>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100 font-bold"> {{ user.hospitalName || 'N/A' }}
-                        <p-button *ngIf="tokenPayload.role === 'UGR0003'" icon="pi pi-copy" [rounded]="true"
+                    <div
+                        class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
+                        {{ user.hospitalName || 'N/A' }}
+                        <p-button *ngIf="tokenPayload.role === 'UGR0003'"
+                            icon="pi pi-copy" [rounded]="true"
                             [outlined]="false" pTooltip="Copy Code"
                             value="user.coorSchoolCode"
                             tooltipPosition="top" severity="secondary"
@@ -132,6 +143,32 @@
                         ••••••••
                     </div>
                 </div> -->
+            </div>
+
+            <div
+                *ngIf="tokenPayload.role === 'UGR0003' || tokenPayload.role === 'UGR0006'" 
+                class="mt-8 flex justify-center  border-2 border-dashed border-gray-300 rounded-lg p-5">
+                <div class=" w-full">
+                
+                        <div class="flex justify-between">
+                            <label class="text-gray-600">School Code</label>
+                            <p-button
+                                icon="pi pi-copy" [rounded]="true"
+                                [outlined]="false" pTooltip="Copy Code"
+                                value="user.coorSchoolCode"
+                                tooltipPosition="top" severity="secondary"
+                                (click)="copyCode(user.coorSchoolCode)" />
+                        </div>
+                        <p class="text-primary-900 dark:text-gray-100 font-bold text-center font-mono 
+                                text-5xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl 
+                                tracking-widest">
+                                {{ user.coorSchoolCode || 'N/A' }}
+                        </p>
+
+                        <p class="text-primary-600 text-center mt-4">
+                            Share this code with your students to link their accounts to your school for attendance.
+                        </p>
+                </div>
             </div>
 
             <!-- Actions -->
@@ -242,7 +279,7 @@
                         Valid
                         Email is
                         required.</small>
-                    <div
+                    <!-- <div
                         class="flex flex-row gap-2 item-center justify-end mt-2">
                         <p-check-box id="autoUsername"
                             formControlName="autoUsername"
@@ -252,13 +289,13 @@
 
                         <small class="text-cyan-500">Copy Email ID to
                             Username</small>
-                    </div>
+                    </div> -->
 
                     <label for="username"
                         class="block font-bold mb-3">Username</label>
                     <input type="text" pInputText id="username" name="username"
                         formControlName="username"
-                        (keyup)="filterSpace()" required autofocus fluid />
+                        (keyup)="filterSpace()"required  autofocus fluid/>
                     <small class="text-red-500"
                         *ngIf="submitted && !form.value['username']"> Username
                         is

@@ -79,11 +79,11 @@ export class Account implements OnInit {
         this.form = this.fb.group({
             userID: [null],
             roleID: ['', Validators.required],
-            username: ['', Validators.required],
+            username: [{ value: '', disabled: true }, Validators.required],
             lastname: ['', Validators.required],
             firstname: ['', Validators.required],
             middlename: ['', Validators.required],
-            email: ['', Validators.required],
+            email: [{ value: '', disabled: true }, Validators.required],
             autoUsername: [false]
         });
     }
@@ -92,11 +92,11 @@ export class Account implements OnInit {
         this.form = this.fb.group({
             userID: [null],
             roleID: ['', Validators.required],
-            username: ['', Validators.required],
+            username: [{ value: '', disabled: true }, Validators.required],
             lastname: ['', Validators.required],
             firstname: ['', Validators.required],
             middlename: ['', Validators.required],
-            email: ['', Validators.required],
+            email: [{ value: '', disabled: true }, Validators.required,],
             autoUsername: [false]
         });
         this.store.getUserPayload()
@@ -362,7 +362,8 @@ export class Account implements OnInit {
     private closeDialog() {
         this.itemDialog = false;
         this.form.reset({
-            email: '',
+            email:  [{ value: '', disabled: true }, Validators.required],
+            username:  [{ value: '', disabled: true }, Validators.required],
         });
         this.user = {}; // reset form
     }

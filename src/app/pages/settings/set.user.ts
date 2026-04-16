@@ -197,7 +197,7 @@ export class Users implements OnInit {
             { field: 'email', header: 'Email' },
             { field: 'role', header: 'Role' },
             { field: 'status', header: 'Status' },
-            { field: 'date_create', header: 'Date Created' },
+            { field: 'date_Created', header: 'Date Created' },
         ];
 
         this.headStatuses = [
@@ -207,7 +207,7 @@ export class Users implements OnInit {
             { label: 'Unverified', value: 'U' },
             { label: 'Suspend', value: 'S' },
         ];
-        
+
     }
 
     loadRoles() {
@@ -226,7 +226,7 @@ export class Users implements OnInit {
             error: (err) => this.logger.printLogs('e', 'Failed to fetch hospitals', err)
         });
     }
-    
+
 
     loadSchools() {
         this.api.getSchools().subscribe({
@@ -243,8 +243,13 @@ export class Users implements OnInit {
         this.loadUsers();
     }
 
+    onUserSelectionChange(selected: any[]) {
+        this.logger.printLogs('i', "Selected Users : ", selected)
+        this.selectedUsers = selected;
+    }
+
     exportCSV() {
-        const users = this.users();
+        const users = this.selectedUsers || this.users();
 
         if (!users || users.length === 0) {
             this.logger.printLogs('i', 'No users to export', null)
@@ -252,7 +257,7 @@ export class Users implements OnInit {
         }
         const csv = [
             ['User ID', 'FullName', 'Email', 'User Role', 'Status', 'Date Created'],
-            ...users.map(u => [u.userID, u.fullname, u.email, u.rolename, this.getStatus(u.status, 'value'), u.date_created])
+            ...users.map(u => [u.userID, u.fullname, u.email, u.rolename, this.getStatus(u.status, 'value'), u.date_Created])
         ]
             .map(row => row.map(v => `"${v}"`).join(','))
             .join('\n');
@@ -264,6 +269,9 @@ export class Users implements OnInit {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+
+        this.selectedUsers = []
     }
 
     onGlobalFilter(table: Table) {
@@ -374,12 +382,12 @@ export class Users implements OnInit {
         this.itemDialog = true;
     }
 
-    selectedHospital(hospitalID: any){
-        this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);  
+    selectedHospital(hospitalID: any) {
+        this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);
     }
-    
-    selectedSchool(schoolID: any){
-        this.logger.printLogs('i', 'Selected School ID : ', schoolID);  
+
+    selectedSchool(schoolID: any) {
+        this.logger.printLogs('i', 'Selected School ID : ', schoolID);
     }
 
     openQrZoom(): void {
@@ -576,7 +584,8 @@ export class Users implements OnInit {
                 next: (res) => {
                     this.logger.printLogs('i', 'User created successfully', res);
                     this.loadUsers(); // reload list
-                    this.closeDialog();
+
+                    this.showErrorAlert('User Created', 'User has been Successfully created!', false, 'success');
                 },
                 error: (err) => {
                     this.showErrorAlert('Saving Failed', err, false, 'error');

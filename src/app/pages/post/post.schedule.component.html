@@ -18,11 +18,11 @@
             @if (tableOption) {
             <p-table #dt [value]="slots()" [rows]="100" [columns]="cols" [paginator]="true" [rowHover]="true"
                 [showGridlines]="true", [loading]="loading", 
-                [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionname', 'status', 'date_created']"
+                [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionName', 'slotStatus', 'date_Created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
                 dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"
-                paginatorDropdownAppendTo="body" [scrollable]="true" scrollHeight="calc(100vh - 28rem)"
+                paginatorDropdownAppendTo="body" scrollable="true" scrollHeight="calc(100vh - 28rem)"
                 (selectionChange)="onScheduleSelectionChange($event)">
 
 
@@ -341,8 +341,9 @@
 
     <!-- SUBMENU -->
     <div class="md:w-1/5">
-        <div class="card"  [style]="{ height: 'calc(100vh - 12rem)'}">
-            <div class="">
+        <div class="card flex flex-col"  [style]="{ height: 'calc(100vh - 12rem)'}">
+            <!-- Sub Component -->
+            <div class="flex-1 overflow-auto">
                 <h5 class="m-0">Sub Component</h5>
                 <!-- 
                 <ul class="layout-menu">
@@ -354,13 +355,81 @@
                  -->
                 <p-panelmenu *ngIf="!loading" [model]="subcomponent"></p-panelmenu>
             </div>
-            <!--             
-            <div class="h-1/2">
-                <div class="font-semibold text-xl mb-4">Properties</div>
+                        
+            <!-- Properties -->
+            <div class="flex-1 overflow-auto" *ngIf="!loading && properties && properties.length > 0">
+                <h5 class="m-0">Properties</h5>
                 <p-panelmenu [model]="properties"></p-panelmenu>
+            </div>
+            
+            <!-- Legend -->
+            <div class="flex-1 overflow-auto">
+                <h5 class="font-semibold text-sm text-gray-600 dark:text-gray-300">
+                        Legend
+                </h5>
 
-            </div> 
-            -->
+                <!-- Schedule Status -->
+                <div class="flex flex-col gap-2 mb-4">
+                    <span class="font-bold text-md text-gray-600 dark:text-gray-300 mb-2">
+                            Schedule Status
+                    </span>
+                    
+                    <div class="flex flex-col gap-2">
+
+                        <div *ngFor="let status of headStatuses" class="flex items-center gap-2">
+
+                        <!-- Color Indicator -->
+                        <span
+                            class="w-3 h-3 rounded-full"
+                            [ngClass]="{
+                            'bg-gray-500': status.color === 'contrast',
+                            'bg-blue-500': status.color === 'info',
+                            'bg-gray-400': status.color === 'secondary',
+                            'bg-yellow-500': status.color === 'warning',
+                            'bg-red-500': status.color === 'danger'
+                            }">
+                        </span>
+
+                        <!-- Label -->
+                        <span class="text-5x1 text-gray-700 dark:text-gray-200">
+                            {{ status.label }}
+                        </span>
+
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Shift -->
+                <div class="flex flex-col gap-2 mb-4">
+                    <span class="font-bold text-md text-gray-600 dark:text-gray-300 mb-2">
+                            Shift
+                    </span>
+                    <div class="flex flex-col gap-2 mb-4">
+
+                        <div *ngFor="let shift of shiftOption" class="flex items-center gap-2">
+
+                        <!-- Color Indicator -->
+                        <span
+                            class="w-3 h-3 rounded-full"
+                            [ngClass]="{
+                            'bg-green-500': shift.shiftName === 'Morning',
+                            'bg-yellow-500': shift.shiftName === 'Afternoon',
+                            'bg-gray-500': shift.shiftName === 'Evening'
+                            }">
+                        </span>
+
+                        <!-- Label -->
+                        <span class="text-5x1 text-gray-700 dark:text-gray-200">
+                            {{ shift.shiftName }}
+                        </span>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+           
 
         </div>
     </div>
