@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { ToastModule } from 'primeng/toast';
 import { PasswordModule } from 'primeng/password';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { AppFloatingConfigurator } from '@/layout/component/app.floatingconfigurator';
 
 @Component({
   selector: 'reset-password',
@@ -25,6 +26,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
     FormsModule,
     RippleModule,
     DialogModule,
+    AppFloatingConfigurator,
+    ToastModule,
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './reset.password.component.html',

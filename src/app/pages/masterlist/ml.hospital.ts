@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, OnChanges, signal, ViewChild, NgZone } from '@angular/core';
 import { ConfirmationService, MenuItem, MessageService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { CommonModule } from '@angular/common';
@@ -27,15 +27,12 @@ import Swal from 'sweetalert2';
 import { StoreService } from '@/services/store.service';
 import { ToastModule } from 'primeng/toast';
 import { HospitalProperties } from "./ml.hospital.sidebar";
-import { NgToastService } from 'ng-angular-popup';
 import { MultiSelectModule } from 'primeng/multiselect';
-import * as FileSaver from 'file-saver';
-import * as XLSX from 'xlsx';
 import { Tooltip } from "primeng/tooltip";
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
-import { take } from 'rxjs';
-import { SortAltIcon } from 'primeng/icons/sortalt';
+import * as L from 'leaflet';
+declare const google: any;
 
 
 interface Column {
@@ -48,6 +45,22 @@ interface ExportColumn {
     title: string;
     dataKey: string;
 }
+
+const iconDefault = L.icon({
+    iconUrl: 'assets/marker-icon.png',
+    shadowUrl: 'assets/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+});
+L.Marker.prototype.options.icon = iconDefault;
+
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconUrl: 'assets/marker-icon.png',
+    iconRetinaUrl: 'assets/marker-icon-2x.png',
+    shadowUrl: 'assets/marker-shadow.png',
+});
 
 @Component({
     selector: 'ml-hospital',
@@ -82,9 +95,10 @@ interface ExportColumn {
         OverlayBadgeModule
     ],
     templateUrl: './ml.hospital.component.html',
+    styleUrl: './css/masterlist.scss',
     providers: [MessageService, ProductService, ConfirmationService]
 })
-export class Hospital implements OnInit {
+export class Hospital implements OnInit, OnChanges, OnDestroy {
 
     // "hospitalID",
     // "hospitalName",
@@ -110,6 +124,13 @@ export class Hospital implements OnInit {
     selectAllocated!: any[] | null;
 
     form!: FormGroup;
+    map: any = null;
+    marker: any = null;
+    autocompleteEl: any = null;
+    mapInitialized = false;
+    showMap = false;
+    searchQuery = '';
+    private searchDebounce: any = null;
 
     loading: boolean = false;
     submitted: boolean = false;
@@ -139,7 +160,7 @@ export class Hospital implements OnInit {
         private store: StoreService,
         private api: ApiService,
         private logger: LogsService,
-        private vf: ValidateForm,
+        private vf: ValidateForm, private zone: NgZone
 
     ) {
 
@@ -147,10 +168,22 @@ export class Hospital implements OnInit {
             hospitalID: [null],
             hospitalName: ['', Validators.required],
             address: ['', Validators.required],
+            latitude: [null],
+            longitude: [null],
             userID: ['', Validators.required],
             sections: [[], Validators.required]   // 👈 add this
         });
 
+        this.loadData();
+
+        this.model = [
+            {
+                items: [
+                    { label: 'Sections', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
+
+                ]
+            }
+        ];
     }
 
     ngOnInit() {
@@ -164,12 +197,16 @@ export class Hospital implements OnInit {
                 ]
             }
         ];
-
     }
-    // exportCSV() {
-    //     this.logger.printLogs('i', 'Exporting CSV', this.hospitals());
-    //     this.dt.exportCSV();
-    // }
+
+    ngOnChanges() {
+        if (this.hospital?.hospitalID) {
+            this.form.get('sections')?.disable();
+        } else {
+            this.form.get('sections')?.enable();
+        }
+    }
+
     exportCSV() {
 
         const hospitals = this.hospitals();
@@ -260,6 +297,205 @@ export class Hospital implements OnInit {
         this.section = this.store.isModuleActive("MOD0003")
     }
 
+    // MAP & LOCATION SERVICES
+    initMap(lat?: number, lng?: number) {
+        const container = document.getElementById('hospital-map');
+        if (!container || this.mapInitialized) return;
+
+        const google = (window as any).google;
+        const hasCoords = lat != null && lng != null;
+        const center = hasCoords ? { lat, lng } : { lat: 7.0707, lng: 125.6087 };
+
+        this.map = new google.maps.Map(container, {
+            center,
+            mapId: 'abcd1234efgh5678',
+            zoom: hasCoords ? 17 : 12,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false,
+            clickableIcons: false,
+        });
+
+        this.marker = new google.maps.marker.AdvancedMarkerElement({
+            map: this.map,
+            position: center,
+            draggable: true,
+        });
+
+        this.map.addListener('click', (e: any) => {
+            this.marker.position = e.latLng;
+            this.reverseGeocode(e.latLng);
+        });
+
+        // ✅ Fixed: AdvancedMarkerElement uses .position not .getPosition()
+        this.marker.addListener('dragend', () => {
+            const pos = this.marker.position;
+            if (pos) this.reverseGeocode(pos);
+        });
+
+        this.mapInitialized = true;
+    }
+
+    onDialogShow() {
+        if (this.hospital?.hospitalID) {
+            this.form.get('sections')?.disable();
+        } else {
+            this.form.get('sections')?.enable();
+        }
+
+        if (this.showMap) {
+            setTimeout(() => {
+                const google = (window as any).google;
+                google.maps.event.trigger(this.map, 'resize');
+
+                const lat = this.form.value.latitude;
+                const lng = this.form.value.longitude;
+
+                if (lat && lng && this.map && this.marker) {
+                    const pos = new google.maps.LatLng(lat, lng);
+                    this.map.setCenter(pos);
+                    this.map.setZoom(17);
+                    this.marker.position = pos;
+                }
+            }, 300);
+        }
+    }
+
+    onDialogHide() {
+        this.destroyMap();
+        this.showMap = false;
+        this.searchQuery = '';
+    }
+
+    toggleMap() {
+        if (!(window as any).google?.maps) {
+            console.error('Google Maps not loaded yet.');
+            return;
+        }
+
+        this.showMap = !this.showMap;
+
+        if (this.showMap) {
+            const lat = this.form.value.latitude;
+            const lng = this.form.value.longitude;
+            setTimeout(() => {
+                this.initMap(lat ?? undefined, lng ?? undefined);
+                this.initSearch();
+            }, 400);
+        } else {
+            this.destroyMap();
+        }
+    }
+
+    initSearch() {
+        const container = document.getElementById('map-search-container');
+        if (!container) {
+            setTimeout(() => this.initSearch(), 200);
+            return;
+        }
+
+        const google = (window as any).google;
+
+        if (this.autocompleteEl) {
+            this.autocompleteEl.remove();
+            this.autocompleteEl = null;
+        }
+
+        const autocompleteEl = new google.maps.places.PlaceAutocompleteElement({
+            componentRestrictions: { country: 'ph' }
+        });
+
+        autocompleteEl.style.width = '100%';
+        container.innerHTML = '';
+        container.appendChild(autocompleteEl);
+        this.autocompleteEl = autocompleteEl;
+        
+        this.zone.runOutsideAngular(() => {
+            // ✅ Correct event name is gmp-select
+            autocompleteEl.addEventListener('gmp-select', async (event: any) => {
+                console.log('✅ gmp-select fired!', event);
+                console.log('Event keys:', Object.keys(event));
+                console.log('Event placePrediction:', event.placePrediction);
+                console.log('Event place:', event.place);
+
+                // ✅ gmp-select uses placePrediction, not place
+                const placePrediction = event.placePrediction;
+                console.log('placePrediction:', placePrediction);
+
+                const place = placePrediction.toPlace();
+                console.log('place:', place);
+
+                await place.fetchFields({
+                    fields: ['displayName', 'formattedAddress', 'location']
+                });
+
+                console.log('Location:', place.location?.lat(), place.location?.lng());
+
+                if (!place.location) return;
+
+                const latitude = place.location.lat();
+                const longitude = place.location.lng();
+                const address = place.formattedAddress || place.displayName || '';
+                const latLng = new google.maps.LatLng(latitude, longitude);
+
+                this.zone.run(() => {
+                    this.map.setCenter(latLng);
+                    this.map.setZoom(17);
+                    this.marker.position = latLng;
+                    this.form.patchValue({ address, latitude, longitude });
+                });
+            });
+        });
+    }
+
+    reverseGeocode(latLng: any) {
+        const google = (window as any).google;
+        const geocoder = new google.maps.Geocoder();
+
+        geocoder.geocode({ location: latLng }, (results: any[], status: string) => {
+            this.zone.run(() => {
+                if (status === 'OK' && results?.[0]) {
+                    const address = results[0].formatted_address;
+
+                    this.form.patchValue({
+                        address: address,
+                        latitude: latLng.lat(),
+                        longitude: latLng.lng()
+                    });
+
+                    const input = document.getElementById('map-search-input') as HTMLInputElement;
+                    if (input) input.value = address;
+                }
+            });
+        });
+    }
+
+    destroyMap() {
+        const google = (window as any).google;
+
+        if (this.marker && google) {
+            google.maps.event.clearInstanceListeners(this.marker);
+            this.marker.setMap(null);
+            this.marker = null;
+        }
+        if (this.map && google) {
+            google.maps.event.clearInstanceListeners(this.map);
+            this.map = null;
+        }
+        // ✅ Fixed: renamed from autocompleteEl cleanup
+        if (this.autocompleteEl && google) {
+            google.maps.event.clearInstanceListeners(this.autocompleteEl);
+            this.autocompleteEl.remove();
+            this.autocompleteEl = null;
+        }
+
+        this.mapInitialized = false;
+    }
+
+    ngOnDestroy() {
+        this.destroyMap();
+    }
+
     getSectionsAsString(hospital: any): string {
         return hospital.sections?.map((s: any) => s.sectionName).join(', ') || '';
     }
@@ -294,11 +530,14 @@ export class Hospital implements OnInit {
         }
     }
 
+
     openNew() {
+
+
         this.form.reset({
             hospitalName: '',
             address: '',
-            userID: this.tokenPayload.nameid
+            userID: this.tokenPayload.nameid,
         });
         this.hospital = {};
         this.submitted = false;
@@ -310,29 +549,76 @@ export class Hospital implements OnInit {
         this.itemDialog = true;
     }
 
+    // edit(hospital: any) {
+    //     this.hospital = hospital;
+    //     // Patch base hospital info first
+    //     this.form.patchValue({
+    //         hospitalID: hospital.hospitalID,
+    //         hospitalName: hospital.hospitalName,
+    //         address: hospital.address,
+    //         latitude: hospital.latitude,
+    //         longitude: hospital.longitude,
+    //         userID: this.tokenPayload.nameid,
+    //     });
+    //     // Load allocations for this hospital
+    //     this.api.getAllocationsByHospitalID(hospital.hospitalID).subscribe({
+    //         next: (allocations) => {
+
+    //             this.form.patchValue({
+    //                 sections: allocations.map((a: any) => a.sectionID) || []  // Patch the form with assigned sections
+    //             });
+    //             this.logger.printLogs('i', `Loaded sections for ${hospital.hospitalID}`, allocations.map((a: any) => a.sectionID));
+    //         },
+    //         error: (err) =>
+    //             this.logger.printLogs('e', `Failed to load sections for ${hospital.hospitalID}`, err),
+    //     });
+
+    //     this.itemDialog = true;
+
+
+    //     // 🔥 auto show map if coordinates exist
+    //     if (hospital.latitude && hospital.longitude) {
+    //         this.showMap = true;
+
+    //         setTimeout(() => {
+    //             this.initMap();
+    //             this.initSearch();
+    //         }, 400);
+    //     }
+    // }
+
     edit(hospital: any) {
         this.hospital = hospital;
-        // Patch base hospital info first
+
         this.form.patchValue({
             hospitalID: hospital.hospitalID,
             hospitalName: hospital.hospitalName,
             address: hospital.address,
+            latitude: hospital.latitude,
+            longitude: hospital.longitude,
             userID: this.tokenPayload.nameid,
         });
-        // Load allocations for this hospital
+
+
+
         this.api.getAllocationsByHospitalID(hospital.hospitalID).subscribe({
             next: (allocations) => {
-
                 this.form.patchValue({
-                    sections: allocations.map((a: any) => a.sectionID) || []  // Patch the form with assigned sections
+                    sections: allocations.map((a: any) => a.sectionID) || []
                 });
-                this.logger.printLogs('i', `Loaded sections for ${hospital.hospitalID}`, allocations.map((a: any) => a.sectionID));
             },
-            error: (err) =>
-                this.logger.printLogs('e', `Failed to load sections for ${hospital.hospitalID}`, err),
+            error: (err) => this.logger.printLogs('e', 'Failed to load sections', err),
         });
 
         this.itemDialog = true;
+
+        if (hospital.latitude && hospital.longitude) {
+            this.showMap = true;
+            setTimeout(() => {
+                this.initMap(hospital.latitude, hospital.longitude); // ✅ pass coords
+                this.initSearch();
+            }, 400);
+        }
     }
 
     deleteSelected() {
@@ -455,32 +741,28 @@ export class Hospital implements OnInit {
 
         this.itemDialog = false;
 
-        this.hospital = this.form.value;
-        const selectedSections = this.form.value['sections'] || [];
+        this.hospital = {
+            ...this.form.value,
+            latitude: Number(this.form.value.latitude),
+            longitude: Number(this.form.value.longitude)
+        };
 
-
-        // 🔁 Map sections to API format
-        const allocationPayload = selectedSections.map((sec: any) => ({
-            sectionID: sec.sectionID || sec, // depends on your dropdown structure
-            allocation: sec.allocation || 0, // adjust if needed
-            status: sec.status || 'Active',
-            userId: this.tokenPayload.nameid
-        }));
 
         if (this.hospital?.hospitalID) {
 
             let hospitalID = this.hospital.hospitalID;
 
-            this.logger.printLogs('i', 'Hospital details', this.hospital);
+            this.logger.printLogs('i', 'Updating Hospital details', this.hospital);
 
             this.api.updateHospital(hospitalID, this.hospital).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'Hospital updated successfully', this.hospital);
 
-                    this.saveAllocatedSections(hospitalID, selectedSections);
+                    // this.saveAllocatedSections(hospitalID, selectedSections);
 
                     this.closeDialog();
                     this.showAlert('Update Successful', 'Hospital has been updated successfully.', false, 'success');
+                    this.loadHospitals()
                 },
                 error: (err) => {
                     this.showAlert('Updating Failed', err, true);
@@ -490,7 +772,17 @@ export class Hospital implements OnInit {
                 }
             });
         } else {
-            // ✅ CREATE hospital
+
+            // CREATE hospital
+            const selectedSections = this.form.value['sections'] || [];
+
+            const allocationPayload = selectedSections.map((sec: any) => ({
+                sectionID: sec.sectionID || sec, // depends on your dropdown structure
+                allocation: sec.allocation || 0, // adjust if needed
+                status: sec.status || 'Active',
+                userId: this.tokenPayload.nameid
+            }));
+
             this.api.createHospital(this.hospital).subscribe({
                 next: (res: any) => {
                     this.logger.printLogs('i', 'Hospital created successfully', res);
@@ -638,6 +930,7 @@ export class Hospital implements OnInit {
             sectionID: s.sectionID,
             allocation: s.allocation, // || 1 default to 1 if not set
             status: s.status, // || false default to 1 if not set
+            isTimeRestricted: s.isTimeRestricted, // || false default to 1 if not set
             userID: this.tokenPayload.nameid, //  || 'USR0001' default to 1 if not set
         }));
 

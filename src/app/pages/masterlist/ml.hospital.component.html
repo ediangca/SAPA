@@ -64,9 +64,8 @@
                             Date Created
                             <p-sortIcon field="dateCreated" />
                         </th> -->
-                        @if (c || r || d) {
-                            <th style="min-width: 7rem">Action</th>
-                        }
+                        <th *ngIf="c || r || d" style="min-width: 7rem">Action</th>
+                        
                     </tr>
                 </ng-template>
                 <ng-template #body let-hospital>
@@ -76,7 +75,9 @@
                         </td> -->
                         <td style="min-width: 5rem">{{ hospital.hospitalID }}</td>
                         <td style="min-width: 10rem">{{ hospital.hospitalName }}</td>
-                        <td style="min-width: 20rem">{{ hospital.address }}</td>
+                        <td style="min-width: 20rem">{{ hospital.address }}
+                             <!-- - ({{ hospital.latitude }}, {{ hospital.longitude }}) -->
+                        </td>
                         <td style="min-width: 10rem">
                             <ng-container *ngIf="hospital.sections?.length > 0; else noSections">
                                 <!-- <p-chip *ngFor="let section of hospital.sections" [label]="section.sectionName"
@@ -119,27 +120,25 @@
                         </td>
                         <!-- <td style="min-width: 3rem">{{ dateFormat(hospital.dateCreated) }}</td> -->
                         
-                        @if (c || r || d) {
-                            <td>
-                                <div class="flex flex-row gap-2">
-                                    <p-button *ngIf="r" icon="pi pi-pencil" [rounded]="true" [outlined]="true" pTooltip="Edit"
-                                        tooltipPosition="top" (click)="edit(hospital)" />
-                                    <p-button *ngIf="d" icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                        <td>
+                            <div class="flex flex-row gap-2">
+                                <p-button *ngIf="r" icon="pi pi-pencil" [rounded]="true" [outlined]="true" pTooltip="Edit"
+                                    tooltipPosition="top" (click)="edit(hospital)" />
+                                <p-button *ngIf="d" icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
                                         pTooltip="Delete" tooltipPosition="top" (click)="delete(hospital)" />
 
-                                    <button class="mr-2" *ngIf="c" severity="danger" pTooltip="Maximum Allocation"
-                                        tooltipPosition="top" (click)="openAllocatedSections(hospital)">
-                                        <p-overlaybadge [value]="hospital.totalAllocations || 0">
-                                            <i class="pi pi-users" style="font-size: 1.7rem"></i>
-                                        </p-overlaybadge>
-                                    </button>
+                                <button class="mr-2" *ngIf="c" severity="danger" pTooltip="Maximum Allocation"
+                                    tooltipPosition="top" (click)="openAllocatedSections(hospital)">
+                                    <p-overlaybadge [value]="hospital.totalAllocations || 0">
+                                        <i class="pi pi-users" style="font-size: 1.7rem"></i>
+                                    </p-overlaybadge>
+                                </button>
 
-                                </div>
-                                <!-- <p-button label="" icon="pi pi-users" severity="info" [rounded]="true" [outlined]="false"
-                                    badge="100" pTooltip="Total Allocated" tooltipPosition="top"
-                                    badgeSeverity="primary"></p-button> -->
-                            </td>
-                        }   
+                            </div>
+                            <!-- <p-button label="" icon="pi pi-users" severity="info" [rounded]="true" [outlined]="false"
+                                badge="100" pTooltip="Total Allocated" tooltipPosition="top"
+                                badgeSeverity="primary"></p-button> -->
+                        </td>
                     </tr>
                 </ng-template>
             </p-table>
@@ -155,66 +154,144 @@
 </div>
 
 <!-- ADD/EDIT -->
-<p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="Hospital Details" [modal]="true">
-    <ng-template #content>
-        <div class="flex flex-col gap-6">
-            <form [formGroup]="form" ng-reflect-form="[object Object]">
-                <div>
-                    <input type="text" pInputText id="hospitalID" name="hospitalID" formControlName="userID" hidden />
-                    <label for="hospitalName" class="block font-bold mb-3">Hospital Name</label>
-                    <input type="text" pInputText id="hospitalName" name="hospitalName" formControlName="hospitalName"
-                        required autofocus fluid />
-                    <small class="flex flex-row w-full justify-end text-red-500" *ngIf="submitted && !form.value['hospitalName']"> Name is
-                        required.</small>
-                </div>
-                <div>
-                    <label for="address" class="block font-bold mb-3">Hospital Address</label>
-                    <textarea id="address" pTextarea name="address" formControlName="address" required rows="3"
-                        cols="20" fluid></textarea>
-                    <small class="flex flex-row w-full justify-end text-red-500" *ngIf="submitted && !form.value['address']"> Name is required.</small>
-                    <input type="text" pInputText id="userID" name="userID" formControlName="userID" hidden />
-                </div>
+<p-dialog 
+  [(visible)]="itemDialog" 
+  [style]="{ width: '450px' }" 
+  header="Hospital Details"
+  [modal]="true"
+  (onShow)="onDialogShow()"
+  (onHide)="onDialogHide()">
 
-                <!-- [(ngModel)]="selectedSections" -->
-                <div>
-                    <label for="sections" class="block font-bold mb-3">Sections</label>
-                    <p-multiSelect id="sections" name="sections" [options]="allSections" placeholder="Select Sections"
-                        optionLabel="sectionName" display="chip" [filter]="true" appendTo="body" [showToggleAll]="true"
-                        optionValue="sectionID" formControlName="sections" (onChange)="onSectionsChange()" fluid>
+  <ng-template #content>
+    <div class="flex flex-col gap-6">
+      <form [formGroup]="form">
 
-                        <!-- Selected items template -->
-                        <ng-template pTemplate="selectedItems" let-selected>
-                            <div class="flex flex-wrap gap-2">
-                                <div *ngFor="let section of selected"
-                                    class="inline-flex items-center py-1 px-2 bg-primary text-primary-contrast rounded-border mr-2">
-                                    <div>{{ section.sectionName }}</div>
-                                </div>
-                            </div>
-                        </ng-template>
-
-                        <!-- Dropdown item template -->
-                        <ng-template pTemplate="item" let-section>
-                            <div class="flex items-center">
-                                <div>{{ section.sectionName }}</div>
-                            </div>
-                        </ng-template>
-                    </p-multiSelect>
-                    <small class="flex flex-row w-full justify-end text-red-500" *ngIf="submitted && form.controls['sections'].errors?.['required']">
-                        At least one section must be selected.
-                    </small>
-                </div>
-            </form>
+        <!-- Hospital Name -->
+        <div>
+          <input pInputText formControlName="userID" hidden />
+          
+          <label for="hospitalName" class="block font-bold mb-3">Hospital Name</label>
+          <input type="text" pInputText id="hospitalName" formControlName="hospitalName" autofocus fluid />
+          <small class="flex justify-end text-red-500" *ngIf="submitted && !form.value['hospitalName']">
+            Name is required.
+          </small>
         </div>
-    </ng-template>
 
-    <ng-template #footer>
-        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
-        <p-button *ngIf="s || u" label="Save" icon="pi pi-check" (click)="save()" />
-    </ng-template>
+        <!-- Hospital Address -->
+        <div class="mt-4">
+            <label for="address" class="block font-bold mb-3">Hospital Address</label>
+
+            <div class="flex gap-2 items-start">
+                <textarea id="address" pTextarea formControlName="address" required rows="3" fluid></textarea>
+                <p-button
+                [icon]="showMap ? 'pi pi-times' : 'pi pi-map-marker'"
+                [label]="showMap ? 'Close' : 'Pick'"
+                size="small"
+                severity="secondary"
+                (click)="toggleMap()"
+                />
+            </div>
+
+            <small class="text-red-500" *ngIf="submitted && !form.value['address']">
+                Address is required.
+            </small>
+
+            <div class="flex flex-col md:flex-row gap-4 mt-4">
+                <div class="flex flex-col flex-1">
+                    <!-- <label class="font-bold mb-2">Longitude</label> -->
+                    <input type="text" pInputText formControlName="longitude" class="w-full" hidden />
+                </div>
+
+                <div class="flex flex-col flex-1">
+                    <!-- <label class="font-bold mb-2">Latitude</label> -->
+                    <input type="text" pInputText formControlName="latitude" class="w-full" hidden />
+                </div>
+            </div>
+
+            <!-- Google Map Panel -->
+            <!-- <div *ngIf="showMap" class="mt-3 flex flex-col gap-2">
+
+                <!-- <div class="w-full" style="position: relative;">
+                <i class="pi pi-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); z-index: 1; color: var(--p-text-muted-color); font-size: 14px; pointer-events: none;"></i>
+                <input
+                    id="map-search-input"
+                    type="text"
+                    pInputText
+                    class="w-full"
+                    style="padding-left: 2.5rem;"
+                    placeholder="Search hospital or location..."
+                    autocomplete="off"
+                />
+                </div>
+
+                <div id="map-search-container" class="w-full"></div>
+                
+                <divWW
+                id="hospital-map"
+                style="height: 280px; width: 100%; border-radius: 8px; border: 1px solid var(--p-surface-border);">
+                </div>
+
+                <p class="text-xs text-color-secondary">
+                <i class="pi pi-info-circle mr-1"></i>
+                Search, click the map, or drag the pin to set the location
+                </p>
+            </div> -->
+
+            <div *ngIf="showMap" class="mt-3 flex flex-col gap-2">
+                <!-- ✅ Places Autocomplete Container -->
+                <div id="map-search-container" class="bg-white dark:bg-gray-800 w-full"></div>
+
+                <!-- Map Container -->
+                <div
+                id="hospital-map"
+                style="height: 280px; width: 100%; border-radius: 8px; border: 1px solid var(--p-surface-border);">
+                </div>
+
+                <p class="text-xs text-color-secondary">
+                <i class="pi pi-info-circle mr-1"></i>
+                Search, click the map, or drag the pin to set the location
+                </p>
+            </div>
+
+        </div>  
+
+        <!-- Sections -->
+        <div class="mt-4">
+          <label for="sections" class="block font-bold mb-3">Sections</label>
+          <p-multiSelect
+            class="w-full" id="sections"
+            [options]="allSections"
+            placeholder="Select Sections"
+            optionLabel="sectionName"
+            display="chip"
+            [filter]="true"
+            appendTo="body"
+            [showToggleAll]="true"
+            optionValue="sectionID"
+            formControlName="sections"
+            (onChange)="onSectionsChange()"
+            >
+            <!-- [disabled]="hospital?.hospitalID" -->
+          </p-multiSelect>
+          <small class="flex justify-end text-red-500"
+            *ngIf="submitted && form.controls['sections'].errors?.['required']">
+            At least one section must be selected.
+          </small>
+        </div>
+
+      </form>
+    </div>
+  </ng-template>
+
+  <ng-template #footer>
+    <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+    <p-button *ngIf="s || u" label="Save" icon="pi pi-check" (click)="save()" />
+  </ng-template>
+
 </p-dialog>
 
-<!-- MAX ALLOCATION -->
-<p-dialog [(visible)]="assignDialog" [style]="{ width: '480px' }" header="Manage Allocations" [modal]="true">
+<!-- Manage Allocation -->
+<p-dialog [(visible)]="assignDialog" [style]="{ width: '580px' }" header="Manage Allocations" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
             <p-table [value]="allocations" responsiveLayout="scroll">
@@ -224,6 +301,7 @@
                         <th>Section Name</th>
                         <th>Allocation</th>
                         <th>Status</th>
+                        <th class="!text-center">Restrict Time Attendance</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-allocation let-i="rowIndex">
@@ -237,6 +315,12 @@
                         </td>
                         <td>
                             <p-toggleswitch [(ngModel)]="allocation.status" (onChange)="onChangeStatus(allocation)" />
+                        </td>
+                        <td class="!text-center">
+                            <p-toggleswitch
+                                [(ngModel)]="allocation.isTimeRestricted" (onChange)="onChangeStatus(allocation)">
+                                (onChange)="onChangeStatus(allocation)">
+                            </p-toggleswitch>
                         </td>
                     </tr>
                 </ng-template>

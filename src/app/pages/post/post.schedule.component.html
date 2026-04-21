@@ -437,7 +437,7 @@
 </div>
 
 <!-- Post Schedule -->
-<p-dialog header="Post Schedule" [(visible)]="itemDialog" [style]="{ width: '450px' }" [modal]="true">
+<p-dialog header="Post Schedule" [(visible)]="itemDialog" [style]="{ width: '450px' }" [modal]="true" [closable]="true" [dismissableMask]="true" >
     <ng-template #content>
         <div class="flex flex-col gap-6">
 
@@ -580,7 +580,7 @@
 </p-dialog>
 
 <!-- Schedule Details -->
-<p-dialog header="Schedule Details" [(visible)]="displayEventDialog" [modal]="true" [closable]="true"
+<p-dialog header="Schedule Details" [(visible)]="displayEventDialog" [modal]="true"  [closable]="true" [dismissableMask]="true" 
     [style]="{ width: '560px' }" [resizable]="false" [breakpoints]="{'640px':'95vw'}">
 
     <div *ngIf="selectedEvent" class="space-y-4">
@@ -638,7 +638,7 @@
                     ${selectedEvent.sectionName}` }}</span>
             </div>
 
-            <!-- Shift -->
+            <!--  Date & Shift -->
             <div
                 class="flex items-center border-b pb-2 pt-2 opacity-0 translate-y-4 animate-fadeIn delay-200">
                 <i class="fas fa-cloud-sun mr-2 text-secondary-500"></i>
@@ -646,6 +646,8 @@
                     class="font-semibold dark:text-surface-100 text-gray-700 flex-1">Shift</span>
                 <span
                     class="p-3 bg-green-100 text-green-800 rounded-full text-sm font-bold">
+                    {{selectedEvent.dateSlot | date:'MMM dd, yyyy (EEEE)' }} -
+                    
                     {{ selectedEvent.shiftName }} ({{ formatTimeOnly(selectedEvent.startTime)  | date:'shortTime'  }}
                     -
                     {{ formatTimeOnly(selectedEvent.endTime) | date:'shortTime' }})
@@ -693,7 +695,7 @@
 </p-dialog>
 
 <!-- Schedule Conflict -->
-<p-dialog header="Slot Conflict Detected" [(visible)]="showForceDialog" [modal]="true" [closable]="false"
+<p-dialog header="Slot Conflict Detected" [(visible)]="showForceDialog" [modal]="true"  [closable]="true" [dismissableMask]="true"  
     [style]="{ width: '90%', maxWidth: '1024px' }">
 
     <p> <span class="text-red-500 font-bold">Note:</span> Some slots you requested already exist but are unconfirmed and
@@ -798,9 +800,9 @@
 </p-dialog>
 
 <!-- Schedule Selected Day -->
-<p-dialog [header]="'Schedules (' + selectedDay + ')' " [(visible)]="dayDialog" modal [style]="{ width: '70vw' }"
+<p-dialog  [(visible)]="dayDialog" [header]="'Schedules (' + selectedDay + ')' " [closable]="true" [dismissableMask]="true"  modal [style]="{ width: '70vw' }"
     [resizable]="false">
-    <div class="flex justify-start gap-4 pl-4 py-3">
+    <!-- <div class="flex justify-start gap-4 pl-4 py-3">
         <div class="flex items-center gap-2">
             <p-tag severity="success" class="p-5" value="Morning" [rounded]="true" />
         </div>
@@ -810,7 +812,7 @@
         <div class="flex items-center gap-2">
             <p-tag severity="secondary" class="p-5" value="Evening" [rounded]="true" />
         </div>
-    </div> 
+    </div>  -->
                
 
     <p-table [value]="daySlots" [rowHover]="true" [showGridlines]="true" responsiveLayout="stack" breakpoint="960px"
@@ -1092,8 +1094,8 @@
     </ng-template>
 </p-dialog>
 
-<p-dialog [(visible)]="assignDialog" header="Assign Coordinator" [modal]="true" [style]="{width: '25vw',}"
-    [closable]="true" [draggable]="true" [contentStyle]="{'height':'calc(100% - 60px)', 'overflow':'auto'}">
+<p-dialog [(visible)]="assignDialog" header="Assign Coordinator" [modal]="true" [style]="{width: '25vw',}" [closable]="true" [dismissableMask]="true" 
+[draggable]="true" [contentStyle]="{'height':'calc(100% - 60px)', 'overflow':'auto'}">
 
     <ng-template #content>
         <div class="flex flex-row gap-4">
@@ -1128,7 +1130,7 @@
 </p-dialog>
 
 <!-- Manage Appointed Student Attendance -->
-<p-dialog header="Attendance" [(visible)]="manageAttendanceDialog" [modal]="true" [closable]="true"
+<p-dialog header="Attendance" [(visible)]="manageAttendanceDialog" [modal]="true"  [closable]="true" [dismissableMask]="true"
     [style]="{ height: '100%', minHeight:'420px', width: '90%', minWidth: '380px', maxWidth: '624px' }"
     contentStyleClass="flex flex-col h-full" [resizable]="true"
     >
@@ -1139,7 +1141,7 @@
             ({{ slot?.sectionName ?? 'Section Name' }})
         </span>
         on
-        <span class="text-primary-500 font-bold">
+        <span class="block text-primary-500 font-bold">
             {{ slot?.dateSlot ?? 'Date Slot' }}
             ({{ slot?.shiftName ?? 'Shift Name' }})
         </span>.

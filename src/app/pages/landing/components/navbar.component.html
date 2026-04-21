@@ -15,20 +15,28 @@
                 fill="var(--primary-color)" />
         </g>
     </svg> -->
-    <img src="assets/images/sapa-logo250x250.png" alt="sapa-Logo" class="h-20 w-auto mr-20" />
+    <img src="assets/images/sapa-logo250x250.png" alt="sapa-Logo"
+        class="h-20 w-auto sm:mr-20" />
     <!-- <span class="text-surface-900 dark:text-surface-0 font-medium text-2xl leading-normal mr-20">SAPA</span> -->
+    <span
+        class="block sm:hidden ml-5 sm:ml-0 text-slate-900 dark:text-surface-0 font-semibold text-3xl">
+        SAPA
+    </span>
 </a>
 
-<a pButton [text]="true" severity="secondary" [rounded]="true" pRipple class="lg:hidden!" pStyleClass="@next"
+<a pButton [text]="true" severity="secondary" [rounded]="true" pRipple
+    class="lg:hidden!" pStyleClass="@next"
     enterFromClass="hidden" leaveToClass="hidden" [hideOnOutsideClick]="true">
     <i class="pi pi-bars text-2xl!"></i>
 </a>
 
 <div
     class="items-center bg-surface-0 dark:bg-surface-900 grow justify-between hidden lg:flex absolute lg:static w-full left-0 top-full px-12 lg:px-0 z-20 rounded-border">
-    <ul class="list-none p-0 m-0 flex lg:items-center select-none flex-col lg:flex-row cursor-pointer gap-8">
+    <ul
+        class="list-none p-0 m-0 flex lg:items-center select-none flex-col lg:flex-row cursor-pointer gap-8">
         <li>
-            <a routerLink="/" pRipple class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
+            <a routerLink="/" pRipple
+                class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
                 <span>Home</span>
             </a>
         </li>
@@ -39,7 +47,8 @@
             </a>
         </li>
         <li>
-            <a (click)="router.navigate([''], { fragment: 'stakeholders' })" pRipple
+            <a (click)="router.navigate([''], { fragment: 'stakeholders' })"
+                pRipple
                 class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
                 <span>Stakeholder</span>
             </a>
@@ -50,24 +59,30 @@
                 class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl flex items-center gap-2 cursor-pointer">
                 <span>Team</span>
                 <!-- Dropdown indicator -->
-                <svg class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none"
+                <svg
+                    class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180"
+                    fill="none"
                     stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M19 9l-7 7-7-7" />
                 </svg>
             </a>
 
             <!-- Dropdown menu -->
             <ul
                 class="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 shadow-lg rounded-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-300 ease-in-out z-20">
-                
+
                 <li>
-                    <a (click)="router.navigate([''], { fragment: 'hospitals' })" pRipple
+                    <a
+                        (click)="router.navigate([''], { fragment: 'hospitals' })"
+                        pRipple
                         class="block px-4 py-2 text-surface-900 dark:text-surface-0 font-medium text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg">
                         Hospital Partners
                     </a>
                 </li>
                 <li>
-                    <a (click)="router.navigate([''], { fragment: 'schools' })" pRipple
+                    <a (click)="router.navigate([''], { fragment: 'schools' })"
+                        pRipple
                         class="block px-4 py-2 text-surface-900 dark:text-surface-0 font-medium text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg">
                         Schools
                     </a>
@@ -75,7 +90,8 @@
             </ul>
         </li>
         <li>
-            <a (click)="router.navigate([''], { fragment: 'contactus' })" pRipple
+            <a (click)="router.navigate([''], { fragment: 'contactus' })"
+                pRipple
                 class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
                 <span>Contact Us</span>
             </a>
@@ -114,9 +130,12 @@
 
     @if (!isLoggedIn) {
 
-    <div class="flex border-t lg:border-t-0 border-surface py-4 lg:py-0 mt-4 lg:mt-0 gap-2">
-        <button pButton pRipple label="Login" routerLink="login" [rounded]="true" [text]="true"></button>
-        <button pButton pRipple label="Register" routerLink="register" [rounded]="true"></button>
+    <div
+        class="flex border-t lg:border-t-0 border-surface py-4 lg:py-0 mt-4 lg:mt-0 gap-2">
+        <button pButton pRipple label="Login" routerLink="login"
+            [rounded]="true" [text]="true"></button>
+        <button pButton pRipple label="Register" routerLink="register"
+            [rounded]="true"></button>
         <app-floating-configurator [float]="false" />
     </div>
 
@@ -142,7 +161,8 @@
                     <i [class]="item.icon"></i>
                     <span class="block lg:hidden ml-2">{{ item.label }}</span>
                     @if (item.label === 'Inbox') {
-                    <p-badge [value]="5" class="absolute top-30 right-80" severity="danger"></p-badge>
+                    <p-badge [value]="5" class="absolute top-30 right-80"
+                        severity="danger"></p-badge>
 
                     <!-- <p-overlaybadge value="4" severity="danger">
                         <i class="pi pi-calendar" style="font-size: 1.5rem"></i>
@@ -161,9 +181,13 @@
                         <i [class]="item.icon"></i>
                         <span class="block lg:hidden">{{ item.label }}</span>
                         <!-- Dropdown arrow -->
-                        <svg class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180" fill="none"
-                            stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        <svg
+                            class="w-4 h-4 transition-transform duration-200 group-hover:rotate-180"
+                            fill="none"
+                            stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
 
@@ -174,7 +198,8 @@
                         <li>
                             <button type="button"
                                 class="block w-full text-left px-4 py-2 text-surface-900 dark:text-surface-0 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                [routerLink]="child.routerLink" (click)="child.command?.()">
+                                [routerLink]="child.routerLink"
+                                (click)="child.command?.()">
                                 <!-- <i [class]="child.icon"></i> -->
                                 <span class="ml-2">{{ child.label }}</span>
                             </button>
@@ -196,7 +221,6 @@
                 }
             </div>
         </div>
-
 
         <!--  -->
     </div>
