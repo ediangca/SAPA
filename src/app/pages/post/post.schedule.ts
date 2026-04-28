@@ -484,12 +484,12 @@ export class Schedule implements OnInit, OnChanges {
             { field: 'date_created', header: 'Date Created' },
         ];
 
-        this.headStatuses = [{ label: 'Unposted | Unconfirmed', value: 0, color: 'contrast' }, 
-            { label: 'Posted | Confirmed', value: 1, color: 'info' }, 
-            { label: 'Declined', value: 2, color: 'secondary' }, 
-            { label: 'Cancel Request', value: 3, color: 'warning' }, 
-            { label: 'Cancelled', value: 4, color: 'danger' },];
-            
+        this.headStatuses = [{ label: 'Unposted | Unconfirmed', value: 0, color: 'contrast' },
+        { label: 'Posted | Confirmed', value: 1, color: 'info' },
+        { label: 'Declined', value: 2, color: 'secondary' },
+        { label: 'Cancel Request', value: 3, color: 'warning' },
+        { label: 'Cancelled', value: 4, color: 'danger' },];
+
         this.exportColumns = this.cols.map((col) => ({ title: col.header, dataKey: col.field }));
 
     }
@@ -1613,7 +1613,7 @@ export class Schedule implements OnInit, OnChanges {
         today.setHours(0, 0, 0, 0);
         d.setHours(0, 0, 0, 0);
 
-        this.logger.printLogs('i', 'isPastOrToday:' + d + ' >>>', d <= today);
+        // this.logger.printLogs('i', 'isPastOrToday:' + d + ' >>>', d <= today);
 
         return d <= today;
     }
@@ -2010,6 +2010,27 @@ export class Schedule implements OnInit, OnChanges {
 
     }
 
+    printAttendance() {
+
+        if (!this.slot) return;
+
+        const slotInfo = `${this.dateFormat(this.slot.dateSlot)} - ${this.slot.hospitalName} (${this.slot.sectionName})`;
+
+        const slotsArray = this.appointedStudents; // already contains slot + student merged
+
+        const attendanceRecords = this.appointedStudents
+            .filter(s => s.hasAttendance)
+            .map(s => ({
+                userID: s.userID,
+                dateCreated: s.date_created
+            }));
+
+        this.pdfService.generateAttendanceReport(
+            `Attendance Report`,
+            slotsArray,
+            attendanceRecords
+        );
+    }
 
     onCloseDetails() {
         this.slot = null;
@@ -2109,42 +2130,27 @@ export class Schedule implements OnInit, OnChanges {
         this.printDialogVisible = false;
     }
 
-    // confirmPrintSchedule() {
-    //     const start = this.printDateRange[0];
-    //     const end = this.printDateRange[1];
-
-    //     const dateFrom = start.toISOString().split('T')[0];
-    //     const dateTo = end.toISOString().split('T')[0];
-
-
-    //     const filteredSlots: any = this.slots().filter((s: any) => {
-    //         return s.dateSlot >= dateFrom && s.dateSlot <= dateTo;
-    //     });
-
-    //     this.logger.printLogs('i', `Slot from ${dateFrom} to ${dateTo}`, filteredSlots)
-
-    //     this.pdfService.generateScheduleReport(
-    //         `LIST OF SCHEDULE
-    //         (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
-    //         filteredSlots,
-    //         start.toString(),
-    //         end.toString()
-    //     );
-
-    //     this.printDialogVisible = false;
-    // }   
-
     confirmPrintSchedule() {
         const [start, end] = this.printDateRange;
 
         const dateFrom = start.toISOString().split('T')[0];
         const dateTo = end.toISOString().split('T')[0];
 
+
+        this.logger.printLogs('i', 'Slots', this.slots());
+
+        this.logger.printLogs(
+            'i', `Print Schedule with filters -`,
+            `Date: ${dateFrom} to ${dateTo}, SchoolID: ${this.selectedSchoolID}, HospitalID: ${this.selectedHospitalID}, Status: ${this.selectedStatus}`,
+        );
+
         const filteredSlots = this.slots().filter((s: any) => {
+            
+            const slotDate = new Date(s.dateSlot).toISOString().split('T')[0];
 
             // DATE FILTER (required)
             const isWithinDate =
-                s.dateSlot >= dateFrom && s.dateSlot <= dateTo;
+                slotDate >= dateFrom && slotDate <= dateTo;
 
             // OPTIONAL FILTERS
             const schoolMatch =

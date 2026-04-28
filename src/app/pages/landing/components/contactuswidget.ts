@@ -58,7 +58,7 @@ import { RippleModule } from 'primeng/ripple';
             <!-- EMAIL -->
             <div class="flex items-center gap-4">
               <div
-                class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                class="w-12 h-12 rounded-xl bg-primary/10 text-primary/90 flex items-center justify-center">
                 <span class="material-symbols-outlined text-2xl">
                   <i class="fa-solid fa-envelope"></i>
                 </span>
@@ -82,7 +82,7 @@ import { RippleModule } from 'primeng/ripple';
             <!-- PHONE -->
             <div class="flex items-center gap-4">
               <div
-                class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                class="w-12 h-12 rounded-xl bg-primary/10 text-primary/90 to-primary flex items-center justify-center">
                 <span class="material-symbols-outlined text-2xl">
                   <i class="fa-solid fa-phone"></i>
                 </span>

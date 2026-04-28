@@ -5,9 +5,9 @@ import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 
 @Component({
-    selector: 'banner-widget',
-    imports: [RouterModule, ButtonModule, RippleModule],
-    template: `
+  selector: 'banner-widget',
+  imports: [RouterModule, ButtonModule, RippleModule],
+  template: `
        <section
           class="flex flex-col px-6 lg:px-20 overflow-hidden relative min-h-screen justify-center"
           style="background: linear-gradient(0deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.2)), radial-gradient(77.36% 256.97% at 77.36% 57.52%, rgb(238, 239, 175) 0%, rgb(195, 227, 250) 100%); clip-path: ellipse(150% 87% at 93% 13%)"
@@ -34,11 +34,13 @@ import { RippleModule } from 'primeng/ripple';
              </span>
 
              <h1
-               class="font-display text-4xl lg:text-6xl font-extrabold text-slate-900 leading-tight mb-6"
+               class="font-display text-4xl lg:text-6xl font-extrabold leading-tight mb-6"
                data-aos="fade-up" data-aos-delay="250"
              >
-               School Affiliation Program
-               <span class="block text-secondary-blue dark:text-primary">
+               <span class="block text-primary-500 dark:text-slate-900">
+                School Affiliation Program
+               </span>
+               <span class="block text-slate-700 dark:text-slate-500">
                  Connecting Learning & Healthcare
                </span>
              </h1>
@@ -89,31 +91,31 @@ import { RippleModule } from 'primeng/ripple';
 })
 export class BannerWidget {
 
-    parallaxOffset = 0;
-    textParallaxOffset = 0;
-    imageParallaxOffset = 0;
+  parallaxOffset = 0;
+  textParallaxOffset = 0;
+  imageParallaxOffset = 0;
 
-    constructor(public router: Router, private authService: AuthService, private el: ElementRef) {}
+  constructor(public router: Router, private authService: AuthService, private el: ElementRef) { }
 
-    get isLoggedIn(): boolean {
-        return this.authService.isAuthenticated();
+  get isLoggedIn(): boolean {
+    return this.authService.isAuthenticated();
+  }
+
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    const section = this.el.nativeElement.querySelector('section');
+    if (!section) return;
+
+    const rect = section.getBoundingClientRect();
+    const sectionTop = rect.top + window.scrollY;
+    const scrolled = window.scrollY - sectionTop;
+
+    if (scrolled > 0) {
+      this.textParallaxOffset = -(scrolled * 0.15);
+      this.imageParallaxOffset = -(scrolled * 0.50);
+    } else {
+      this.textParallaxOffset = 0;
+      this.imageParallaxOffset = 0;
     }
-
-    @HostListener('window:scroll', [])
-    onWindowScroll() {
-        const section = this.el.nativeElement.querySelector('section');
-        if (!section) return;
-
-        const rect = section.getBoundingClientRect();
-        const sectionTop = rect.top + window.scrollY;
-        const scrolled = window.scrollY - sectionTop;
-
-        if (scrolled > 0) {
-            this.textParallaxOffset = -(scrolled * 0.15);
-            this.imageParallaxOffset = -(scrolled * 0.50);
-        } else {
-            this.textParallaxOffset = 0;
-            this.imageParallaxOffset = 0;
-        }
-    }
+  }
 }

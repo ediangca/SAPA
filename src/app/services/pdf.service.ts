@@ -14,6 +14,8 @@ export class PdfService {
   private rightLogo: string | null = null;
   pdfPreviewSrc: string | null = null;
 
+  sapaWatermark: any = null;
+
   constructor(
     private logger: LogsService,) {
     // Preload logos
@@ -67,6 +69,7 @@ export class PdfService {
     };
   }
 
+
   private getFooter() {
     return {
       columns: [
@@ -86,11 +89,31 @@ export class PdfService {
     };
   }
 
+  async loadSapaWatermark() {
+    this.sapaWatermark = await this.getBase64ImageFromURL('assets/images/sapa-logo.png');
+  }
+
   async generateSchoolsReport(schools: any[]) {
-    // Ensure logos are loaded before generating
-    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+    // Ensure logos are loaded
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark(); // if separate
+    }
 
     const docDefinition: any = {
+      background: (currentPage: number, pageSize: any) => {
+        return [
+          {
+            image: this.sapaWatermark,
+            width: 250,
+            absolutePosition: {
+              x: (pageSize.width / 2) - 125,
+              y: (pageSize.height / 2) - 125
+            },
+            opacity: 0.08
+          }
+        ];
+      },
       content: [
         this.getHeader('LIST OF SCHOOL'),
         { text: '\n' },
@@ -143,10 +166,27 @@ export class PdfService {
   }
 
   async generateUserReport(users: any[], title: string) {
-    // Ensure logos are loaded before generating
-    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
-
+    
+    // Ensure logos are loaded
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark(); // if separate
+    }
+    
     const docDefinition: any = {
+      background: (currentPage: number, pageSize: any) => {
+        return [
+          {
+            image: this.sapaWatermark,
+            width: 250,
+            absolutePosition: {
+              x: (pageSize.width / 2) - 125,
+              y: (pageSize.height / 2) - 125
+            },
+            opacity: 0.08
+          }
+        ];
+      },
       content: [
         this.getHeader(title),
         { text: '\n' },
@@ -200,9 +240,25 @@ export class PdfService {
 
   async generateRoleReport(roles: any[], title: string) {
     // Ensure logos are loaded before generating
-    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark(); // if separate
+    }
 
     const docDefinition: any = {
+      background: (currentPage: number, pageSize: any) => {
+        return [
+          {
+            image: this.sapaWatermark,
+            width: 250,
+            absolutePosition: {
+              x: (pageSize.width / 2) - 125,
+              y: (pageSize.height / 2) - 125
+            },
+            opacity: 0.08
+          }
+        ];
+      },
       content: [
         this.getHeader(title),
         { text: '\n' },
@@ -252,9 +308,25 @@ export class PdfService {
     this.logger.printLogs('i', "Generate PDF for Hospitals : ", hospitals);
 
     // Ensure logos are loaded
-    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark(); // if separate
+    }
 
     const docDefinition: any = {
+      background: (currentPage: number, pageSize: any) => {
+        return [
+          {
+            image: this.sapaWatermark,
+            width: 250,
+            absolutePosition: {
+              x: (pageSize.width / 2) - 125,
+              y: (pageSize.height / 2) - 125
+            },
+            opacity: 0.08
+          }
+        ];
+      },
       content: [
         this.getHeader('LIST OF HOSPITALS'),
         { text: '\n' },
@@ -330,9 +402,24 @@ export class PdfService {
     this.logger.printLogs('i', "Generate PDF for Sections : ", sections);
 
     // Ensure logos are loaded
-    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
-
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark(); // if separate
+    }
     const docDefinition: any = {
+      background: (currentPage: number, pageSize: any) => {
+        return [
+          {
+            image: this.sapaWatermark,
+            width: 250,
+            absolutePosition: {
+              x: (pageSize.width / 2) - 125,
+              y: (pageSize.height / 2) - 125
+            },
+            opacity: 0.08
+          }
+        ];
+      },
       content: [
         this.getHeader('LIST OF SECTIONS'),
         { text: '\n' },
@@ -442,8 +529,10 @@ export class PdfService {
     dateTo: string
   ) {
     // Ensure logos are loaded
-    if (!this.leftLogo || !this.rightLogo) await this.loadLogos();
-
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark(); // if separate
+    }
     // Group schedules by date → shift → entries
     const grouped: any = {};
 
@@ -541,6 +630,19 @@ export class PdfService {
       });
 
     const docDefinition: any = {
+      background: (currentPage: number, pageSize: any) => {
+        return [
+          {
+            image: this.sapaWatermark,
+            width: 250,
+            absolutePosition: {
+              x: (pageSize.width / 2) - 125,
+              y: (pageSize.height / 2) - 125
+            },
+            opacity: 0.08
+          }
+        ];
+      },
       content,
       footer: this.getFooter(),
       styles: {
@@ -578,6 +680,190 @@ export class PdfService {
       default:
         return { text: '?', color: '#000000' };
     }
+  }
+
+  // Print Attendance Report
+  async generateAttendanceReport(title: string, slots: any[], attendanceRecords: any[]) {
+    this.logger.printLogs('i', 'Generate Attendance Report', { title, attendanceRecords });
+
+    // Ensure logos are loaded
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark(); // if separate
+    }
+
+    // 🔒 Safe slot reference
+    const slot = slots?.[0] || {};
+
+    // 🔥 Merge slots with attendance
+    const mergedData = slots.map((s) => {
+      const attendance = attendanceRecords.find(a => a.userID === s.userID);
+
+      return {
+        ...s,
+        hasAttendance: !!attendance,
+        attendanceDate: attendance?.dateCreated ?? null
+      };
+    });
+
+    // 🔢 Summary (optional but useful)
+    const presentCount = mergedData.filter(x => x.hasAttendance).length;
+    const absentCount = mergedData.length - presentCount;
+
+    const docDefinition: any = {
+
+      background: (currentPage: number, pageSize: any) => {
+        return [
+          {
+            image: this.sapaWatermark,
+            width: 250,
+            absolutePosition: {
+              x: (pageSize.width / 2) - 125,
+              y: (pageSize.height / 2) - 125
+            },
+            opacity: 0.08
+          }
+        ];
+      },
+
+      content: [
+        this.getHeader(title),
+        { text: '\n' },
+
+        // ===============================
+        // 📌 SLOT INFORMATION TABLE
+        // ===============================
+        {
+          table: {
+            widths: ['25%', '30%', '25%', '25%'],
+            body: [
+              [
+                { text: 'DATE', bold: true, fontSize: 10, color: '#555', alignment: 'center' },
+                { text: 'SHIFT', bold: true, fontSize: 10, color: '#555', alignment: 'center' },
+                { text: 'HOSPITAL', bold: true, fontSize: 10, color: '#555', alignment: 'center' },
+                { text: 'SECTION', bold: true, fontSize: 10, color: '#555', alignment: 'center' }
+              ],
+              [
+                {
+                  text: slot?.dateSlot
+                    ? new Date(slot.dateSlot).toLocaleDateString()
+                    : '—',
+                  fontSize: 9,
+                  alignment: 'center'
+                },
+                {
+                  text: slot?.shiftName
+                    ? `${slot.shiftName} (${slot.startTime} - ${slot.endTime})`
+                    : '—',
+                  fontSize: 9,
+                  alignment: 'center'
+                },
+                {
+                  text: slot?.hospitalName || '—',
+                  fontSize: 9,
+                  alignment: 'center'
+                },
+                {
+                  text: slot?.sectionName || '—',
+                  fontSize: 9,
+                  alignment: 'center'
+                }
+              ]
+            ]
+          },
+
+          layout: {
+            fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#aaa',
+            vLineColor: () => '#aaa',
+            paddingLeft: () => 4,
+            paddingRight: () => 4,
+            paddingTop: () => 3,
+            paddingBottom: () => 3,
+          },
+
+          margin: [0, 0, 30, 15]
+        },
+        {
+          text: `Clinical Instructor: ${slot.ci_fullname || '—'}`,
+          bold: true,
+          fontSize: 10,
+          margin: [0, 0, 0, 10]
+        },
+
+        // ===============================
+        // 📊 ATTENDANCE TABLE
+        // ===============================
+        {
+          table: {
+            headerRows: 1,
+            widths: ['10%', '55%', '20%', '20%'],
+            body: [
+              [
+                { text: '#', bold: true, fontSize: 10, alignment: 'center' },
+                { text: 'Student Name', bold: true, fontSize: 10 },
+                { text: 'Time', bold: true, fontSize: 10, alignment: 'center' },
+                { text: 'Status', bold: true, fontSize: 10, alignment: 'center' }
+              ],
+
+              ...mergedData.map((s, i) => [
+                { text: (i + 1).toString(), alignment: 'center', fontSize: 9 },
+                { text: s.fullname || '—', fontSize: 9 },
+                {
+                  text: s.attendanceDate
+                    ? new Date(s.attendanceDate).toLocaleTimeString()
+                    : '—',
+                  alignment: 'center',
+                  fontSize: 9
+                },
+                {
+                  text: s.hasAttendance ? 'Present' : 'Absent',
+                  alignment: 'center',
+                  fontSize: 9,
+                  color: s.hasAttendance ? 'green' : 'red',
+                  bold: true
+                }
+              ])
+            ]
+          },
+
+          layout: {
+            fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#aaa',
+            vLineColor: () => '#aaa',
+            paddingLeft: () => 4,
+            paddingRight: () => 4,
+            paddingTop: () => 2,
+            paddingBottom: () => 2,
+          },
+
+          margin: [0, 0, 30, 10]
+        },
+
+        // ===============================
+        // 📈 SUMMARY
+        // ===============================
+        {
+          text: `Total: ${mergedData.length} | Present: ${presentCount} | Absent: ${absentCount}`,
+          bold: true,
+          fontSize: 10,
+          margin: [0, 5, 0, 0]
+        }
+      ],
+
+      footer: this.getFooter(),
+
+      styles: {
+        header: { bold: true, alignment: 'center', fontSize: 13 },
+        tableCell: { fontSize: 9, noWrap: false, lineHeight: 1.1 },
+      }
+    };
+
+    pdfMakeLib.createPdf(docDefinition).open();
   }
 
   // Appointment Report
@@ -708,7 +994,6 @@ export class PdfService {
       pdfMake.createPdf(docDefinition).open();
     }
   }
-
 
   // Return a Promise<string> containing the PDF Data URL
   generateAppointmentReportPreview(
@@ -977,7 +1262,6 @@ export class PdfService {
         console.error("Error printing PDF:", error);
       });
   }
-
 
 
 }

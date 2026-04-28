@@ -1094,6 +1094,7 @@
     </ng-template>
 </p-dialog>
 
+<!-- Manage  Assigned Coordinator -->
 <p-dialog [(visible)]="assignDialog" header="Assign Coordinator" [modal]="true" [style]="{width: '25vw',}" [closable]="true" [dismissableMask]="true" 
 [draggable]="true" [contentStyle]="{'height':'calc(100% - 60px)', 'overflow':'auto'}">
 
@@ -1249,6 +1250,10 @@
         @if(targetStudent.length > 0){
             <button pButton type="button" label="Save Assignments"
             class="p-button-primary mr-2" (click)="saveAssignStudentStudent()"></button>
+        }
+        
+        @if(isAdmin() || isSchoolCoordinator() || isClinicalInstructor() || isSupervisor()){
+            <p-button label="Print" class="mr-2" severity="info" icon="pi pi-print" (click)="printAttendance()"></p-button>
         }
         <!-- Cancel -->
         <button pButton type="button" label="Close" class="p-button-text" (click)="onCloseManagAttendance()"></button>
