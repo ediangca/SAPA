@@ -48,7 +48,8 @@ export class NavbarWidget {
             {
                 label: 'Schedule',
                 icon: 'pi pi-fw pi-calendar',
-                routerLink: '/dashboard/post/schedules'
+                command: () => this.routeto('/dashboard/post/schedules')
+                // routerLink: '/dashboard/post/schedules'
             },
             // {
             //     label: 'Inbox',
@@ -67,7 +68,8 @@ export class NavbarWidget {
                     {
                         label: 'Account',
                         icon: 'pi pi-fw pi-user',
-                        routerLink: '/dashboard/settings/account'
+                        command: () => this.routeto('/dashboard/settings/account')
+                        // routerLink: '/dashboard/settings/account'
                     },
                     {
                         label: 'Mode',
@@ -82,6 +84,10 @@ export class NavbarWidget {
                 ]
             }
         ];
+    }
+
+    routeto(path: string) {
+        this.router.navigate([path]);
     }
 
 }

@@ -43,11 +43,12 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { mapSlotsToEvents, formatTimeString, computeEnd, aggregateSlotsByDay } from './post.schedule.utils';
 import { Tooltip } from "primeng/tooltip";
 import { ChipModule } from 'primeng/chip';
-import { BehaviorSubject, combineLatest, filter, forkJoin, switchMap, take, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, filter, forkJoin, of, switchMap, take, tap } from 'rxjs';
 import { SkeletonModule } from 'primeng/skeleton';
 import { PickListModule } from 'primeng/picklist';
 import { BadgeModule } from 'primeng/badge';
 import { CheckboxModule } from 'primeng/checkbox';
+import { DividerModule } from 'primeng/divider';
 
 
 interface Column {
@@ -166,6 +167,7 @@ const ROLE_PERMISSIONS: Record<string, number[]> = {
         SkeletonModule,
         ChipModule,
         PickListModule,
+        DividerModule,
         Tooltip
     ],
     templateUrl: './post.schedule.component.html',
@@ -182,12 +184,15 @@ export class Schedule implements OnInit, OnChanges {
     itemDialog: boolean = false;
     displayEventDialog: boolean = false;
     printDialogVisible: boolean = false;
+    printAttDialogVisible: boolean = false;
 
     slots = signal<any[]>([]);
     public slot!: any;
     selectSlots!: any[] | [];
     public loading: boolean = false;
     loadingDaySlots: boolean = false;
+
+    filteredSlots = signal<any[]>([]);
 
     form!: FormGroup;
 
@@ -218,6 +223,7 @@ export class Schedule implements OnInit, OnChanges {
     isSlotEditable: boolean = true;
 
     manageAttendanceDialog: boolean = false;
+    showFilter: boolean = true;
 
     viewOptions = [
         { label: 'Table', value: true, icon: 'pi pi-table' },
@@ -264,7 +270,6 @@ export class Schedule implements OnInit, OnChanges {
     existingSlots: any[] = [];
     blockedSlots: any[] = [];
     forceRequest: any;
-
 
     calendarOptions: CalendarOptions = {};
     selectedDay: string = '';
@@ -432,7 +437,17 @@ export class Schedule implements OnInit, OnChanges {
 
     buildSubComponent() {
         this.subcomponent = [
-            { label: 'Print All', icon: 'fas fa-print', visible: this.p, command: () => this.openPrintDialog() },
+            { id: 'print_all', label: 'Print All', icon: 'fas fa-print', visible: this.p, command: () => this.openPrintDialog() },
+            ...(this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002' || this.tokenPayload.role === 'UGR0003' || this.tokenPayload.role === 'UGR0006' ?
+                [
+                    {
+                        id: 'print_attendance',
+                        label: 'Print Attendance',
+                        icon: 'fas fa-user-clock',
+                        command: () => this.openPrintAttDialog()
+                    }
+                ]
+                : []),
             ...(this.tokenPayload.role === 'UGR0001'
                 ? [
                     {
@@ -452,6 +467,7 @@ export class Schedule implements OnInit, OnChanges {
                 ]
                 : [
                     {
+                        id: 'request_cancel',
                         label: 'Request Cancel',
                         icon: 'fas fa-file-arrow-up',
                         disabled: !this.selectSlots || this.selectSlots.length === 0,
@@ -2074,7 +2090,7 @@ export class Schedule implements OnInit, OnChanges {
     }
 
     openPrintDialog() {
-        this.loadSlots
+        this.loadSlots();
         this.printDateRange = [];
 
         if (this.isIntern()) {
@@ -2100,6 +2116,37 @@ export class Schedule implements OnInit, OnChanges {
             this.loadSchools();
         }
         this.printDialogVisible = true;
+    }
+
+    openPrintAttDialog() {
+        this.loadSlots();
+        this.printDateRange = [];
+        this.filteredSlots.set([]);
+
+        if (this.isIntern()) {
+            this.selectedStatus = 1;
+            this.selectedSchoolID = this.user.schoolID;
+            this.selectedHospitalID = null;
+        } else if (this.isSchoolCoordinator()) {
+            // this.slotStatusOptions = [
+            //     { label: 'PENDING', value: 0 },
+            //     { label: 'CONFIRMED', value: 1 },
+            //     { label: 'DECLINED', value: 2 },
+            //     { label: 'CANCEL REQUEST', value: 3 },
+            //     { label: 'CANCELED', value: 4 }
+            // ];
+            this.selectedSchoolID = this.user.schoolID;
+        } else if (this.isSupervisor()) {
+            this.selectedHospitalID = this.user.hospitalID;
+        } else {
+            this.selectedStatus = null;
+            this.selectedSchoolID = null
+            this.selectedHospitalID = null;
+            this.loadHospitals();
+            this.loadSchools();
+        }
+        this.printAttDialogVisible = true;
+        this.showFilter = true;
     }
 
     getSelectedSchoolName(): string | null {
@@ -2128,6 +2175,7 @@ export class Schedule implements OnInit, OnChanges {
 
     closePrintDialog() {
         this.printDialogVisible = false;
+        this.printAttDialogVisible = false;
     }
 
     confirmPrintSchedule() {
@@ -2145,7 +2193,7 @@ export class Schedule implements OnInit, OnChanges {
         );
 
         const filteredSlots = this.slots().filter((s: any) => {
-            
+
             const slotDate = new Date(s.dateSlot).toISOString().split('T')[0];
 
             // DATE FILTER (required)
@@ -2203,5 +2251,146 @@ export class Schedule implements OnInit, OnChanges {
         );
 
         // this.printDialogVisible = false;
+    }
+
+    showSlotConfirmed() {
+
+        
+        this.printAttDialogVisible = false;
+        const [start, end] = this.printDateRange;
+
+        const dateFrom = start.toISOString().split('T')[0];
+        const dateTo = end.toISOString().split('T')[0];
+
+        const params: any = {
+            start: dateFrom,
+            end: dateTo,
+            roleID: this.tokenPayload?.role,
+            userID: this.tokenPayload?.nameid,
+            schoolID: this.selectedSchoolID,
+        };
+
+        if (this.selectedHospitalID) params.hospitalID = this.selectedHospitalID;
+        if (this.selectedSchoolID) params.schoolID = this.selectedSchoolID;
+
+        this.loadingAttendance = true;
+
+        const startDate = this.dateFormat(dateFrom) || '';
+        const endDate = this.dateFormat(dateTo) || '';
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const minAllowed = new Date(today);
+        minAllowed.setDate(today.getDate() + 7);
+
+        // const isAdmin =
+        //     this.tokenPayload.role === 'UGR0001' ||
+        //     this.tokenPayload.role === 'UGR0002';
+
+        // Admin → no user filter
+        // Others → pass userID
+        const userID = this.isAdmin() ? null : (
+            this.isSupervisor() ? null :
+                this.tokenPayload.nameid);
+
+        const schoolID = this.isSchoolCoordinator() || this.isIntern() ? this.user.schoolID : null;
+
+        this.api.getSlotsByRange(startDate, endDate, this.tokenPayload.role, this.tokenPayload.nameid, this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null).subscribe({
+            next: (slots) => {
+                this.loadingAttendance = false;
+
+                if (!slots.length) {
+                    Swal.fire({
+                        title: 'No Schedule Found',
+                        text: 'No schedules match your selected filters.',
+                        icon: 'info',
+                        confirmButtonText: 'OK',
+                    }).then(() => (this.printAttDialogVisible = true));
+                    return;
+                }
+
+                this.filteredSlots.set(slots.filter((s: any) => s.slotStatus === 1));
+                this.logger.printLogs('i', 'Filtered slots from API', this.filteredSlots());
+
+                this.printAttDialogVisible = true;
+            },
+            error: (err) => {
+                this.loadingAttendance = false;
+                this.logger.printLogs('e', 'Failed to fetch slots by range', err);
+            }
+        });
+    }
+
+    async printAllAttendance() {
+        const slots = this.filteredSlots();
+        if (!slots.length) return;
+
+        const slotIDs = slots.map((s: any) => s.slotID);
+        this.loadingAttendance = true;
+
+        forkJoin({
+            students: this.api.getAppointedStudentsBySlots(slotIDs),
+            attendance: this.api.getAttendanceBySlots(slotIDs)
+        }).subscribe({
+            next: ({ students, attendance }) => {
+                this.loadingAttendance = false;
+
+                this.logger.printLogs('i', 'RAW students', students);
+                this.logger.printLogs('i', 'RAW attendance', attendance);
+                this.logger.printLogs('i', 'Slot IDs from filteredSlots', slots.map((s: any) => s.slotID));
+                this.logger.printLogs('i', 'SlotIDs from students', [...new Set(students.map((s: any) => s.slotID ?? s.SlotID))]);
+
+                // Merge per slot — same logic as openAttendance()
+                const mergedSlots = slots.map((slot: any) => {
+
+                    // Normalize slot ID from filteredSlots()
+                    const slotID = slot.slotID ?? slot.SlotID;
+
+                    const slotStudents = students
+                        .filter((s: any) => {
+                            const sSlotID = s.slotID ?? s.SlotID;  // handle both casings
+                            return sSlotID === slotID;
+                        })
+                        .map((student: any) => {
+                            const sUserID = student.userID ?? student.UserID;
+
+                            const record = attendance.find((a: any) => {
+                                const aSlotID = a.slotID ?? a.SlotID;
+                                const aUserID = a.userID ?? a.UserID;
+                                return aSlotID === slotID && aUserID === sUserID;
+                            });
+
+                            return {
+                                ...student,
+                                fullname: student.fullname ?? student.Fullname,
+                                hasAttendance: !!record,
+                                date_created: record?.dateCreated ?? record?.DateCreated ?? null
+                            };
+                        });
+
+                    this.logger.printLogs('i', `Slot ${slotID} → ${slotStudents.length} students`, slotStudents);
+                    return { slot, students: slotStudents };
+                });
+
+                const [start, end] = this.printDateRange;
+                const dateFrom = start.toISOString().split('T')[0];
+                const dateTo = end.toISOString().split('T')[0];
+
+
+
+                this.logger.printLogs('i', 'Merged slots with attendance', mergedSlots);
+                this.pdfService.generateAttendanceReportMulti(
+                    `LIST OF ATTENDANCE (${this.dateFormat(dateFrom)} – ${this.dateFormat(dateTo)})`,
+                    mergedSlots
+                );
+
+                // this.printAttDialogVisible = false;
+            },
+            error: (err) => {
+                this.loadingAttendance = false;
+                this.logger.printLogs('e', 'Failed to load attendance for print', err);
+            }
+        });
     }
 }

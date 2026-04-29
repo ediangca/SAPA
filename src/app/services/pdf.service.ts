@@ -166,13 +166,13 @@ export class PdfService {
   }
 
   async generateUserReport(users: any[], title: string) {
-    
+
     // Ensure logos are loaded
     if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
       await this.loadLogos();
       await this.loadSapaWatermark(); // if separate
     }
-    
+
     const docDefinition: any = {
       background: (currentPage: number, pageSize: any) => {
         return [
@@ -526,7 +526,8 @@ export class PdfService {
     title: string,
     schedules: any[],
     dateFrom: string,
-    dateTo: string
+    dateTo: string,
+    isAttendanceReport: boolean = false
   ) {
     // Ensure logos are loaded
     if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
@@ -682,189 +683,6 @@ export class PdfService {
     }
   }
 
-  // Print Attendance Report
-  async generateAttendanceReport(title: string, slots: any[], attendanceRecords: any[]) {
-    this.logger.printLogs('i', 'Generate Attendance Report', { title, attendanceRecords });
-
-    // Ensure logos are loaded
-    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
-      await this.loadLogos();
-      await this.loadSapaWatermark(); // if separate
-    }
-
-    // 🔒 Safe slot reference
-    const slot = slots?.[0] || {};
-
-    // 🔥 Merge slots with attendance
-    const mergedData = slots.map((s) => {
-      const attendance = attendanceRecords.find(a => a.userID === s.userID);
-
-      return {
-        ...s,
-        hasAttendance: !!attendance,
-        attendanceDate: attendance?.dateCreated ?? null
-      };
-    });
-
-    // 🔢 Summary (optional but useful)
-    const presentCount = mergedData.filter(x => x.hasAttendance).length;
-    const absentCount = mergedData.length - presentCount;
-
-    const docDefinition: any = {
-
-      background: (currentPage: number, pageSize: any) => {
-        return [
-          {
-            image: this.sapaWatermark,
-            width: 250,
-            absolutePosition: {
-              x: (pageSize.width / 2) - 125,
-              y: (pageSize.height / 2) - 125
-            },
-            opacity: 0.08
-          }
-        ];
-      },
-
-      content: [
-        this.getHeader(title),
-        { text: '\n' },
-
-        // ===============================
-        // 📌 SLOT INFORMATION TABLE
-        // ===============================
-        {
-          table: {
-            widths: ['25%', '30%', '25%', '25%'],
-            body: [
-              [
-                { text: 'DATE', bold: true, fontSize: 10, color: '#555', alignment: 'center' },
-                { text: 'SHIFT', bold: true, fontSize: 10, color: '#555', alignment: 'center' },
-                { text: 'HOSPITAL', bold: true, fontSize: 10, color: '#555', alignment: 'center' },
-                { text: 'SECTION', bold: true, fontSize: 10, color: '#555', alignment: 'center' }
-              ],
-              [
-                {
-                  text: slot?.dateSlot
-                    ? new Date(slot.dateSlot).toLocaleDateString()
-                    : '—',
-                  fontSize: 9,
-                  alignment: 'center'
-                },
-                {
-                  text: slot?.shiftName
-                    ? `${slot.shiftName} (${slot.startTime} - ${slot.endTime})`
-                    : '—',
-                  fontSize: 9,
-                  alignment: 'center'
-                },
-                {
-                  text: slot?.hospitalName || '—',
-                  fontSize: 9,
-                  alignment: 'center'
-                },
-                {
-                  text: slot?.sectionName || '—',
-                  fontSize: 9,
-                  alignment: 'center'
-                }
-              ]
-            ]
-          },
-
-          layout: {
-            fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
-            hLineWidth: () => 0.5,
-            vLineWidth: () => 0.5,
-            hLineColor: () => '#aaa',
-            vLineColor: () => '#aaa',
-            paddingLeft: () => 4,
-            paddingRight: () => 4,
-            paddingTop: () => 3,
-            paddingBottom: () => 3,
-          },
-
-          margin: [0, 0, 30, 15]
-        },
-        {
-          text: `Clinical Instructor: ${slot.ci_fullname || '—'}`,
-          bold: true,
-          fontSize: 10,
-          margin: [0, 0, 0, 10]
-        },
-
-        // ===============================
-        // 📊 ATTENDANCE TABLE
-        // ===============================
-        {
-          table: {
-            headerRows: 1,
-            widths: ['10%', '55%', '20%', '20%'],
-            body: [
-              [
-                { text: '#', bold: true, fontSize: 10, alignment: 'center' },
-                { text: 'Student Name', bold: true, fontSize: 10 },
-                { text: 'Time', bold: true, fontSize: 10, alignment: 'center' },
-                { text: 'Status', bold: true, fontSize: 10, alignment: 'center' }
-              ],
-
-              ...mergedData.map((s, i) => [
-                { text: (i + 1).toString(), alignment: 'center', fontSize: 9 },
-                { text: s.fullname || '—', fontSize: 9 },
-                {
-                  text: s.attendanceDate
-                    ? new Date(s.attendanceDate).toLocaleTimeString()
-                    : '—',
-                  alignment: 'center',
-                  fontSize: 9
-                },
-                {
-                  text: s.hasAttendance ? 'Present' : 'Absent',
-                  alignment: 'center',
-                  fontSize: 9,
-                  color: s.hasAttendance ? 'green' : 'red',
-                  bold: true
-                }
-              ])
-            ]
-          },
-
-          layout: {
-            fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
-            hLineWidth: () => 0.5,
-            vLineWidth: () => 0.5,
-            hLineColor: () => '#aaa',
-            vLineColor: () => '#aaa',
-            paddingLeft: () => 4,
-            paddingRight: () => 4,
-            paddingTop: () => 2,
-            paddingBottom: () => 2,
-          },
-
-          margin: [0, 0, 30, 10]
-        },
-
-        // ===============================
-        // 📈 SUMMARY
-        // ===============================
-        {
-          text: `Total: ${mergedData.length} | Present: ${presentCount} | Absent: ${absentCount}`,
-          bold: true,
-          fontSize: 10,
-          margin: [0, 5, 0, 0]
-        }
-      ],
-
-      footer: this.getFooter(),
-
-      styles: {
-        header: { bold: true, alignment: 'center', fontSize: 13 },
-        tableCell: { fontSize: 9, noWrap: false, lineHeight: 1.1 },
-      }
-    };
-
-    pdfMakeLib.createPdf(docDefinition).open();
-  }
 
   // Appointment Report
   async generateAppointmentReport(
@@ -1248,6 +1066,7 @@ export class PdfService {
     };
   }
 
+
   printAppointmentReport(
     appointments: any[],
     dateFrom: string,
@@ -1264,4 +1083,343 @@ export class PdfService {
   }
 
 
+  // Print Attendance Report
+  async generateAttendanceReport(title: string, slots: any[], attendanceRecords: any[]) {
+    this.logger.printLogs('i', 'Generate Attendance Report', { title, attendanceRecords });
+
+    // Ensure logos are loaded
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark(); // if separate
+    }
+
+    // 🔒 Safe slot reference
+    const slot = slots?.[0] || {};
+
+    // 🔥 Merge slots with attendance
+    const mergedData = slots.map((s) => {
+      const attendance = attendanceRecords.find(a => a.userID === s.userID);
+
+      return {
+        ...s,
+        hasAttendance: !!attendance,
+        attendanceDate: attendance?.dateCreated ?? null
+      };
+    });
+
+    // 🔢 Summary (optional but useful)
+    const presentCount = mergedData.filter(x => x.hasAttendance).length;
+    const absentCount = mergedData.length - presentCount;
+
+    const docDefinition: any = {
+
+      background: (currentPage: number, pageSize: any) => {
+        return [
+          {
+            image: this.sapaWatermark,
+            width: 250,
+            absolutePosition: {
+              x: (pageSize.width / 2) - 125,
+              y: (pageSize.height / 2) - 125
+            },
+            opacity: 0.08
+          }
+        ];
+      },
+
+      content: [
+        this.getHeader(title),
+        { text: '\n' },
+
+        // ===============================
+        // 📌 SLOT INFORMATION TABLE
+        // ===============================
+        {
+          table: {
+            widths: ['20%', '40%', '25%', '15%'],
+            body: [
+
+              [
+                { text: 'DATE & SHIFT', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
+                { text: slot?.dateSlot ? new Date(slot.dateSlot).toLocaleDateString() + ' - ' + (slot?.shiftName ? `${slot.shiftName} (${slot.startTime} - ${slot.endTime})` : '—') : '—', fontSize: 9 },
+                {},
+                {}
+              ],
+              [
+                { text: 'HOSPITAL', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
+                { text: slot?.hospitalName ?? slot?.HospitalName ?? '—', fontSize: 9 },
+                { text: 'SECTION', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
+                { text: slot?.sectionName ?? slot?.SectionName ?? '—', fontSize: 9 }
+              ],
+              [
+                { text: 'CLINICAL INSTRUCTOR', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
+                { text: slot?.ci_fullname ?? '—', fontSize: 9, colSpan: 3 },
+                {},
+                {}
+              ]
+            ]
+          },
+          layout: {
+            hLineWidth: () => 0.5, vLineWidth: () => 0.5,
+            hLineColor: () => '#ccc', vLineColor: () => '#ccc',
+            paddingLeft: () => 4, paddingRight: () => 4,
+            paddingTop: () => 3, paddingBottom: () => 3,
+          },
+          margin: [0, 0, 0, 3]
+        },
+        {
+          text: `Clinical Instructor: ${slot.ci_fullname || '—'}`,
+          bold: true,
+          fontSize: 10,
+          margin: [0, 0, 0, 10]
+        },
+
+        // ===============================
+        // 📊 ATTENDANCE TABLE
+        // ===============================
+        {
+          table: {
+            headerRows: 1,
+            widths: ['10%', '55%', '20%', '20%'],
+            body: [
+              [
+                { text: '#', bold: true, fontSize: 10, alignment: 'center' },
+                { text: 'Student Name', bold: true, fontSize: 10 },
+                { text: 'Time', bold: true, fontSize: 10, alignment: 'center' },
+                { text: 'Status', bold: true, fontSize: 10, alignment: 'center' }
+              ],
+
+              ...mergedData.map((s, i) => [
+                { text: (i + 1).toString(), alignment: 'center', fontSize: 9 },
+                { text: s.fullname || '—', fontSize: 9 },
+                {
+                  text: s.attendanceDate
+                    ? new Date(s.attendanceDate).toLocaleTimeString()
+                    : '—',
+                  alignment: 'center',
+                  fontSize: 9
+                },
+                {
+                  text: s.hasAttendance ? 'Present' : 'Absent',
+                  alignment: 'center',
+                  fontSize: 9,
+                  color: s.hasAttendance ? 'green' : 'red',
+                  bold: true
+                }
+              ])
+            ]
+          },
+
+          layout: {
+            fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
+            hLineWidth: () => 0.5,
+            vLineWidth: () => 0.5,
+            hLineColor: () => '#aaa',
+            vLineColor: () => '#aaa',
+            paddingLeft: () => 4,
+            paddingRight: () => 4,
+            paddingTop: () => 2,
+            paddingBottom: () => 2,
+          },
+
+          margin: [0, 0, 30, 10]
+        },
+
+        // ===============================
+        // 📈 SUMMARY
+        // ===============================
+        {
+          text: `Total: ${mergedData.length} | Present: ${presentCount} | Absent: ${absentCount}`,
+          bold: true,
+          fontSize: 10,
+          margin: [0, 5, 0, 0]
+        }
+      ],
+
+      footer: this.getFooter(),
+
+      styles: {
+        header: { bold: true, alignment: 'center', fontSize: 13 },
+        tableCell: { fontSize: 9, noWrap: false, lineHeight: 1.1 },
+      }
+    };
+
+    pdfMakeLib.createPdf(docDefinition).open();
+  }
+
+  async generateAttendanceReportMulti(title: string, mergedSlots: { slot: any; students: any[] }[]) {
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark();
+    }
+
+    // ── Group by date → shiftName → slots
+    const grouped: Record<string, Record<string, { slot: any; students: any[] }[]>> = {};
+
+    mergedSlots.forEach(({ slot, students }) => {
+      const date = slot.dateSlot ?? slot.DateSlot ?? 'Unknown Date';
+      const shiftName = slot.shiftName ?? slot.ShiftName ?? 'Unknown Shift';
+
+      if (!grouped[date]) grouped[date] = {};
+      if (!grouped[date][shiftName]) grouped[date][shiftName] = [];
+
+      grouped[date][shiftName].push({ slot, students });
+    });
+
+    const content: any[] = [this.getHeader(title), { text: '\n' }];
+
+    Object.keys(grouped).sort().forEach(date => {
+      // ── DATE HEADER
+      content.push({
+        text: `DATE: ${new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`,
+        style: 'dateTitle',
+        margin: [0, 10, 0, 5]
+      });
+
+      const shifts = grouped[date];
+
+      Object.keys(shifts).forEach(shiftName => {
+        const slotEntries = shifts[shiftName];
+        const firstSlot = slotEntries[0]?.slot;
+
+        // ── SHIFT HEADER
+        content.push({
+          text: `Shift: ${shiftName} (${firstSlot?.startTime ?? ''} – ${firstSlot?.endTime ?? ''})`,
+          style: 'shiftTitle',
+          margin: [0, 6, 0, 4]
+        });
+
+        // ── ONE BLOCK PER SLOT
+        slotEntries.forEach(({ slot, students }) => {
+          const presentCount = students.filter(s => s.hasAttendance).length;
+          const absentCount = students.length - presentCount;
+
+          // Slot info row
+          content.push({
+            table: {
+              widths: ['20%', '40%', '25%', '15%'],
+              body: [
+                [
+                  { text: 'HOSPITAL', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
+                  { text: slot?.hospitalName ?? slot?.HospitalName ?? '—', fontSize: 9 },
+                  { text: 'SECTION', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
+                  { text: slot?.sectionName ?? slot?.SectionName ?? '—', fontSize: 9 }
+                ],
+                [
+                  { text: 'CLINICAL INSTRUCTOR', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
+                  { text: slot?.ci_fullname ?? '—', fontSize: 9, colSpan: 3 },
+                  {}, {}
+                ]
+              ]
+            },
+            layout: {
+              hLineWidth: () => 0.5, vLineWidth: () => 0.5,
+              hLineColor: () => '#ccc', vLineColor: () => '#ccc',
+              paddingLeft: () => 4, paddingRight: () => 4,
+              paddingTop: () => 3, paddingBottom: () => 3,
+            },
+            margin: [0, 0, 0, 3]
+          });
+
+          // Student attendance table
+          const studentRows = students.length > 0
+            ? students.map((s, i) => [
+              { text: (i + 1).toString(), alignment: 'center', fontSize: 8 },
+              {
+                stack: [
+                  { text: s.fullname ?? s.Fullname ?? '—', fontSize: 8 },
+                  { text: s.userID ?? s.UserID ?? '', fontSize: 7, color: '#999' }
+                ]
+              },
+              {
+                text: s.hasAttendance && s.date_created
+                  ? new Date(s.date_created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : '—',
+                alignment: 'center', fontSize: 8
+              },
+              {
+                text: s.hasAttendance ? 'Present' : 'Absent',
+                color: s.hasAttendance ? 'green' : 'red',
+                alignment: 'center', fontSize: 8, bold: true
+              }
+            ])
+            : [[
+              {
+                text: 'No appointed students found.',
+                colSpan: 4, alignment: 'center',
+                fontSize: 8, color: '#999', italics: true
+              },
+              {}, {}, {}
+            ]];
+
+          content.push({
+            table: {
+              headerRows: 1,
+              widths: ['6%', '52%', '22%', '20%'],
+              body: [
+                [
+                  { text: '#', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' },
+                  { text: 'Student Name', bold: true, fontSize: 9, fillColor: '#e8e8e8' },
+                  { text: 'Time', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' },
+                  { text: 'Status', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' }
+                ],
+                ...studentRows
+              ]
+            },
+            layout: {
+              fillColor: (_row: number, _node: any, _col: number) => null, // handled per-cell above
+              hLineWidth: () => 0.5, vLineWidth: () => 0.5,
+              hLineColor: () => '#ccc', vLineColor: () => '#ccc',
+              paddingLeft: () => 4, paddingRight: () => 4,
+              paddingTop: () => 2, paddingBottom: () => 2,
+            },
+            margin: [0, 0, 0, 2]
+          });
+
+          // Per-slot summary
+          content.push({
+            columns: [
+              { text: `Total: ${students.length}`, bold: true, fontSize: 8, color: '#333' },
+              { text: `Present: ${presentCount}`, bold: true, fontSize: 8, color: 'green', alignment: 'center' },
+              { text: `Absent: ${absentCount}`, bold: true, fontSize: 8, color: 'red', alignment: 'right' }
+            ],
+            margin: [0, 1, 0, 8]
+          });
+        });
+      });
+    });
+
+    const docDefinition: any = {
+      background: (_currentPage: number, pageSize: any) => [{
+        image: this.sapaWatermark,
+        width: 250,
+        absolutePosition: {
+          x: (pageSize.width / 2) - 125,
+          y: (pageSize.height / 2) - 125
+        },
+        opacity: 0.08
+      }],
+      content,
+      footer: this.getFooter(),
+      styles: {
+        dateTitle: {
+          fontSize: 12,
+          bold: true,
+        },
+        shiftTitle: {
+          fontSize: 10,
+          bold: true,
+          italics: true,
+          color: '#444'
+        },
+      }
+    };
+
+    // ✅ Avoids browser popup block inside async/subscribe
+    pdfMakeLib.createPdf(docDefinition).getBlob((blob: Blob) => {
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    });
+  }
 }

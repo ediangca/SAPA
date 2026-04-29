@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, delay, finalize, map, Observable, throwError } from 'rxjs';
+import { catchError, delay, finalize, map, Observable, tap, throwError } from 'rxjs';
 import { Environment } from '../environment';
 import { LogsService } from './logs.service';
 import { NgToastService } from 'ng-angular-popup';
@@ -335,13 +335,13 @@ export class ApiService {
     return this.handleRequest('put', 'Allocations/sections', { id, body: allocations, logAction: 'Updating Allocations' });
   }
 
-//   updateAllocationsBulk(hospitalId: string, allocations: any[]) {
-//   return this.http.put(
-//     `${this.apiUrl}Allocations/sections/${hospitalId}`,
-//     allocations
-//   );
-// }
-  
+  //   updateAllocationsBulk(hospitalId: string, allocations: any[]) {
+  //   return this.http.put(
+  //     `${this.apiUrl}Allocations/sections/${hospitalId}`,
+  //     allocations
+  //   );
+  // }
+
   updateAllocation(id: number, allocation: any) {
     return this.handleRequest('put', 'Allocations', { id, body: allocation, logAction: 'Updating Allocation' });
   }
@@ -526,7 +526,7 @@ export class ApiService {
     this.logger.printLogs('i', ' On getSlotsByUserID Selected year', year);
     return this.handleRequest<any[]>('get', 'Slots/user', year ? { id: userID, params: { year }, logAction: 'Fetching Slots By User' } : { id: userID, logAction: 'Fetching Slots By User' });
   }
-  
+
   getSlotsByCI(CIID: string, year?: number) {
     this.logger.printLogs('i', ' On getSlotsByCI Selected year', year);
     return this.handleRequest<any[]>('get', 'Slots/ci', year ? { id: CIID, params: { year }, logAction: 'Fetching Slots By CI' } : { id: CIID, logAction: 'Fetching Slots By CI' });
@@ -550,7 +550,7 @@ export class ApiService {
   // getSlotsByRange(start: string, end: string) {
   //   return this.handleRequest<any[]>('get', 'Slots/range', { params: { start, end }, logAction: 'Fetch Slots By Range' });
   // }
-  getSlotsByRange(start: string, end: string, roleID?: string, userID?: string, hospitalID?: string) {
+  getSlotsByRange(start: string, end: string, roleID?: string, userID?: string, hospitalID?: string, schoolID?: string): Observable<any[]> {
     const params: any = { start, end, roleID };
 
     // ✅ Attach userID only if it exists
@@ -662,6 +662,28 @@ export class ApiService {
       { id: slotID, logAction: 'Fetching Appointed Students By Slot' }
     );
   }
+
+  // getAppointedStudentsBySlots(slotIDs: string[]): Observable<any[]> {
+  //   return this.handleRequest<any[]>('post', 'AppointedStudents/by-slots', {
+  //     body: slotIDs,
+  //     logAction: 'Fetching Appointed Students By Slots'
+  //   });
+  // }
+
+  getAppointedStudentsBySlots(slotIDs: string[]): Observable<any[]> {
+    return this.http.post<any[]>(`${this.apiUrl}AppointedStudents/by-slots`, slotIDs).pipe(
+        tap(res => this.logger.printLogs('i', 'RAW getAppointedStudentsBySlots', res)),
+        map((res: any) => {
+            if (Array.isArray(res)) return res;
+            if (res?.items && Array.isArray(res.items)) return res.items;
+            return res;
+        }),
+        catchError(err => {
+            this.logger.printLogs('e', 'getAppointedStudentsBySlots error', err);
+            return throwError(() => err);
+        })
+    );
+}
 
   // GET: api/AppointedStudents/hospital/{id}
   getAppointedStudentsByHospitalID(hospitalID: string) {
@@ -804,6 +826,27 @@ export class ApiService {
     );
   }
 
+  // getAttendanceBySlots(slotIDs: string[]): Observable<any[]> {
+  //   return this.handleRequest<any[]>('post', 'attendance/by-slots', {
+  //     body: slotIDs,
+  //     logAction: 'Fetching Attendance By Slots'
+  //   });
+  // }
+
+  getAttendanceBySlots(slotIDs: string[]): Observable<any[]> {
+    return this.http.post<any[]>(`${this.apiUrl}attendance/by-slots`, slotIDs).pipe(
+        tap(res => this.logger.printLogs('i', 'RAW getAttendanceBySlots', res)),
+        map((res: any) => {
+            if (Array.isArray(res)) return res;
+            if (res?.items && Array.isArray(res.items)) return res.items;
+            return res;
+        }),
+        catchError(err => {
+            this.logger.printLogs('e', 'getAttendanceBySlots error', err);
+            return throwError(() => err);
+        })
+    );
+}
   /*----------------------- HOSPITAL -----------------------*/
 
   // SHOW hospital
