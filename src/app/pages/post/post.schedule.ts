@@ -1791,7 +1791,7 @@ export class Schedule implements OnInit, OnChanges {
                 this.sourceStudent.set(availableStudents);
 
 
-                if (this.sourceStudent.length === 0) {
+                if (availableStudents.length === 0) {
 
                     this.messageService.add({
                         severity: 'info',
@@ -2346,16 +2346,15 @@ export class Schedule implements OnInit, OnChanges {
         const startDate = this.formatDate(start);
         const endDate = this.formatDate(end);
 
-        const params: any = {
-            start: startDate,
-            end: endDate,
-            roleID: this.tokenPayload?.role,
-            userID: this.tokenPayload?.nameid,
-            schoolID: this.selectedSchoolID,
-        };
+        // const params: any = {
+        //     start: startDate,
+        //     end: endDate,
+        //     roleID: this.tokenPayload?.role,
+        //     userID: this.tokenPayload?.nameid,
+        // };
 
-        if (this.selectedHospitalID) params.hospitalID = this.selectedHospitalID;
-        if (this.selectedSchoolID) params.schoolID = this.selectedSchoolID;
+        // if (this.selectedHospitalID) params.hospitalID = this.selectedHospitalID;
+        // if (this.selectedSchoolID) params.schoolID = this.selectedSchoolID;
 
         this.loadingAttendance = true;
 
@@ -2378,9 +2377,10 @@ export class Schedule implements OnInit, OnChanges {
             this.isSupervisor() ? null :
                 this.tokenPayload.nameid);
 
-        const schoolID = this.isSchoolCoordinator() || this.isIntern() ? this.user.schoolID : null;
+        const hospitalID = this.isSupervisor() ? this.user.hospitalID : this.selectedHospitalID || null;
+        const schoolID = this.isSchoolCoordinator() || this.isIntern() ? this.user.schoolID : this.selectedSchoolID || null;
 
-        this.api.getSlotsByRange(startDate, endDate, this.tokenPayload.role, this.tokenPayload.nameid, this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null, schoolID).subscribe({
+        this.api.getSlotsByRange(startDate, endDate, this.tokenPayload.role, this.tokenPayload.nameid, hospitalID, schoolID).subscribe({
             next: (slots) => {
                 this.loadingAttendance = false;
 
@@ -2466,7 +2466,8 @@ export class Schedule implements OnInit, OnChanges {
 
                 this.logger.printLogs('i', 'Merged slots with attendance', mergedSlots);
                 this.pdfService.generateAttendanceReportMulti(
-                    `LIST OF ATTENDANCE (${this.dateFormat(startDate)} – ${this.dateFormat(endDate)})`,
+                    'LIST OF ATTENDANCE',
+                    `(${this.dateFormat(startDate)} – ${this.dateFormat(endDate)})`,
                     mergedSlots
                 );
 

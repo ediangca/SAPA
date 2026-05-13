@@ -51,7 +51,7 @@ export class PdfService {
   }
 
   /** Global header generator */
-  private getHeader(title: string) {
+  private getHeader(title: string, subtitle: string = '') {
     return {
       columns: [
         { image: this.leftLogo, width: 60 },
@@ -60,7 +60,8 @@ export class PdfService {
             { text: 'Republic of the Philippines', bold: true, fontSize: 12, alignment: 'center' },
             { text: 'Provincial Government of Davao del Norte', fontSize: 12, alignment: 'center' },
             { text: 'Government Center, Mankilam, Tagum City', fontSize: 11, alignment: 'center' },
-            { text: `\n${title}`, bold: true, fontSize: 14, alignment: 'center' }
+            { text: `\n${title}`, bold: true, fontSize: 14, alignment: 'center' },
+            { text: subtitle, fontSize: 10, alignment: 'center' }
           ],
           width: '*'
         },
@@ -552,82 +553,89 @@ export class PdfService {
 
     // Build PDF content
     Object.keys(grouped)
-      .sort()
+      .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
       .forEach(date => {
         content.push({
-          text: `DATE: ${date}`,
+          // text: `DATE: ${this.dateFormat(date)}`,
+          text: `DATE: ${new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`,
           style: 'dateTitle',
           margin: [0, 10, 0, 5]
         });
 
         const shifts = grouped[date];
 
-        Object.keys(shifts).forEach(shiftName => {
-          const shiftEntries = shifts[shiftName];
+        Object.keys(shifts)
+          .sort((a, b) => {
+            const aTime = shifts[a][0]?.startTime || '';
+            const bTime = shifts[b][0]?.startTime || '';
+            return aTime.localeCompare(bTime);
+          })
+          .forEach(shiftName => {
+            const shiftEntries = shifts[shiftName];
 
-          content.push({
-            text: `Shift: ${shiftName} (${shiftEntries[0].startTime} - ${shiftEntries[0].endTime})`,
-            style: 'shiftTitle',
-            margin: [0, 5, 0, 3]
+            content.push({
+              text: `Shift: ${shiftName} (${shiftEntries[0].startTime} - ${shiftEntries[0].endTime})`,
+              style: 'shiftTitle',
+              margin: [0, 5, 0, 3]
+            });
+
+            // Table per shift
+            content.push({
+              table: {
+                headerRows: 1,
+                widths: [20, '30%', '20%', '20%', '10%', '15%'],
+                body: [
+                  [
+                    { text: '#', bold: true, alignment: 'center', fontSize: 9 },
+                    { text: 'School', bold: true, fontSize: 9 },
+                    { text: 'Hospital', bold: true, fontSize: 9 },
+                    { text: 'Section', bold: true, fontSize: 9 },
+                    { text: 'Allocation', bold: true, fontSize: 9 },
+                    { text: 'Status', bold: true, fontSize: 9, alignment: 'center' }
+                  ],
+
+
+                  ...shiftEntries.map((item: any, idx: number) => [
+                    { text: idx + 1, alignment: 'center', fontSize: 9 },
+                    { text: item.schoolName, fontSize: 9, noWrap: false },
+                    { text: item.hospitalName, fontSize: 9, noWrap: false },
+                    { text: item.sectionName, fontSize: 9 },
+                    { text: (item.studentCount?.toString() ?? '0') + "/" + (item.allocation?.toString() ?? '0'), fontSize: 9 },
+                    // {
+                    //     text: statusIcon.text,
+                    //     color: statusIcon.color,
+                    //     alignment: 'center',
+                    //     fontSize: 12,   // slightly larger for icon feel
+                    //     bold: true
+                    // }
+                    {
+                      text:
+                        item.slotStatus === 0 ? 'UNCONFIRMED'
+                          : item.slotStatus === 1 ? 'CONFIRMED'
+                            : item.slotStatus === 2 ? 'DECLINED'
+                              : item.slotStatus === 3 ? 'CANCEL REQUEST'
+                                : item.slotStatus === 4 ? 'CANCELED'
+                                  : 'UNKNOWN',
+                      alignment: 'center',
+                      fontSize: 9
+                    }
+                  ])
+                ]
+              },
+              layout: {
+                fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
+                hLineWidth: () => 0.5,
+                vLineWidth: () => 0.5,
+                hLineColor: () => '#aaa',
+                vLineColor: () => '#aaa',
+                paddingLeft: () => 4,
+                paddingRight: () => 4,
+                paddingTop: () => 2,
+                paddingBottom: () => 2,
+              },
+              margin: [0, 0, 0, 10]
+            });
           });
-
-          // Table per shift
-          content.push({
-            table: {
-              headerRows: 1,
-              widths: [20, '30%', '20%', '20%', '10%', '15%'],
-              body: [
-                [
-                  { text: '#', bold: true, alignment: 'center', fontSize: 9 },
-                  { text: 'School', bold: true, fontSize: 9 },
-                  { text: 'Hospital', bold: true, fontSize: 9 },
-                  { text: 'Section', bold: true, fontSize: 9 },
-                  { text: 'Allocation', bold: true, fontSize: 9 },
-                  { text: 'Status', bold: true, fontSize: 9, alignment: 'center' }
-                ],
-
-
-                ...shiftEntries.map((item: any, idx: number) => [
-                  { text: idx + 1, alignment: 'center', fontSize: 9 },
-                  { text: item.schoolName, fontSize: 9, noWrap: false },
-                  { text: item.hospitalName, fontSize: 9, noWrap: false },
-                  { text: item.sectionName, fontSize: 9 },
-                  { text: (item.studentCount?.toString() ?? '0') + "/" + (item.allocation?.toString() ?? '0'), fontSize: 9 },
-                  // {
-                  //     text: statusIcon.text,
-                  //     color: statusIcon.color,
-                  //     alignment: 'center',
-                  //     fontSize: 12,   // slightly larger for icon feel
-                  //     bold: true
-                  // }
-                  {
-                    text:
-                      item.slotStatus === 0 ? 'UNCONFIRMED'
-                        : item.slotStatus === 1 ? 'CONFIRMED'
-                          : item.slotStatus === 2 ? 'DECLINED'
-                            : item.slotStatus === 3 ? 'CANCEL REQUEST'
-                              : item.slotStatus === 4 ? 'CANCELED'
-                                : 'UNKNOWN',
-                    alignment: 'center',
-                    fontSize: 9
-                  }
-                ])
-              ]
-            },
-            layout: {
-              fillColor: (rowIndex: number) => (rowIndex === 0 ? '#f2f2f2' : null),
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-              hLineColor: () => '#aaa',
-              vLineColor: () => '#aaa',
-              paddingLeft: () => 4,
-              paddingRight: () => 4,
-              paddingTop: () => 2,
-              paddingBottom: () => 2,
-            },
-            margin: [0, 0, 0, 10]
-          });
-        });
       });
 
     const docDefinition: any = {
@@ -1247,7 +1255,7 @@ export class PdfService {
     pdfMakeLib.createPdf(docDefinition).open();
   }
 
-  async generateAttendanceReportMulti(title: string, mergedSlots: { slot: any; students: any[] }[]) {
+  async generateAttendanceReportMulti(title: string, subtitle: string, mergedSlots: { slot: any; students: any[] }[]) {
     if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
       await this.loadLogos();
       await this.loadSapaWatermark();
@@ -1266,7 +1274,7 @@ export class PdfService {
       grouped[date][shiftName].push({ slot, students });
     });
 
-    const content: any[] = [this.getHeader(title), { text: '\n' }];
+    const content: any[] = [this.getHeader(title, subtitle), { text: '\n' }];
 
     Object.keys(grouped).sort().forEach(date => {
       // ── DATE HEADER
@@ -1275,6 +1283,7 @@ export class PdfService {
         style: 'dateTitle',
         margin: [0, 10, 0, 5]
       });
+
 
       const shifts = grouped[date];
 
@@ -1304,6 +1313,11 @@ export class PdfService {
                   { text: slot?.hospitalName ?? slot?.HospitalName ?? '—', fontSize: 9 },
                   { text: 'SECTION', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
                   { text: slot?.sectionName ?? slot?.SectionName ?? '—', fontSize: 9 }
+                ],
+                [
+                  { text: 'SCHOOL', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
+                  { text: slot?.schoolName ?? slot?.SchoolName ?? '—', fontSize: 9, colSpan: 3 },
+                  {}, {}
                 ],
                 [
                   { text: 'CLINICAL INSTRUCTOR', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
@@ -1421,5 +1435,678 @@ export class PdfService {
       window.open(url, '_blank');
       setTimeout(() => URL.revokeObjectURL(url), 10000);
     });
+  }
+
+  async generateBillingReport(
+    title: string,
+    billingItems: any[],
+    action: 'open' | 'download' | 'print' = 'open',
+    preparedBy?: string,
+    reviewedBy?: string,
+    notedBy?: string
+  ) {
+
+    if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
+      await this.loadLogos();
+      await this.loadSapaWatermark();
+    }
+
+    // ======================================================
+    // GROUP BY SCHOOL
+    // ======================================================
+
+    const groupedBySchool: Record<string, any[]> = {};
+
+    billingItems.forEach(item => {
+
+      const key = item.schoolID || item.schoolName || 'Unknown School';
+
+      if (!groupedBySchool[key]) {
+        groupedBySchool[key] = [];
+      }
+
+      groupedBySchool[key].push(item);
+    });
+
+    const content: any[] = [];
+
+    const schoolKeys = Object.keys(groupedBySchool);
+
+    schoolKeys.forEach((schoolKey, schoolIndex) => {
+
+      const schoolItems = groupedBySchool[schoolKey];
+
+      const schoolName =
+        schoolItems[0]?.schoolName || 'Unknown School';
+
+      const schoolCoordinator =
+        schoolItems[0]?.fullname || '-';
+
+      const totalAmount = schoolItems.reduce(
+        (sum, item) => {
+
+          const students =
+            item.attendedStudentCount > 0
+              ? item.attendedStudentCount
+              : 10;
+
+          return sum + (students * 100);
+
+        }, 0
+      );
+
+      const amountInWords =
+        this.numberToWords(totalAmount);
+
+      // ======================================================
+      // GROUP HOSPITALS INSIDE SCHOOL
+      // ======================================================
+
+      const groupedByHospital: Record<string, any[]> = {};
+
+      schoolItems.forEach(item => {
+
+        const key =
+          item.hospitalName || 'Unknown Hospital';
+
+        if (!groupedByHospital[key]) {
+          groupedByHospital[key] = [];
+        }
+
+        groupedByHospital[key].push(item);
+      });
+
+      // ======================================================
+      // PAGE BREAK BETWEEN SCHOOLS
+      // ======================================================
+
+      if (schoolIndex > 0) {
+
+        content.push({
+          text: '',
+          pageBreak: 'before'
+        });
+      }
+
+      // ======================================================
+      // HEADER
+      // ======================================================
+
+      content.push(
+
+        this.getHeader(
+          title,
+          'Billing Statement'
+        ),
+
+        // DATE
+        {
+          columns: [
+
+            {
+              width: '15%',
+              text: 'Date'
+            },
+
+            {
+              width: '5%',
+              text: ':'
+            },
+
+            {
+              width: '*',
+              text: new Date().toLocaleDateString(
+                'en-US',
+                {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                }
+              )
+            }
+          ],
+
+          margin: [0, 0, 0, 10]
+        },
+
+        // FOR
+        {
+          columns: [
+
+            {
+              width: '15%',
+              text: 'For'
+            },
+
+            {
+              width: '5%',
+              text: ':'
+            },
+
+            {
+              width: '*',
+
+              stack: [
+
+                {
+                  text: schoolCoordinator,
+                  bold: true
+                },
+
+                {
+                  text: 'School Administrator'
+                },
+
+                {
+                  text: schoolName
+                }
+              ]
+            }
+          ],
+
+          margin: [0, 0, 0, 10]
+        },
+
+        // FROM
+        {
+          columns: [
+
+            {
+              width: '15%',
+              text: 'From'
+            },
+
+            {
+              width: '5%',
+              text: ':'
+            },
+
+            {
+              width: '*',
+
+              stack: [
+
+                {
+                  text: 'DOMINIC R. BASALO, MD, MPM',
+                  bold: true
+                },
+
+                {
+                  text: 'Acting PG Dept. Head – PEEDO'
+                },
+
+                {
+                  text: 'Provincial Government of Davao del Norte'
+                }
+              ]
+            }
+          ],
+
+          margin: [0, 0, 0, 15]
+        },
+
+        // LINE
+        {
+          canvas: [
+            {
+              type: 'line',
+              x1: 0,
+              y1: 0,
+              x2: 515,
+              y2: 0,
+              lineWidth: 1,
+              lineColor: '#888'
+            }
+          ],
+
+          margin: [0, 5, 0, 12]
+        },
+
+        // INTRO
+        {
+          text: [
+
+            'This is to bill your institution the amount of ',
+
+            {
+              text:
+                `${amountInWords} Pesos ` +
+                `(Php ${totalAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })})`,
+              bold: true
+            },
+
+            ' for the payment of training costs/affiliation fee of BS Nursing students who underwent their Related Learning Experience (RLE). ',
+
+            {
+              text:
+                'Please note that schedules plotted during the slotting period and additional requests are reflected in this statement.',
+              italics: true
+            }
+          ],
+
+          fontSize: 10,
+          margin: [0, 0, 0, 12],
+          alignment: 'justify'
+        },
+
+        {
+          text: 'Details are as follows:',
+          fontSize: 10,
+          margin: [0, 0, 0, 8]
+        }
+      );
+
+      // ======================================================
+      // HOSPITAL TABLES
+      // ======================================================
+
+      Object.keys(groupedByHospital).forEach(hospitalName => {
+
+        const items = groupedByHospital[hospitalName];
+
+        const body: any[] = [
+
+          [
+            {
+              text: 'HOSPITAL ZONE',
+              bold: true,
+              alignment: 'center',
+              fillColor: '#d9d9d9',
+              fontSize: 9
+            },
+
+            {
+              text: 'DATE & SHIFT',
+              bold: true,
+              alignment: 'center',
+              fillColor: '#d9d9d9',
+              fontSize: 9
+            },
+
+            {
+              text: 'NO. OF STUDENTS',
+              bold: true,
+              alignment: 'center',
+              fillColor: '#d9d9d9',
+              fontSize: 9
+            },
+
+            {
+              text: 'AMOUNT PER STUDENT',
+              bold: true,
+              alignment: 'center',
+              fillColor: '#d9d9d9',
+              fontSize: 9
+            },
+
+            {
+              text: 'TOTAL',
+              bold: true,
+              alignment: 'center',
+              fillColor: '#d9d9d9',
+              fontSize: 9
+            }
+          ]
+        ];
+
+        const hospitalRowSpan = items.length;
+
+        items.forEach((item, index) => {
+
+          const students =
+            item.attendedStudentCount > 0
+              ? item.attendedStudentCount
+              : 10;
+
+          const amountPerStudent = 100;
+
+          const total = students * amountPerStudent;
+
+          const row: any[] = [];
+
+          // HOSPITAL CELL
+          if (index === 0) {
+
+            row.push({
+              text: hospitalName,
+              rowSpan: hospitalRowSpan,
+              alignment: 'center',
+              margin: [0, 20, 0, 0],
+              fontSize: 9
+            });
+
+          } else {
+
+            row.push({});
+          }
+
+          // DATE
+          row.push({
+
+            stack: [
+
+              {
+                text: new Date(item.dateSlot)
+                  .toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  }),
+
+                bold: true,
+                fontSize: 9
+              },
+
+              {
+                text: `${item.shiftName || ''} `,
+                  // `${item.startTime || ''} - ${item.endTime || ''}`,
+
+                fontSize: 8
+              },
+
+              {
+                text:
+                  item.sectionName || '',
+
+                italics: true,
+                fontSize: 7,
+                color: '#666'
+              }
+            ]
+          });
+
+          // STUDENTS
+          row.push({
+            text: students.toString(),
+            alignment: 'center',
+            fontSize: 9
+          });
+
+          // RATE
+          row.push({
+            text: amountPerStudent.toLocaleString(
+              undefined,
+              {
+                minimumFractionDigits: 2
+              }
+            ),
+
+            alignment: 'right',
+            fontSize: 9
+          });
+
+          // TOTAL
+          row.push({
+            text: total.toLocaleString(
+              undefined,
+              {
+                minimumFractionDigits: 2
+              }
+            ),
+
+            alignment: 'right',
+            bold: true,
+            fontSize: 9
+          });
+
+          body.push(row);
+        });
+
+        // HOSPITAL TOTAL
+        body.push([
+
+          {
+            text: 'TOTAL',
+            colSpan: 4,
+            alignment: 'right',
+            bold: true,
+            fillColor: '#efefef',
+            fontSize: 9
+          },
+
+          {},
+          {},
+          {},
+
+          {
+            text: items.reduce((sum, item) => {
+
+              const students =
+                item.attendedStudentCount > 0
+                  ? item.attendedStudentCount
+                  : 10;
+
+              return sum + (students * 100);
+
+            }, 0).toLocaleString(undefined, {
+              minimumFractionDigits: 2
+            }),
+
+            alignment: 'right',
+            bold: true,
+            fillColor: '#efefef',
+            fontSize: 9
+          }
+        ]);
+
+        content.push({
+
+          table: {
+
+            headerRows: 1,
+
+            widths: [
+              '22%',
+              '33%',
+              '15%',
+              '15%',
+              '15%'
+            ],
+
+            body
+          },
+
+          layout: {
+
+            hLineWidth: () => 0.7,
+            vLineWidth: () => 0.7,
+
+            hLineColor: () => '#777',
+            vLineColor: () => '#777',
+
+            paddingLeft: () => 5,
+            paddingRight: () => 5,
+            paddingTop: () => 4,
+            paddingBottom: () => 4
+          },
+
+          margin: [0, 0, 0, 15]
+        });
+      });
+
+      // ======================================================
+      // FOOTER
+      // ======================================================
+
+      content.push(
+
+        {
+          text: [
+            'Kindly settle the aforementioned amount on or before the end of ',
+            {
+              text: new Date().toLocaleDateString(
+                'en-US',
+                {
+                  month: 'long',
+                  year: 'numeric'
+                }
+              ),
+              bold: true
+            },
+            '.'
+          ],
+
+          fontSize: 10,
+          margin: [0, 5, 0, 25]
+        },
+
+        {
+          columns: [
+
+            {
+              width: '33%',
+
+              stack: [
+
+                {
+                  text: 'Prepared by:',
+                  margin: [0, 0, 0, 25]
+                },
+
+                {
+                  text:
+                    preparedBy ||
+                    'JOREY JANE N. CABALLERO',
+
+                  bold: true
+                },
+
+                {
+                  text: 'Administrative Aide VI'
+                }
+              ]
+            },
+
+            {
+              width: '33%',
+
+              stack: [
+
+                {
+                  text: 'Reviewed by:',
+                  margin: [0, 0, 0, 25]
+                },
+
+                {
+                  text:
+                    reviewedBy ||
+                    'SHALOVE C. GETIZO, RN, MAHA',
+
+                  bold: true
+                },
+
+                {
+                  text:
+                    'Supervising Administrative Officer'
+                }
+              ]
+            },
+
+            {
+              width: '34%',
+
+              stack: [
+
+                {
+                  text: 'Noted by:',
+                  margin: [0, 0, 0, 25]
+                },
+
+                {
+                  text:
+                    notedBy ||
+                    'DOMINIC R. BASALO, MD, MPM',
+
+                  bold: true
+                },
+
+                {
+                  text:
+                    'Acting PG Dept. Head - PEEDO'
+                }
+              ]
+            }
+          ]
+        }
+      );
+    });
+
+    // DOCUMENT
+
+    const docDefinition: any = {
+
+      background: (
+        _currentPage: number,
+        pageSize: any
+      ) => [
+
+          {
+            image: this.sapaWatermark,
+
+            width: 250,
+
+            absolutePosition: {
+              x: (pageSize.width / 2) - 125,
+              y: (pageSize.height / 2) - 125
+            },
+
+            opacity: 0.05
+          }
+        ],
+
+      content,
+
+      footer: this.getFooter(),
+
+      defaultStyle: {
+        fontSize: 9
+      },
+
+      pageMargins: [30, 25, 30, 40]
+    };
+
+    const pdfDoc =
+      pdfMakeLib.createPdf(docDefinition);
+
+    switch (action) {
+
+      case 'download':
+
+        pdfDoc.download(`${title}.pdf`);
+        break;
+
+      case 'print':
+
+        pdfDoc.print();
+        break;
+
+      default:
+
+        pdfDoc.open();
+        break;
+    }
+  }
+
+  computeBillingAmount(item: any): number {
+
+    const attendedStudents =
+      item.attendedStudentCount &&
+        item.attendedStudentCount > 0
+        ? item.attendedStudentCount
+        : 10;
+
+    return attendedStudents * 100;
+  }
+
+  numberToWords(amount: number): string {
+
+    const formatter = new Intl.NumberFormat('en-US');
+
+    return formatter.format(amount)
+      .replace(/,/g, ' Thousand ')
+      .replace(/\./g, ' Point ');
   }
 }

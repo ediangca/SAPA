@@ -11,6 +11,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ApiService } from '@/services/api.service';
 import { LogsService } from '@/services/logs.service';
 import { Tooltip } from "primeng/tooltip";
+import { MessageService } from 'primeng/api';
+import { PdfService } from '@/services/pdf.service';
 
 @Component({
     selector: 'app-billing',
@@ -63,8 +65,10 @@ export class Billing implements OnInit {
     displayDateRange = '';
 
     constructor(
+        private messageService: MessageService,
         private api: ApiService,
-        private logger: LogsService,) {
+        private logger: LogsService,
+        private pdfService: PdfService,) {
         this.loadHospitals();
         this.loadSchools();
         this.loadBilling();
@@ -80,6 +84,10 @@ export class Billing implements OnInit {
         return this.roleID === 'UGR0001' || this.roleID === 'UGR0002';
     }
 
+    isSupervisor(): boolean {
+        return this.roleID === 'UGR0005';
+    }
+
     isSchoolScoped(): boolean {
         return this.roleID === 'UGR0003' || this.roleID === 'UGR0006';
     }
@@ -88,7 +96,7 @@ export class Billing implements OnInit {
         this.api.getHospitals().subscribe({
             next: (hospitals) => {
                 this.hospitals = hospitals || [];
-                if (this.isSchoolScoped()) {
+                if (this.isSupervisor()) {
                     this.hospitals = this.hospitals.filter((h: any) => h.hospitalID === this.hospitalID);
                     this.selectedHospital = this.hospitals.length > 0 ? this.hospitals[0].hospitalID : null;
                 } else {
@@ -156,12 +164,36 @@ export class Billing implements OnInit {
         ).subscribe({
             next: (res) => {
 
-                this.billingItems = res.map(x => ({
-                    ...x,
+                // this.billingItems = res.map(x => ({
+                //     ...x,
 
-                    // SAMPLE COMPUTATION
-                    amount: this.computeAmount(x)
-                }));
+                //     // SAMPLE COMPUTATION
+                //     amount: this.computeAmount(x)
+                // }));
+                this.billingItems = res
+                    .map(x => ({
+                        ...x,
+
+                        // SAMPLE COMPUTATION
+                        amount: this.computeAmount(x)
+                    }))
+                    .sort((a, b) => {
+
+                        // SORT BY DATE
+                        const dateDiff =
+                            new Date(b.dateSlot).getTime() -
+                            new Date(a.dateSlot).getTime();
+
+                        if (dateDiff !== 0) {
+                            return dateDiff;
+                        }
+
+                        // OPTIONAL:
+                        // SORT BY START TIME IF SAME DATE
+
+                        return (a.startTime || '')
+                            .localeCompare(b.startTime || '');
+                    });
 
                 this.computeSummary();
 
@@ -212,9 +244,30 @@ export class Billing implements OnInit {
         return attendedStudents * 100;
     }
 
-    // formatDate(date: Date): string {
-    //     return date.toISOString().split('T')[0];
-    // }
+    downloadBillingReport() {
+
+        this.pdfService.generateBillingReport(
+            'SAPA Billing Report',
+            this.billingItems,
+            'download'
+        );
+    }
+    printBillingReport() {
+
+        this.pdfService.generateBillingReport(
+            'SAPA Billing Report',
+            this.billingItems,
+            'print'
+        );
+    }
+    previewBillingReport() {
+
+        this.pdfService.generateBillingReport(
+            'SAPA Billing Report',
+            this.billingItems,
+            'open'
+        );
+    }
 
     formatDate(date: Date): string {
 

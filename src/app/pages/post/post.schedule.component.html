@@ -1109,12 +1109,13 @@
        
     <ng-template pTemplate="footer" to>
         <!-- Add only available -->
-            <button
-                pButton type="button" label="Save Assignments" class="p-button-primary mr-2" (click)="saveAssignStudentStudent()">
-            </button>
-
-        <!-- Cancel -->
-        <button pButton type="button" label="Cancel" class="p-button-text" (click)="onCloseManageStudent()"></button>
+        
+        <p-button label="Close" icon="pi pi-times" [text]="true" (onClick)="onCloseManageStudent()">
+        </p-button>
+        
+        <p-button label="Print" icon="pi pi-save" (onClick)="saveAssignStudentStudent()">
+        </p-button>
+        
     </ng-template>
 </p-dialog>
 
@@ -1270,16 +1271,18 @@
     </div>
     <ng-template pTemplate="footer" to>
         <!-- Add only available -->
-        @if(targetStudent.length > 0){
+        <!-- @if(targetStudent.length > 0){
             <button pButton type="button" label="Save Assignments"
             class="p-button-primary mr-2" (click)="saveAssignStudentStudent()"></button>
-        }
+        } -->
+        <!-- Cancel -->
+        <p-button label="Close" icon="pi pi-times" [text]="true" (onClick)="onCloseManagAttendance()">
+        </p-button>
         
         @if(isAdmin() || isSchoolCoordinator() || isClinicalInstructor() || isSupervisor()){
-            <p-button label="Print" class="mr-2" severity="info" icon="pi pi-print" (click)="printAttendance()"></p-button>
+            <p-button label="Print" icon="pi pi-file-pdf" (onClick)="printAttendance()">
+            </p-button>
         }
-        <!-- Cancel -->
-        <button pButton type="button" label="Close" class="p-button-text" (click)="onCloseManagAttendance()"></button>
     </ng-template>
 
 </p-dialog>
@@ -1391,10 +1394,12 @@
     </div>
 
     <ng-template pTemplate="footer">
-        <p-button label="Cancel" icon="pi pi-times" class="p-button-text" (onClick)="closePrintDialog()">
+        <!-- <p-button label="Cancel" icon="pi pi-times"  class="p-button-text" (onClick)="closePrintDialog()"> -->
+            
+        <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="closePrintDialog()">
         </p-button>
 
-        <p-button *ngIf="printDateRange?.length === 2  && (printDateRange?.[0] !== null && printDateRange?.[1] !== null)" label="Print PDF" icon="pi pi-file-pdf" severity="danger" (onClick)="confirmPrintSchedule()">
+        <p-button *ngIf="printDateRange?.length === 2  && (printDateRange?.[0] !== null && printDateRange?.[1] !== null)" label="Print" icon="pi pi-file-pdf" (onClick)="confirmPrintSchedule()">
         </p-button>
     </ng-template>
 

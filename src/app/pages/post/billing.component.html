@@ -120,16 +120,28 @@
                 <div class="flex items-center gap-2">
 
                     <p-button
+                        *ngIf="billingItems.length > 0"
                         icon="pi pi-download"
                         severity="secondary"
-                        [outlined]="true">
+                        [outlined]="true"
+                        (click)="downloadBillingReport()">
                     </p-button>
 
                     <p-button
+                        *ngIf="billingItems.length > 0"
                         icon="pi pi-print"
                         severity="secondary"
-                        [outlined]="true">
+                        [outlined]="true"
+                        (click)="printBillingReport()">
                     </p-button>
+
+                    <!-- <p-button
+                        *ngIf="billingItems.length > 0"
+                        icon="pi pi-eye"
+                        severity="secondary"
+                        [outlined]="true"
+                        (click)="previewBillingReport()">
+                    </p-button> -->
 
                 </div>
 
