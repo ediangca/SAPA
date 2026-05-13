@@ -1037,6 +1037,17 @@
             ({{ slot?.shiftName ?? 'Shift Name' }})
         </span>.
     </p>
+    @if (isLoadingAppointedStudents || isSavingAppointedAssignments) {
+        <div class="absolute inset-0 z-50 flex flex-col items-center justify-center 
+                    bg-white/70 dark:bg-black/50 backdrop-blur-sm rounded">
+
+            <i class="pi pi-spin pi-spinner text-4xl text-primary mb-3"></i>
+
+            <span class="font-medium text-sm">
+                Loading students...
+            </span>
+        </div>
+    }@else {
         <div [class.hide-move-controls]="isPastOrToday(slot?.dateSlot)">
             <p-pick-list
             class="h-[420px]"
@@ -1050,6 +1061,8 @@
             sourceFilterPlaceholder="Search available student"
             targetFilterPlaceholder="Search assigned student"
             scrollHeight="20rem"
+            showSourceControls="false"
+            showTargetControls="false"
             [style]="{ height: '100%' }" 
 
             (onMoveToTarget)="onMoveToTarget($event)"
@@ -1063,7 +1076,7 @@
                     <div class="flex flex-wrap p-1 items-center gap-4 w-full">
                         <!-- <img class="w-12 shrink-0 rounded" src="https://primefaces.org/cdn/primeng/images/demo/product/{{ item.image }}" [alt]="item.fullname" /> -->
                         <!-- <i class="fa-solid fa-user-nurse"></i> -->
-                         
+                        
                         <p-button icon="pi pi-user" severity="primary" rounded />
                         <div class="flex-1 flex flex-col">
                             <span class="text-sm text-gray-500"
@@ -1081,7 +1094,18 @@
                 </ng-template>
 
             </p-pick-list>
+            <div class="flex justify-between items-center mt-2 px-2 text-sm font-medium">
+                <div class="text-blue-600">
+                    Available Students: {{ sourceStudent().length }}
+                </div>
+
+                <div class="text-green-600">
+                    Assigned Students: {{ targetStudent().length }}
+                </div>
+            </div>
         </div>
+    }
+
        
     <ng-template pTemplate="footer" to>
         <!-- Add only available -->
@@ -1147,7 +1171,6 @@
             ({{ slot?.shiftName ?? 'Shift Name' }})
         </span>.
     </p>
-    
     
     <div class="flex-1 overflow-auto mt-3">
         
@@ -1377,10 +1400,8 @@
 
 </p-dialog>
 
-
 <!-- PRINT ATTENDANCE DIALOG -->
-<!-- PRINT ATTENDANCE DIALOG -->
-<p-dialog header="Print Attendance" [(visible)]="printAttDialogVisible" [modal]="true" [closable]="false"
+<p-dialog header="Print Attendance" contentStyleClass="h-full overflow-hidden p-0" [(visible)]="printAttDialogVisible" [modal]="true" [closable]="false"
     [dismissableMask]="true" [style]="{ width: '100vw', height: '80vh', maxWidth: '1200px', minWidth: '600px' }">
 
     <div class="flex flex-row gap-4 w-full" style="min-height: 500px;">
@@ -1729,6 +1750,31 @@
             (onClick)="printAllAttendance()">
         </p-button>
     </ng-template>
+
+</p-dialog>
+
+<p-dialog
+    header="Billing Report"
+    [(visible)]="billingDialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [dismissableMask]="true"
+    [maximizable]="true"
+    [style]="{
+        width: '95vw',
+        height: '95vh'
+    }"
+    contentStyleClass="h-full overflow-hidden p-0">
+
+    <app-billing 
+    [roleID]="tokenPayload.role"
+    [userID]="tokenPayload.nameid"
+    [schoolID]="tokenPayload.role === 'UGR0003' || tokenPayload.role === 'UGR0006' ? user.schoolID? user.schoolID : null : null"
+    
+    
+    (manageStudents)="openManageStudent($event)"
+    (attendance)="openAttendance($event)"
+    ></app-billing>
 
 </p-dialog>
 

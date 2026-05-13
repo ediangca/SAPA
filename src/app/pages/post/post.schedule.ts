@@ -49,6 +49,7 @@ import { PickListModule } from 'primeng/picklist';
 import { BadgeModule } from 'primeng/badge';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DividerModule } from 'primeng/divider';
+import { Billing } from './billing.component';
 
 
 interface Column {
@@ -76,14 +77,6 @@ export enum SLOT_STATUS {
     CANCEL_REQUEST = 3, // must be 2 weeks prior
     CANCELED = 4
 }
-
-// export const STATUS_TRANSITIONS: Record<number, number[]> = {
-//     [SLOT_STATUS.PENDING]: [SLOT_STATUS.CONFIRM, SLOT_STATUS.DECLINE],
-//     [SLOT_STATUS.CONFIRM]: [SLOT_STATUS.PENDING, SLOT_STATUS.CANCEL_REQUEST],
-//     [SLOT_STATUS.DECLINE]: [SLOT_STATUS.PENDING, SLOT_STATUS.CONFIRM],
-//     [SLOT_STATUS.CANCEL_REQUEST]: [SLOT_STATUS.CANCELED, SLOT_STATUS.CONFIRM],
-//     [SLOT_STATUS.CANCELED]: [SLOT_STATUS.CANCEL_REQUEST, SLOT_STATUS.PENDING, SLOT_STATUS.CONFIRM]
-// };
 
 export const STATUS_TRANSITIONS: Record<number, number[]> = {
     [SLOT_STATUS.PENDING]: [
@@ -168,7 +161,8 @@ const ROLE_PERMISSIONS: Record<string, number[]> = {
         ChipModule,
         PickListModule,
         DividerModule,
-        Tooltip
+        Tooltip,
+        Billing
     ],
     templateUrl: './post.schedule.component.html',
     styleUrl: './css/post.css',
@@ -222,6 +216,8 @@ export class Schedule implements OnInit, OnChanges {
     manageStudentDialog: boolean = false;
     isSlotEditable: boolean = true;
 
+    billingDialogVisible = false;
+
     manageAttendanceDialog: boolean = false;
     showFilter: boolean = true;
 
@@ -272,6 +268,12 @@ export class Schedule implements OnInit, OnChanges {
     forceRequest: any;
 
     calendarOptions: CalendarOptions = {};
+    eventStartDate = '';
+    eventEndDate = '';
+    eventSchoolID: any = null;
+    success: any;
+    failure: any;
+
     selectedDay: string = '';
     daySlots: any[] = [];
     dayDialog: boolean = false;
@@ -283,6 +285,9 @@ export class Schedule implements OnInit, OnChanges {
     sourceStudent = signal<any[]>([]);
     targetStudent = signal<any[]>([]);
     assignedStudents = signal(0);
+
+    isLoadingAppointedStudents = false;
+    isSavingAppointedAssignments = false;
 
     allStudents!: any[];
     filteredStudents: any[] = [];
@@ -445,9 +450,21 @@ export class Schedule implements OnInit, OnChanges {
                         label: 'Print Attendance',
                         icon: 'fas fa-user-clock',
                         command: () => this.openPrintAttDialog()
+                    },
+
+                    {
+                        id: 'billing_report',
+                        label: 'Billing Report',
+                        icon: 'fas fa-file-invoice-dollar',
+                        command: () => this.openBillingReport()
                     }
                 ]
                 : []),
+
+        ];
+
+
+        this.properties = [
             ...(this.tokenPayload.role === 'UGR0001'
                 ? [
                     {
@@ -483,7 +500,6 @@ export class Schedule implements OnInit, OnChanges {
                     command: () => this.reAssignDialog()
                 }
             ] : [])
-
         ];
 
     }
@@ -599,8 +615,10 @@ export class Schedule implements OnInit, OnChanges {
     }
 
     loadMonthEvents(info: any, success: any, failure: any) {
-        const startDate = this.dateFormat(info.startStr) || '';
-        const endDate = this.dateFormat(info.endStr) || '';
+        this.eventStartDate = this.dateFormat(info.startStr) || '';
+        this.eventEndDate = this.dateFormat(info.endStr) || '';
+        this.success = success;
+        this.failure = failure;
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -614,12 +632,16 @@ export class Schedule implements OnInit, OnChanges {
 
         // Admin → no user filter
         // Others → pass userID
-        const userID = this.isAdmin() ? null : (
+        const eventUserID = this.isAdmin() ? null : (
             this.isSupervisor() ? null :
                 this.tokenPayload.nameid);
 
-        const schoolID = this.isSchoolCoordinator() || this.isIntern() ? this.user.schoolID : null;
+        this.eventSchoolID = this.isSchoolCoordinator() || this.isIntern() ? this.user.schoolID : null;
 
+        this.updateSlotRange(this.eventStartDate, this.eventEndDate, this.eventSchoolID, success, failure);
+
+    }
+    updateSlotRange(startDate: string, endDate: string, schoolID: any, success: any, failure: any) {
         this.api.getSlotsByRange(startDate, endDate, this.tokenPayload.role, this.tokenPayload.nameid, this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null).subscribe({
             next: slots => {
                 success(
@@ -635,6 +657,9 @@ export class Schedule implements OnInit, OnChanges {
             },
             error: failure
         });
+
+        this.manageStudentDialog = false;
+        this.dayDialog = false;
     }
 
     selectedSchool(schoolID: any) {
@@ -782,10 +807,17 @@ export class Schedule implements OnInit, OnChanges {
         }, 400); // 300–500ms is ideal
     }
 
-
-
     formatDate(date: Date): string {
-        return date.toISOString().substring(0, 10);
+
+        const year = date.getFullYear();
+
+        const month = String(date.getMonth() + 1)
+            .padStart(2, '0');
+
+        const day = String(date.getDate())
+            .padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
     }
 
     toLocalDateString(date: Date): string {
@@ -1563,6 +1595,8 @@ export class Schedule implements OnInit, OnChanges {
 
     openManageStudent(slot: any) {
 
+        this.displayEventDialog = false;
+        this.isLoadingAppointedStudents = true;
         this.slot = slot;
 
         // const today = new Date();
@@ -1599,12 +1633,14 @@ export class Schedule implements OnInit, OnChanges {
                 this.logger.printLogs('i', 'Target students (appointed)', mapped);
 
                 this.loadAvailableStudents();
-
+                this.displayEventDialog = false;
                 this.manageStudentDialog = true;
 
             },
 
             error: (err: any) => {
+
+                this.isLoadingAppointedStudents = false;
 
                 this.targetStudent.set([]);
 
@@ -1768,10 +1804,14 @@ export class Schedule implements OnInit, OnChanges {
 
                 this.logger.printLogs('i', 'Source students (available)', this.sourceStudent);
 
+                this.isLoadingAppointedStudents = false;
+
             },
 
-            error: (err: any) =>
+            error: (err: any) => {
+                this.isLoadingAppointedStudents = false;
                 this.logger.printLogs('e', 'Failed to fetch users', err)
+            }
 
         });
 
@@ -1954,21 +1994,54 @@ export class Schedule implements OnInit, OnChanges {
 
     autoSave() {
 
-        if (!this.slot) return;
 
-        const payload = {
+        // this.isSavingAppointedAssignments = true;
 
-            slotID: this.slot.slotID,
+        // if (!this.slot) return;
 
-            userIDs: this.targetStudent().map(x => x.userID)
+        // const payload = {
 
-        };
+        //     slotID: this.slot.slotID,
 
-        this.api.bulkReplaceAppointedStudentsBySlot(payload).subscribe();
+        //     userIDs: this.targetStudent().map(x => x.userID)
+
+        // };
+
+        // this.api.bulkReplaceAppointedStudentsBySlot(payload).subscribe(
+        //     {
+
+        //         next: () => {
+
+        //             this.showErrorAlert(
+        //                 'Successful',
+        //                 'Students assigned successfully',
+        //                 false,
+        //                 'success'
+        //             );
+
+        //             this.isSavingAppointedAssignments = false;
+
+        //         },
+
+        //         error: (err: any) => {
+
+        //             this.isSavingAppointedAssignments = false;
+        //             this.showErrorAlert(
+        //                 'Assigning Students Failed',
+        //                 err?.error?.message || 'Failed to assign students.',
+        //                 false,
+        //                 'error'
+        //             );
+
+        //         }
+
+        //     }
+        // );
 
     }
 
     saveAssignStudentStudent() {
+        this.isSavingAppointedAssignments = true;
 
         if (!this.slot) return;
 
@@ -2007,12 +2080,15 @@ export class Schedule implements OnInit, OnChanges {
                     'success'
                 );
 
-                this.onCloseManageStudent();
+                this.isSavingAppointedAssignments = false;
+                this.loadSlots();
+                this.updateSlotRange(this.eventStartDate, this.eventEndDate, this.eventSchoolID, this.success, this.failure);
 
             },
 
             error: (err: any) => {
 
+                this.isSavingAppointedAssignments = false;
                 this.showErrorAlert(
                     'Assigning Students Failed',
                     err?.error?.message || 'Failed to assign students.',
@@ -2149,6 +2225,11 @@ export class Schedule implements OnInit, OnChanges {
         this.showFilter = true;
     }
 
+    openBillingReport() {
+        this.billingDialogVisible = true;
+
+    }
+
     getSelectedSchoolName(): string | null {
         return this.schools?.find(s => s.schoolID === this.selectedSchoolID)?.schoolName || null;
     }
@@ -2181,24 +2262,25 @@ export class Schedule implements OnInit, OnChanges {
     confirmPrintSchedule() {
         const [start, end] = this.printDateRange;
 
-        const dateFrom = start.toISOString().split('T')[0];
-        const dateTo = end.toISOString().split('T')[0];
+        const startDate = this.formatDate(start);
+        const endDate = this.formatDate(end);
 
 
         this.logger.printLogs('i', 'Slots', this.slots());
 
         this.logger.printLogs(
             'i', `Print Schedule with filters -`,
-            `Date: ${dateFrom} to ${dateTo}, SchoolID: ${this.selectedSchoolID}, HospitalID: ${this.selectedHospitalID}, Status: ${this.selectedStatus}`,
+            `Date: ${startDate} to ${endDate}, SchoolID: ${this.selectedSchoolID}, HospitalID: ${this.selectedHospitalID}, Status: ${this.selectedStatus}`,
         );
 
         const filteredSlots = this.slots().filter((s: any) => {
 
-            const slotDate = new Date(s.dateSlot).toISOString().split('T')[0];
+            // const slotDate = new Date(s.dateSlot).toISOString().split('T')[0];
+            const slotDate = this.formatDate(new Date(s.dateSlot));
 
             // DATE FILTER (required)
             const isWithinDate =
-                slotDate >= dateFrom && slotDate <= dateTo;
+                slotDate >= startDate && slotDate <= endDate;
 
             // OPTIONAL FILTERS
             const schoolMatch =
@@ -2244,7 +2326,7 @@ export class Schedule implements OnInit, OnChanges {
         }
 
         this.pdfService.generateScheduleReport(
-            `LIST OF SCHEDULE (${this.dateFormat(dateFrom)} - ${this.dateFormat(dateTo)})`,
+            `LIST OF SCHEDULE (${this.dateFormat(startDate)} - ${this.dateFormat(endDate)})`,
             filteredSlots,
             start.toString(),
             end.toString()
@@ -2255,16 +2337,18 @@ export class Schedule implements OnInit, OnChanges {
 
     showSlotConfirmed() {
 
-        
+
         this.printAttDialogVisible = false;
         const [start, end] = this.printDateRange;
 
-        const dateFrom = start.toISOString().split('T')[0];
-        const dateTo = end.toISOString().split('T')[0];
+        // const dateFrom = start.toISOString().split('T')[0];
+        // const dateTo = end.toISOString().split('T')[0];
+        const startDate = this.formatDate(start);
+        const endDate = this.formatDate(end);
 
         const params: any = {
-            start: dateFrom,
-            end: dateTo,
+            start: startDate,
+            end: endDate,
             roleID: this.tokenPayload?.role,
             userID: this.tokenPayload?.nameid,
             schoolID: this.selectedSchoolID,
@@ -2275,8 +2359,8 @@ export class Schedule implements OnInit, OnChanges {
 
         this.loadingAttendance = true;
 
-        const startDate = this.dateFormat(dateFrom) || '';
-        const endDate = this.dateFormat(dateTo) || '';
+        // const startDate = this.dateFormat(dateFrom) || '';
+        // const endDate = this.dateFormat(dateTo) || '';
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -2296,7 +2380,7 @@ export class Schedule implements OnInit, OnChanges {
 
         const schoolID = this.isSchoolCoordinator() || this.isIntern() ? this.user.schoolID : null;
 
-        this.api.getSlotsByRange(startDate, endDate, this.tokenPayload.role, this.tokenPayload.nameid, this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null).subscribe({
+        this.api.getSlotsByRange(startDate, endDate, this.tokenPayload.role, this.tokenPayload.nameid, this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null, schoolID).subscribe({
             next: (slots) => {
                 this.loadingAttendance = false;
 
@@ -2374,14 +2458,15 @@ export class Schedule implements OnInit, OnChanges {
                 });
 
                 const [start, end] = this.printDateRange;
-                const dateFrom = start.toISOString().split('T')[0];
-                const dateTo = end.toISOString().split('T')[0];
+                // const dateFrom = start.toISOString().split('T')[0];
+                // const dateTo = end.toISOString().split('T')[0];
 
-
+                const startDate = this.formatDate(start);
+                const endDate = this.formatDate(end);
 
                 this.logger.printLogs('i', 'Merged slots with attendance', mergedSlots);
                 this.pdfService.generateAttendanceReportMulti(
-                    `LIST OF ATTENDANCE (${this.dateFormat(dateFrom)} – ${this.dateFormat(dateTo)})`,
+                    `LIST OF ATTENDANCE (${this.dateFormat(startDate)} – ${this.dateFormat(endDate)})`,
                     mergedSlots
                 );
 

@@ -89,6 +89,7 @@ import { RippleModule } from 'primeng/ripple';
        </section>
     `
 })
+
 export class BannerWidget {
 
   parallaxOffset = 0;

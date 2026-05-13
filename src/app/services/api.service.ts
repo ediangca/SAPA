@@ -561,6 +561,10 @@ export class ApiService {
     if (hospitalID) {
       params.hospitalID = hospitalID;
     }
+    
+    if (schoolID) {
+      params.schoolID = schoolID;
+    }
 
     return this.handleRequest<any[]>(
       'get',

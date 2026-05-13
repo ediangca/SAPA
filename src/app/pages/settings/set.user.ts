@@ -425,7 +425,7 @@ export class Users implements OnInit {
                     next: (res) => {
                         this.logger.printLogs('i', 'Verification sent', res);
                         this.loadUsers();
-                        this.showErrorAlert('Vefification Sent', 'Verification Successfully sent!', false, 'success');
+                        this.showErrorAlert('Verification Sent', 'Verification Successfully sent!', false, 'success');
                     },
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to resend verification', err);

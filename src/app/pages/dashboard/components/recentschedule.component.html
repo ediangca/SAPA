@@ -184,7 +184,7 @@
     <div class="col-span-12">
         <div
             class="flex flex row justify-between font-bold text-primary text-xl">
-            Analysis of Schedules as of {{ currentYear }} 
+            Analysis of Schedules as of {{ currentYear }}
 
             <div class="flex flex-wrap gap-2">
 
@@ -319,7 +319,7 @@
                                 }}</div>
                         </div>
                     </ng-template>
-                    
+
                     <!-- } -->
 
                 </div>
@@ -342,7 +342,7 @@
                     </p-chart>
                 </div>
             </div>
-            
+
             <div
                 *ngIf="isAdmin()  && linearSchoolData?.datasets?.[0]?.data?.length > 0"
                 class="col-span-12 lg:col-span-12 xl:col-span-6">
@@ -358,6 +358,7 @@
                     </p-chart>
                 </div>
             </div>
+
 
         </div>
 
@@ -416,6 +417,21 @@
 
                         </div>
 
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="col-span-12 lg:col-span-12 xl:col-span-12">
+
+                <div class="card">
+                    <div class="font-semibold text-xl pb-5">
+                        User Orientation Video
+                    </div>
+                    <div style="left: 0px; width: 480px; height: 270px; position: relative;">
+                        <iframe src="https://video.pictory.ai/embed/20260511005354686186ccf6135e940609f913ee0ac7733c0/20260511075953893Rgd2YJQuiiQvXyA"
+                        title="EmpoweredUsersStrong.mp4" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen>
+                        </iframe>
                     </div>
                 </div>
             </div>
