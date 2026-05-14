@@ -183,6 +183,7 @@ export class Schedule implements OnInit, OnChanges {
     slots = signal<any[]>([]);
     public slot!: any;
     selectSlots!: any[] | [];
+    forPrintExport = signal<any[]>([]);
     public loading: boolean = false;
     loadingDaySlots: boolean = false;
 
@@ -445,6 +446,13 @@ export class Schedule implements OnInit, OnChanges {
             { id: 'print_all', label: 'Print All', icon: 'fas fa-print', visible: this.p, command: () => this.openPrintDialog() },
             ...(this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002' || this.tokenPayload.role === 'UGR0003' || this.tokenPayload.role === 'UGR0006' ?
                 [
+                    {
+                        id: 'print_schedule',
+                        label: 'Print Schedule',
+                        icon: 'fas fa-calendar-alt',
+                        command: () => this.openPrintScheduleDialog()
+                    },
+
                     {
                         id: 'print_attendance',
                         label: 'Print Attendance',
@@ -709,6 +717,8 @@ export class Schedule implements OnInit, OnChanges {
                         dateSlot: new Date(slot.dateSlot),       // ✅ convert string → Date
                         date_Created: new Date(slot.date_Created) // ✅ same for date_created if needed
                     })));
+
+                    this.forPrintExport.set(this.slots());
 
                     // let filteredSlots;
                     // if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
@@ -1033,6 +1043,11 @@ export class Schedule implements OnInit, OnChanges {
         this.logger.printLogs('i', "Selected Slots : ", selected)
         this.selectSlots = selected; // optional, if you want to keep it synced manually
         this.buildSubComponent();
+    }
+
+    onFilterChange(value: any[]) {
+        this.logger.printLogs('i', "Filter Value : ", value)
+        this.forPrintExport.set(value);
     }
 
     onGlobalFilter(table: Table) {
@@ -2164,8 +2179,12 @@ export class Schedule implements OnInit, OnChanges {
             }
         });
     }
-
     openPrintDialog() {
+        const slots = this.forPrintExport() || this.slots();
+        this.pdfService.generateScheduleReport('LIST OF SCHEDULES', slots);
+    }
+
+    openPrintScheduleDialog() {
         this.loadSlots();
         this.printDateRange = [];
 

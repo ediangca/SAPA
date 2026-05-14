@@ -4,32 +4,57 @@ import { Component } from '@angular/core';
     standalone: true,
     selector: 'app-footer',
     template: `
-    <div class="layout-footer border-t border-gray-200 p-4 w-full">
-        <div class="flex flex-row justify-between items-start w-full text-sm">
+    <div class="layout-footer border-t border-gray-200 dark:border-gray-800 p-4 w-full">
 
-            <!-- Info Section -->
-            <div class="Info w-full md:w-auto text-gray-600">
-            © 2024 School Affiliation Program. All rights reserved.
-            </div>
+    <div
+        class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 text-sm">
 
-            <!-- Note Section -->
-            <div class="Note w-full md:w-auto text-red-500 font-bold">
-            <span>If encounter any issue in displaying data, please try reloading the page by pressing
-                <span class="text-primary font-bold"> (CTRL + Shift + R) </span>
-                or contact for further assistance
-                <a href="mailto:peedo.admin@davaodelnorte.gov.ph" class="text-primary hover:underline">SAPA Support</a>
+        <!-- INFO -->
+        <div class="text-gray-500 text-center lg:text-left">
+            © 2024 School Affiliation Program.
+            All rights reserved.
+        </div>
+
+        <!-- NOTE -->
+        <div
+            class="text-center lg:text-left text-red-500 font-medium max-w-3xl leading-relaxed">
+
+            If you encounter issues displaying data, please reload the page by pressing
+
+            <span class="text-primary font-bold whitespace-nowrap">
+                CTRL + Shift + R
             </span>
-            </div>
 
+            or contact
 
-            <!-- By Section -->
-            <div class="By w-full md:w-auto">
-            SAP Application Developed by
-            <a href="https://www.linkedin.com/in/ediangca22/" target="_blank" rel="noopener noreferrer"
-                class="text-primary font-bold hover:underline">Edbiraanhgicma</a>
-            </div>
+            <a
+                href="mailto:peedo.admin@davaodelnorte.gov.ph"
+                class="text-primary font-semibold hover:underline">
+                SAPA Support
+            </a>
+
+            for further assistance.
 
         </div>
-    </div>`
+
+        <!-- DEVELOPER -->
+        <div
+            class="text-gray-500 text-center lg:text-right whitespace-normal lg:whitespace-nowrap">
+
+            SAP Application Developed by
+
+            <a
+                href="https://www.linkedin.com/in/ediangca22/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary font-bold hover:underline">
+                Edbiraanhgicma
+            </a>
+
+        </div>
+
+    </div>
+
+</div>`
 })
 export class AppFooter { }

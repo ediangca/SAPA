@@ -523,11 +523,14 @@ export class PdfService {
     });
   }
 
+  // async generateScheduleReport(schedules: any[], title: string) {
+  // }
+
   async generateScheduleReport(
     title: string,
     schedules: any[],
-    dateFrom: string,
-    dateTo: string,
+    dateFrom: string = '',
+    dateTo: string = '',
     isAttendanceReport: boolean = false
   ) {
     // Ensure logos are loaded
@@ -1802,7 +1805,7 @@ export class PdfService {
 
               {
                 text: `${item.shiftName || ''} `,
-                  // `${item.startTime || ''} - ${item.endTime || ''}`,
+                // `${item.startTime || ''} - ${item.endTime || ''}`,
 
                 fontSize: 8
               },

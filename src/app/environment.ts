@@ -1,5 +1,5 @@
 export const Environment = {
-  production: false,
+  production: true,
   appName: "SAPA",
   // apiUrl: "http:///localhost/sapa/api/", //Local Live
   // apiUrl: "http:///172.16.22.88/sapa/api/", //Local Live

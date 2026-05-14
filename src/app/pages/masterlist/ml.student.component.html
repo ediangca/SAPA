@@ -9,6 +9,7 @@
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"  
                 scrollable="true" scrollHeight="flex"
+                (onFilter)="onFilterChange($event.filteredValue)"
                 (selectionChange)="onStudentSelectionChange($event)">
 
                 <ng-template pTemplate="caption">
@@ -82,7 +83,7 @@
                         <th pSortableColumn="status" style="min-width:7rem">
                             <div class="flex justify-between items-center">
                                 Status
-                                <p-columnFilter field="slotStatus" matchMode="in" display="menu"
+                                <p-columnFilter field="status" matchMode="in" display="menu"
                                     [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
 
                                     <ng-template #header>

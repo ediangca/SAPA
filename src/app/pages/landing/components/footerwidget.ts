@@ -6,136 +6,127 @@ import { ButtonModule } from 'primeng/button';
     selector: 'footer-widget',
     imports: [RouterModule, ButtonModule],
     template: `
-<div class="container mx-auto py-28 px-6">
-    <!-- TOP GRID -->
-    <div class="grid grid-cols-1 gap-12 mb-16 md:grid-cols-2 lg:grid-cols-8">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-28">
 
-        <!-- BRAND -->
-        <div class="lg:col-span-3 space-y-6">
-            <div class="flex items-center gap-3">
-                <div class="pb-5">
-                    <img src="assets/images/sapa-logo.gif" alt="SAP Logo"
-                        class="
-                    mx-0 my-0
-                    w-32 h-32
-                    object-contain
-                    " />
+    <!-- TOP GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-8 gap-12">
+
+        <!-- BRAND SECTION -->
+        <div class="lg:col-span-3">
+
+            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+
+                <!-- LOGO -->
+                <div class="shrink-0">
+                    <img
+                        src="assets/images/sapa-logo.gif"
+                        alt="SAP Logo"
+                        class="w-28 h-28 sm:w-32 sm:h-32 object-contain"
+                    />
                 </div>
-                <div class="p-0">
+
+                <!-- TEXT -->
+                <div class="text-center sm:text-left">
+
+                    <h3
+                        class="text-lg sm:text-xl font-bold text-primary border-b border-slate-200 dark:border-slate-800 pb-2">
+                        School Affiliation Program (SAP)
+                    </h3>
+
                     <p
-                        class="font-display text-xl text-slate-900 dark:text-white">
-                        <span class="text-primary font-bold block border-b border-slate-100 dark:border-slate-800 pb-2">
-                            School Affiliation Program (SAP)
-                        </span>
-                        <span
-                            class="text-sm leading-relaxed text-slate-500 dark:text-slate-400 mt-2 block">
-                            Dedicated to improving healthcare education through
-                            digital innovation
-                            and institutional cooperation in Davao del Norte.
-                        </span>
+                        class="text-sm leading-relaxed text-slate-500 dark:text-slate-400 mt-3">
+                        Dedicated to improving healthcare education through
+                        digital innovation and institutional cooperation
+                        in Davao del Norte.
                     </p>
-                    <div class="flex items-center gap-4 pt-2">
-                        <a pButton icon="pi pi-facebook" rounded
-                            severity="secondary" size="small"
-                            href="https://facebook.com"
-                            target="_blank" pTooltip="Follow Us"
-                            tooltipPosition="bottom"></a>
-                        <a pButton icon="pi pi-twitter" rounded
-                            severity="secondary" size="small"
-                            href="https://twitter.com"
-                            target="_blank" pTooltip="Follow Us"
-                            tooltipPosition="bottom"></a>
-                        <a pButton icon="pi pi-instagram" rounded
-                            severity="secondary" size="small"
-                            href="https://instagram.com"
-                            target="_blank" pTooltip="Follow Us"
-                            tooltipPosition="bottom"></a>
-                        <a pButton icon="pi pi-linkedin" rounded
-                            severity="secondary" size="small"
-                            href="https://linkedin.com"
-                            target="_blank" pTooltip="Follow Us"
-                            tooltipPosition="bottom"></a>
+
+                    <!-- SOCIALS -->
+                    <div
+                        class="flex flex-wrap justify-center sm:justify-start gap-3 mt-5">
+
+                        <a pButton icon="pi pi-phone" severity="contrast" rounded [size]="'small'" href="tel:+639209745780"
+                            pTooltip="Call Us" tooltipPosition="bottom">
+                        </a>
+
+                        <a pButton icon="pi pi-envelope" severity="success" rounded [size]="'small'" pTooltip="Email Us"
+                            tooltipPosition="bottom" href="mailto:peedo.davnor.officialw@gmail.com">
+                        </a>
+
+                        <a pButton icon="pi pi-map-marker" severity="warn" rounded [size]="'small'"
+                            href="https://maps.app.goo.gl/Di8EN3nmujoEbXNk6" target="_blank" pTooltip="Visit Us"
+                            tooltipPosition="bottom">
+                        </a>
+
+                        <!-- Socials -->
+                        <a pButton icon="pi pi-facebook" rounded severity="info" [size]="'small'" href="https://www.facebook.com/peedodavnorofficial"
+                            target="_blank" pTooltip="Follow Us" tooltipPosition="bottom"></a>
+
                     </div>
+
                 </div>
+
             </div>
 
         </div>
 
-        <!-- LOCATION -->
-        <div class="lg:col-span-5 space-y-6">
-            <h5 class="font-semibold text-primary text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">
+        <!-- QUICK LINKS -->
+        <div class="lg:col-span-5">
+
+            <h5
+                class="font-semibold text-primary text-lg border-b border-slate-200 dark:border-slate-800 pb-3 mb-6">
                 Quick Links
             </h5>
 
-            <div
-                class="items-center bg-surface-0 dark:bg-surface-900 grow justify-between hidden lg:flex absolute lg:static w-full left-0 top-full px-12 lg:px-0 z-20 rounded-border">
-                <ul
-                    class="list-none p-0 m-0 flex lg:items-center select-none flex-col lg:flex-row cursor-pointer gap-8">
-                    <li>
-                        <a
-                            (click)="router.navigate([''], { fragment: 'aboutus' })"
-                            pRipple
-                            class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
-                            <span>About SAP</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a
-                            (click)="router.navigate([''], { fragment: 'stakeholders' })"
-                            pRipple
-                            class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
-                            <span>Stakeholder</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a
-                            (click)="router.navigate([''], { fragment: 'hospitals' })"
-                            pRipple
-                            class="block px-4 py-2 text-surface-900 dark:text-surface-0 font-medium text-xl">
-                            Hospital Partners
-                        </a>
-                    </li>
-                    <li>
-                        <a
-                            (click)="router.navigate([''], { fragment: 'schools' })"
-                            pRipple
-                            class="block px-4 py-2 text-surface-900 dark:text-surface-0 font-medium text-xl">
-                            Schools
-                        </a>
-                    </li>
+            <!-- LINKS -->
+            <ul
+                class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
 
-                    <li>
-                        <a
-                            (click)="router.navigate([''], { fragment: 'contactus' })"
-                            pRipple
-                            class="px-0 py-4 text-surface-900 dark:text-surface-0 font-medium text-xl">
-                            <span>Contact Us</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- <div class="hidden md:block space-y-3 text-sm text-slate-500 dark:text-slate-400">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-primary">
-                        <i class="fa-solid fa-envelope"></i>
-                    </span>
-                    <a class="hover:text-primary transition"
-                    href="mailto:peedo.davnor.officialw@gmail.com">
-                        peedo.davnor.officialw@gmail.com
+                <li>
+                    <a
+                        (click)="router.navigate([''], { fragment: 'aboutus' })"
+                        pRipple
+                        class="block rounded-lg px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-700 dark:text-slate-200 font-medium">
+                        About SAP
                     </a>
-                </div>
+                </li>
 
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-primary">
-                        <i class="fa-solid fa-phone"></i>
-                    </span>
-                    <a class="hover:text-primary transition"
-                    href="tel:+639209745780">
-                        +63 920 974 5780
+                <li>
+                    <a
+                        (click)="router.navigate([''], { fragment: 'stakeholders' })"
+                        pRipple
+                        class="block rounded-lg px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-700 dark:text-slate-200 font-medium">
+                        Stakeholders
                     </a>
-                </div>
-            </div> -->
+                </li>
+
+                <li>
+                    <a
+                        (click)="router.navigate([''], { fragment: 'hospitals' })"
+                        pRipple
+                        class="block rounded-lg px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-700 dark:text-slate-200 font-medium">
+                        Hospital Partners
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        (click)="router.navigate([''], { fragment: 'schools' })"
+                        pRipple
+                        class="block rounded-lg px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-700 dark:text-slate-200 font-medium">
+                        Schools
+                    </a>
+                </li>
+
+                <li>
+                    <a
+                        (click)="router.navigate([''], { fragment: 'contactus' })"
+                        pRipple
+                        class="block rounded-lg px-4 py-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-700 dark:text-slate-200 font-medium">
+                        Contact Us
+                    </a>
+                </li>
+
+            </ul>
 
         </div>
 
@@ -143,14 +134,30 @@ import { ButtonModule } from 'primeng/button';
 
     <!-- FOOTER BOTTOM -->
     <div
-        class="flex flex-col gap-4 border-t border-slate-100 dark:border-slate-900 pt-8 text-sm text-slate-400 md:flex-row md:items-center md:justify-between">
-        <p>© 2024 School Affiliation Program. All rights reserved.</p>
+        class="mt-16 pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-400">
 
-        <div class="flex items-center gap-2">
-            <span class="material-icons-outlined text-sm">public</span>
-            <span>English (Philippines)</span>
+        <p class="text-center md:text-left">
+            © 2024 School Affiliation Program. All rights reserved.
+        </p>
+
+        
+        <div
+            class="text-gray-500 text-center lg:text-right whitespace-normal lg:whitespace-nowrap">
+
+            SAP Application Developed by
+
+            <a
+                href="https://www.linkedin.com/in/ediangca22/"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary font-bold hover:underline">
+                Edbiraanhgicma
+            </a>
+
         </div>
+
     </div>
+
 </div>
 
     `

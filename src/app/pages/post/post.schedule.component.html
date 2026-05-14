@@ -23,6 +23,7 @@
                 dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"
                 paginatorDropdownAppendTo="body" scrollable="true" scrollHeight="calc(100vh - 28rem)"
+                (onFilter)="onFilterChange($event.filteredValue)"
                 (selectionChange)="onScheduleSelectionChange($event)">
 
 
@@ -360,10 +361,12 @@
             <div class="flex-1 overflow-auto" *ngIf="!loading && properties && properties.length > 0">
                 <h5 class="m-0">Properties</h5>
                 <p-panelmenu [model]="properties"></p-panelmenu>
+
+                
             </div>
             
             <!-- Legend -->
-            <div class="flex-1 overflow-auto">
+            <div class="flex-1">
                 <h5 class="font-semibold text-sm text-gray-600 dark:text-gray-300">
                         Legend
                 </h5>

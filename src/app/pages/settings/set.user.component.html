@@ -8,6 +8,7 @@
                 dataKey="userID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sections"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" 
                 paginatorDropdownAppendTo="body" scrollable="true" scrollHeight="calc(100vh - 28rem)"
+                (onFilter)="onFilterChange($event.filteredValue)"
                 (selectionChange)="onUserSelectionChange($event)">
 
                 <ng-template pTemplate="caption">
@@ -148,7 +149,7 @@
     <!-- SUBMENU -->
     <div class="md:w-1/5">
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
-            <set-users-sidebar [users]="users()" [selectedUsers]="selectedUsers"
+            <set-users-sidebar [users]="forPrintExport() || users()" [selectedUsers]="selectedUsers"
                 (statusChanged)="onStatusChanged()"></set-users-sidebar>
         </div>
     </div>

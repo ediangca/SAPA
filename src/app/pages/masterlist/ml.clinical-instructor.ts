@@ -96,6 +96,7 @@ export class ClinicalInstructor implements OnInit {
     users = signal<any[]>([]);
     user!: any;
     selectUsers!: any[] | null;
+    forPrintExport = signal<any[]>([]);
 
     form!: FormGroup;
 
@@ -282,6 +283,8 @@ export class ClinicalInstructor implements OnInit {
                      this.users.set(users.filter((user: any) => user.roleID === 'UGR0006' && user.schoolID === this.loggedUser.schoolID))
                             this.logger.printLogs('i', 'Clinical Instructors loaded under School', this.loggedUser.schoolID)
                 }
+
+                this.forPrintExport.set(this.users());
             },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
         });
@@ -305,7 +308,7 @@ export class ClinicalInstructor implements OnInit {
     }
 
     exportCSV() {
-        const users = this.users();
+        const users = this.forPrintExport() || this.users();
 
         if (!users || users.length === 0) {
             this.logger.printLogs('i', 'No users to export', null)
@@ -333,6 +336,10 @@ export class ClinicalInstructor implements OnInit {
         this.buildSubComponent()
     }
 
+    onFilterChange(value: any[]) {
+        this.logger.printLogs('i', "Filter Value : ", value)
+        this.forPrintExport.set(value);
+    }
 
     onGlobalFilter(table: Table) {
         table.filterGlobal(this.filter, 'contains');
@@ -740,7 +747,8 @@ export class ClinicalInstructor implements OnInit {
     }
 
     printAll() {
-        this.pdfService.generateUserReport(this.users(), 'LIST OF STUDENTS');
+        const users = this.forPrintExport() || this.users();
+        this.pdfService.generateUserReport(users, 'LIST OF STUDENTS');
     }
 
 

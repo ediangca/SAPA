@@ -81,11 +81,11 @@ interface ExportColumn {
         FormsModule,
         RouterModule,
     ],
-    templateUrl: './ml.student.component.html',
+    templateUrl: './ml.school-coordinator.component.html',
     providers: [MessageService, ConfirmationService],
     styleUrl: './css/masterlist.scss'
 })
-export class Student implements OnInit {
+export class SchoolCoordinator implements OnInit {
 
     subcomponent: MenuItem[] = [];
     properties: MenuItem[] = [];
@@ -206,7 +206,7 @@ export class Student implements OnInit {
                 this.buildSubComponent();
                 this.loadRoles();
                 this.loadSchools();
-                this.loadStudents();
+                this.loadSchoolCoordinators();
             });
 
 
@@ -279,26 +279,19 @@ export class Student implements OnInit {
     }
 
 
-    loadStudents() {
+    loadSchoolCoordinators() {
         this.api.getUsers().subscribe({
             next: (users) => {
                 if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
 
-                    this.logger.printLogs('i', 'Students loaded', users)
-                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
-                    this.logger.printLogs('i', 'Students loaded for AdminSys | SAP Admin', this.users)
+                    this.logger.printLogs('i', 'School Coordinators loaded', users)
+                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0003'))
+                    this.logger.printLogs('i', 'School Coordinators loaded for AdminSys | SAP Admin', this.users)
 
 
                 } else {
-                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0004' && user.schoolID === this.loggedUser.schoolID))
-                    this.logger.printLogs('i', 'Students loaded under School', this.loggedUser.schoolID)
-                    // this.api.GetStudentBySchoolCoordinatorID(this.tokenPayload.nameid).subscribe({
-                    //     next: (users) => {
-                    //         this.users.set(users.filter((user: any) => user.roleID === 'UGR0004'))
-                    //         this.logger.printLogs('i', 'Students loaded for Others', this.users)
-                    //     },
-                    //     error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
-                    // });
+                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0003' && user.schoolID === this.loggedUser.schoolID))
+                    this.logger.printLogs('i', 'School Coordinators loaded under School', this.loggedUser.schoolID)
                 }
 
                 this.forPrintExport.set(this.users());
@@ -323,7 +316,7 @@ export class Student implements OnInit {
     }
 
     exportCSV() {
-        const users = this.users();
+        const users = this.forPrintExport() || this.users();
 
         if (!users || users.length === 0) {
             this.logger.printLogs('i', 'No users to export', null)
@@ -449,7 +442,7 @@ export class Student implements OnInit {
     openNew() {
         this.form.reset({
             email: '',
-            roleID: 'UGR0004',
+            roleID: 'UGR0003',
             userID: this.tokenPayload.nameid
         });
         this.user = {};
@@ -479,7 +472,7 @@ export class Student implements OnInit {
                 this.api.resendVerification(user.email).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'Verification sent', res);
-                        this.loadStudents();
+                        this.loadSchoolCoordinators();
                         this.showErrorAlert('Vefification Sent', 'Verification Successfully sent!', false, 'success');
                     },
                     error: (err) => {
@@ -514,7 +507,7 @@ export class Student implements OnInit {
                 this.api.approve(user.email).subscribe({
                     next: (res: any) => {
                         this.logger.printLogs('i', 'Approved Account', res);
-                        this.loadStudents();
+                        this.loadSchoolCoordinators();
                         this.showErrorAlert('Account Approved', res.message, false, 'success');
                     },
                     error: (err) => {
@@ -549,7 +542,7 @@ export class Student implements OnInit {
                 this.api.approve(user.email).subscribe({
                     next: (res: any) => {
                         this.logger.printLogs('i', 'Approved Account', res);
-                        this.loadStudents();
+                        this.loadSchoolCoordinators();
                         this.showErrorAlert('Account Approved', res.message, false, 'success');
                     },
                     error: (err) => {
@@ -641,7 +634,7 @@ export class Student implements OnInit {
                         });
 
                         this.logger.printLogs('s', 'Status updated successfully', res);
-                        this.loadStudents();
+                        this.loadSchoolCoordinators();
                         this.selectUsers = [];
                     },
                     error: (err) => {
@@ -696,7 +689,7 @@ export class Student implements OnInit {
             this.api.updateUser(id, this.user).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'Student updated successfully', res);
-                    this.loadStudents(); // reload list
+                    this.loadSchoolCoordinators(); // reload list
                     this.showErrorAlert('Student Updated', 'Student has been Successfully updated!', false, 'success');
                 },
                 error: (err) => {
@@ -712,7 +705,7 @@ export class Student implements OnInit {
             this.api.createUser(this.user).subscribe({
                 next: (res) => {
                     this.logger.printLogs('i', 'Student created successfully', res);
-                    this.loadStudents(); // reload list
+                    this.loadSchoolCoordinators(); // reload list
                     this.showErrorAlert('Student Created', 'Student has been Successfully created!', false, 'success');
                 },
                 error: (err) => {
@@ -742,7 +735,7 @@ export class Student implements OnInit {
                 this.api.deleteUser(user.userID).subscribe({
                     next: (res) => {
                         this.logger.printLogs('i', 'User deleted', res);
-                        this.loadStudents();
+                        this.loadSchoolCoordinators();
                         this.showErrorAlert('User Deleted', 'User has been Successfully deleted!', false, 'success');
                     },
                     error: (err) => {
@@ -762,7 +755,7 @@ export class Student implements OnInit {
 
     printAll() {
         const users = this.forPrintExport() || this.users();
-        this.pdfService.generateUserReport(users, 'LIST OF STUDENTS');
+        this.pdfService.generateUserReport(users, 'LIST OF SCHOOL COORDINATOR');
     }
 
 

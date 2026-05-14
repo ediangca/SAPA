@@ -88,6 +88,7 @@ export class Users implements OnInit {
     users = signal<any[]>([]);
     user!: any;
     selectedUsers!: any[] | null;
+    forPrintExport = signal<any[]>([]);
 
     form!: FormGroup;
 
@@ -248,8 +249,13 @@ export class Users implements OnInit {
         this.selectedUsers = selected;
     }
 
+    onFilterChange(value: any[]) {
+        this.logger.printLogs('i', "Filter Value : ", value)
+        this.forPrintExport.set(value);
+    }
+
     exportCSV() {
-        const users = this.selectedUsers || this.users();
+        const users = this.forPrintExport() || this.users();
 
         if (!users || users.length === 0) {
             this.logger.printLogs('i', 'No users to export', null)
@@ -522,7 +528,10 @@ export class Users implements OnInit {
 
     loadUsers() {
         this.api.getUsers().subscribe({
-            next: (users) => this.users.set(users),
+            next: (users) => {
+                this.users.set(users)
+                this.forPrintExport.set(users);
+            },
             error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
         });
     }
