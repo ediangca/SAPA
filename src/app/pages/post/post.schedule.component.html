@@ -57,7 +57,7 @@
                             <p-button icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
                                 tooltipPosition="top" (click)="loadSlots()" />
                             <p-button class="" icon="pi pi-upload" severity="info" rounded="true" pTooltip="Export"
-                                tooltipPosition="top" (onClick)="exportCSV()" />
+                                tooltipPosition="top" (onClick)="exportCSV1()" />
 
                         </div>
 
@@ -225,6 +225,28 @@
                             Date Created
                             <p-sortIcon field="date_created" />
                         </th>
+                        <th *ngIf="isAdmin()" pSortableColumn="fullname" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                Created By
+                                <p-columnFilter field="fullname" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Coordinator Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="coordinators" optionLabel="fullname"
+                                            optionValue="fullname" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+
+                                </p-columnFilter>
+                            </div>
+                        </th>
                         <th style="min-width: 5rem">Action</th>
                     </tr>
                 </ng-template>
@@ -245,13 +267,17 @@
                             </small>
                         </td>
                         <td>{{ slot.hospitalName }}</td>
-                        <td>{{ slot.sectionName }}</td>
+                        <td>{{ slot.sectionName }}
+                            
+                    <p-tag severity="info" class="p-5" [value]="slot.studentCount+' / ' + slot.allocation" [rounded]="true" />
+                        </td>
                         <td>{{ slot.schoolName }}</td>
                         <td>
                             <p-tag [value]="getStatus(slot.slotStatus,'value')"
                                 [severity]="getStatus(slot.slotStatus,'severirty')" />
                         </td>
                         <td>{{ dateFormat(slot.date_Created) }}</td>
+                        <td *ngIf="isAdmin()"><small class="block text-gray-500">{{ slot.fullname }}</small></td>
                         <td>
                             <div class="flex gap-2">
                                 <p-button *ngIf="slot.slotStatus==0 && d" icon="pi pi-trash" severity="danger"
@@ -902,7 +928,7 @@
 
                             <ng-template #header>
                                 <div class="px-3 pt-3 pb-0">
-                                    <span class="font-bold">Hospital Picker</span>
+                                    <span class="font-bold">Section Picker</span>
                                 </div>
                             </ng-template>
 
@@ -1688,6 +1714,9 @@
                                 </p-columnFilter>
                             </div>
                         </th>
+                        <th pSortableColumn="slotID">
+                            Appointed/ Attendance
+                        </th>
                         <th pSortableColumn="schoolName" style="min-width:10rem">
                             <div class="flex justify-between items-center">
                                 School
@@ -1726,6 +1755,51 @@
                         </td>
                         <td class="text-center">
                             {{ student.sectionName }}
+                        </td>
+                        <td class="text-center"><div
+                                class="flex flex-col items-center justify-center gap-2">
+
+                                <!-- APPOINTED -->
+                                <div class="flex items-center gap-1">
+
+                                    <p-tag
+                                        [value]="student.studentCount + ' appointed'"
+                                        severity="info">
+                                    </p-tag>
+
+                                    <p-button
+                                        icon="pi pi-eye"
+                                        severity="info"
+                                        size="small"
+                                        [text]="true"
+                                        pTooltip="View Appointed Students"
+                                        tooltipPosition="top"
+                                        (click)="openManageStudent(student)">
+                                    </p-button>
+
+                                </div>
+
+                                <!-- ATTENDANCE -->
+                                <div class="flex items-center gap-1">
+
+                                    <p-tag
+                                        [value]="student.attendedStudentCount + ' present'"
+                                        severity="success">
+                                    </p-tag>
+
+                                    <p-button
+                                        icon="pi pi-eye"
+                                        severity="success"
+                                        size="small"
+                                        [text]="true"
+                                        pTooltip="View Attendance"
+                                        tooltipPosition="top"
+                                        (click)="openAttendance(student)">
+                                    </p-button>
+
+                                </div>
+
+                            </div>
                         </td>
                         <td class="text-center">
                             {{ student.schoolName }}

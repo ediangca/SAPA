@@ -23,6 +23,7 @@ import { StepperModule } from 'primeng/stepper';
 import { Tooltip } from "primeng/tooltip";
 import { Badge, BadgeModule } from "primeng/badge";
 import { TextareaModule } from 'primeng/textarea';
+import { MessageModule } from 'primeng/message';
 
 @Component({
     selector: 'app-register',
@@ -46,6 +47,7 @@ import { TextareaModule } from 'primeng/textarea';
         StepperModule,
         Tooltip,
         BadgeModule,
+        MessageModule,
     ],
     templateUrl: './register.component.html',
     styleUrls: ['./css/auth.component.scss'],

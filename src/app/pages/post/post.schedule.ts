@@ -241,6 +241,7 @@ export class Schedule implements OnInit, OnChanges {
     sections: any[] = [];
     schools: any[] = [];
     schoolCoordinators: any[] = [];
+    coordinatorsName: any[] = [];
 
     INITIAL_EVENTS: any[] = [];
 
@@ -516,11 +517,12 @@ export class Schedule implements OnInit, OnChanges {
     initCols() {
         this.cols = [
             // { field: 'SlotID', header: 'ID', customExportHeader: 'Slot ID' },
-            { field: 'slotDate', header: 'Date Slot' },
+            { field: 'dateSlot', header: 'Date Slot' },
             { field: 'shiftName', header: 'Shift' },
             { field: 'hospitalName', header: 'Hospital' },
             { field: 'sectionName', header: 'Section' },
-            { field: 'status', header: 'Status' },
+            { field: 'slotStatus', header: 'Status' },
+            { field: 'fullname', header: 'Created By' },
             { field: 'date_created', header: 'Date Created' },
         ];
 
@@ -880,7 +882,51 @@ export class Schedule implements OnInit, OnChanges {
     exportCSV() {
         this.dt.exportCSV();
     }
+    
+    exportCSV1() {
 
+        const slots = this.forPrintExport() || this.slots();
+
+        if (!slots || slots.length === 0) {
+            this.logger.printLogs('i', 'No slots to export', null)
+            return;
+        }
+
+        const exportData = slots.map((h: any) => ({
+            Date: h.dateSlot,
+            Shift: h.shiftName,
+            Hospital: h.hospitalName,
+            Section: h.sectionName,
+            Status: h.slotStatus,
+            Appointted_Allocations: (h.studentCount || 0) +'/'+ (h.allocation || 0),
+            DateCreated: h.date_Created,
+            CreatedBy: h.fullname,
+
+        }));
+
+        const csv = [
+            ['Date', 'Shift', 'Hospital', 'Section', 'Status', 'Appointted_Allocations', 'DateCreated', 'CreatedBy'],
+            ...exportData.map(d => [this.dateFormat(d.Date), d.Shift, d.Hospital, d.Section, d.Status, d.Appointted_Allocations, this.dateFormat(d.DateCreated), d.CreatedBy])
+        ]
+            .map(row => row.map(v => `"${v}"`).join(','))
+            .join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', `slots_export_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+
+    }
+
+    
+    printAll(){
+        const slots = this.forPrintExport() || this.slots();
+        this.pdfService.generateUserReport(slots, 'LIST OF SCHEDULES');
+    }
 
     getAllocationsByHospitalID(hospitalID: any) {
         this.itemDialog = false;
@@ -915,9 +961,11 @@ export class Schedule implements OnInit, OnChanges {
         this.api.getUsers().subscribe({
             next: (users) => {
                 if (this.isAdmin()) {
+                    this.coordinators = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A') || []; //Role ID - Coordinators
                     this.schools = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A') || []; //Role ID - Clinical Instructor
                 } else {
-                    this.schools = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A' && user.schoolID === this.user.schoolID) || []; //Role ID - Clinical Instructor
+                    this.schools = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A' && user.schoolID === this.user.schoolID) || []; 
+                    this.coordinators = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A' && user.schoolID === this.user.schoolID) || []; 
                 }
 
                 this.logger.printLogs('i', 'CI Users loaded', this.coordinators)
@@ -974,7 +1022,6 @@ export class Schedule implements OnInit, OnChanges {
         });
     }
 
-
     formatTime(timeString: string): string {
         const date = new Date(`1970-01-01T${timeString}`);
         return new Intl.DateTimeFormat('en-US', {
@@ -984,7 +1031,6 @@ export class Schedule implements OnInit, OnChanges {
         }).format(date);
     }
 
-
     formatTimeOnly(time: string): Date {
         const today = new Date();
         const [hours, minutes, seconds] = time.split(':').map(Number);
@@ -993,10 +1039,7 @@ export class Schedule implements OnInit, OnChanges {
         return today;
     }
 
-
-
-
-    getStatus(status: any, type: string): any {
+    getStatus(status: any, type: string = 'value'): any {
         // this.logger.printLogs('i', 'Status: ', status)
         switch (status) {
             case 0:
@@ -1059,14 +1102,12 @@ export class Schedule implements OnInit, OnChanges {
         table.clear();
     }
 
-
     onEventClick(slot: any) {
         this.selectedEvent = slot;
         this.slot = slot;
         this.logger.printLogs('i', 'Selected Slot', slot || []);
         this.displayEventDialog = true;
     }
-
 
     openNew(selectInfo: DateSelectArg | null) {
 
@@ -1127,7 +1168,6 @@ export class Schedule implements OnInit, OnChanges {
         this.form.reset();
         this.itemDialog = true;
     }
-
 
     edit(slot: any) {
         this.slot = slot;
@@ -1378,7 +1418,6 @@ export class Schedule implements OnInit, OnChanges {
         this.createSchedule(request);
     }
 
-
     createSchedule(request: any, force: boolean = false) {
         this.forceRequest = request;
 
@@ -1439,7 +1478,6 @@ export class Schedule implements OnInit, OnChanges {
         });
     }
 
-
     getMaxLengthIndices(): number[] {
         const maxLength = Math.max(
             this.availableSlots.length,
@@ -1448,7 +1486,6 @@ export class Schedule implements OnInit, OnChanges {
         );
         return Array.from({ length: maxLength }, (_, i) => i);
     }
-
 
     // forceAddSlots() {
     //     this.showForceDialog = false;
@@ -2181,6 +2218,16 @@ export class Schedule implements OnInit, OnChanges {
     }
     openPrintDialog() {
         const slots = this.forPrintExport() || this.slots();
+
+        if(slots.length === 0) {
+            this.showErrorAlert(
+                'No Schedule Found',
+                'There are no schedules to print.',
+                false,
+                'info'
+            );
+            return;
+        }
         this.pdfService.generateScheduleReport('LIST OF SCHEDULES', slots);
     }
 

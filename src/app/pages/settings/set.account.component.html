@@ -103,13 +103,12 @@
 
                 <!-- School -->
                 <div
-                    *ngIf="tokenPayload.role === 'UGR0003' || tokenPayload.role === 'UGR0004'">
+                    *ngIf="isSchoolCoordinator() || isIntern()">
                     <label
                         class="text-sm font-medium text-gray-600">School</label>
                     <div
                         class="mt-1 text-gray-900 dark:text-gray-100 font-bold">
-                        {{ (tokenPayload.role === 'UGR0003'? user.coorSchoolName :
-                        user.schoolName) || 'N/A' }}
+                        {{ (user.coorSchoolName || user.schoolName) || 'N/A' }}
                         <!-- <p-button *ngIf="tokenPayload.role === 'UGR0003'"
                             icon="pi pi-copy" [rounded]="true"
                             [outlined]="false" pTooltip="Copy Code"
@@ -157,12 +156,12 @@
                                 [outlined]="false" pTooltip="Copy Code"
                                 value="user.coorSchoolCode"
                                 tooltipPosition="top" severity="secondary"
-                                (click)="copyCode(user.coorSchoolCode)" />
+                                (click)="copyCode(user.coorSchoolCode || user.code || 'N/A')" />
                         </div>
                         <p class="text-primary-900 dark:text-gray-100 font-bold text-center font-mono 
                                 text-5xl sm:text-5xl md:text-7xl lg:text-8xl xl:text-9xl 
                                 tracking-widest">
-                                {{ user.coorSchoolCode || 'N/A' }}
+                                {{ user.coorSchoolCode || user.code || 'N/A' }}
                         </p>
 
                         <p class="text-primary-600 text-center mt-4">

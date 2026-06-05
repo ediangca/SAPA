@@ -600,7 +600,7 @@ export class PdfService {
 
                   ...shiftEntries.map((item: any, idx: number) => [
                     { text: idx + 1, alignment: 'center', fontSize: 9 },
-                    { text: item.schoolName, fontSize: 9, noWrap: false },
+                    { text: item.schoolName +"\n("+ item.fullname + ")", fontSize: 9, noWrap: false },
                     { text: item.hospitalName, fontSize: 9, noWrap: false },
                     { text: item.sectionName, fontSize: 9 },
                     { text: (item.studentCount?.toString() ?? '0') + "/" + (item.allocation?.toString() ?? '0'), fontSize: 9 },
@@ -1960,7 +1960,7 @@ export class PdfService {
           columns: [
 
             {
-              width: '33%',
+              width: '50%',
 
               stack: [
 
@@ -1984,7 +1984,7 @@ export class PdfService {
             },
 
             {
-              width: '33%',
+              width: '50%',
 
               stack: [
 
@@ -2008,14 +2008,18 @@ export class PdfService {
               ]
             },
 
+          ]
+        },
+        {
+          columns: [
             {
-              width: '34%',
+              width: '100%',
 
               stack: [
 
                 {
                   text: 'Noted by:',
-                  margin: [0, 0, 0, 25]
+                  margin: [0, 20, 0, 25]
                 },
 
                 {
@@ -2033,7 +2037,8 @@ export class PdfService {
               ]
             }
           ]
-        }
+        },
+
       );
     });
 

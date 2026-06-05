@@ -6,13 +6,16 @@
     <!-- Overlay -->
     <div class="absolute inset-0 bg-black/30 dark:bg-white/30"></div>
 
-    <div class="flex flex-col items-center justify-center" data-aos="flip-left" data-aos-easing="ease-out-cubic"
+    <div class="flex flex-col items-center justify-center" data-aos="flip-left"
+        data-aos-easing="ease-out-cubic"
         data-aos-duration="500">
         <div
             style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
-            <div class="w-full bg-surface-0 dark:bg-surface-900 py-20 px-8 sm:px-20" style="border-radius: 53px">
-                    <div
-                        class="flex flex-col items-center text-center px-4 animate-fade-in">
+            <div
+                class="w-full bg-surface-0 dark:bg-surface-900 py-20 px-8 sm:px-20"
+                style="border-radius: 53px">
+                <div
+                    class="flex flex-col items-center text-center px-4 animate-fade-in">
 
                     <!-- <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg" routerLink=""
                         class="mb-8 w-16 shrink-0 mx-auto cursor-pointer">
@@ -32,34 +35,38 @@
                         </g>
                     </svg> -->
 
-                        <!-- Logo -->
-                        <a href="">
-                            <img
-                                src="assets/images/sapa-logo.gif"
-                                alt="SAPA Logo"
-                                class="w-28 sm:w-32 md:w-36 lg:w-40 h-auto
+                    <!-- Logo -->
+                    <a href>
+                        <img
+                            src="assets/images/sapa-logo.gif"
+                            alt="SAPA Logo"
+                            class="w-28 sm:w-32 md:w-36 lg:w-40 h-auto
                    transition-transform duration-300 hover:scale-105" />
-                        </a>
+                    </a>
 
-                        <!-- Title -->
-                        <div class="text-surface-900 dark:text-surface-0
+                    <!-- Title -->
+                    <div class="text-surface-900 dark:text-surface-0
                     text-2xl sm:text-3xl md:text-4xl
                     font-semibold mb-3">
-                            Join to <br />
-                            <em class="text-primary-500">School Affiliation
-                                Program</em>
-                        </div>
-
+                        Join to <br />
+                        <em class="text-primary-500">School Affiliation
+                            Program</em>
                     </div>
 
-                <form class="p-3 mt-3" [formGroup]="form" ng-reflect-form="[object Object]"
+                </div>
+
+                <form class="p-3 mt-3" [formGroup]="form"
+                    ng-reflect-form="[object Object]"
                     class="ng-untouched ng-pristine ng-invalid">
                     <div>
                         <div class="text-muted-color mb-6 text-center">
-                            <label class="block font-medium mb-4">Register as</label>
+                            <label class="block font-medium mb-4">Register
+                                as</label>
 
-                            <p-selectButton [options]="roleOptions" optionLabel="label" optionValue="value"
-                                formControlName="isStudent" (onChange)="onRoleToggle()"
+                            <p-selectbutton [options]="roleOptions"
+                                optionLabel="label" optionValue="value"
+                                formControlName="isStudent"
+                                (onChange)="onRoleToggle()"
                                 styleClass="w-full justify-center role-toggle">
                                 <ng-template let-option pTemplate="item">
                                     <div class="flex items-center gap-2">
@@ -67,29 +74,33 @@
                                         <span>{{ option.label }}</span>
                                     </div>
                                 </ng-template>
-                            </p-selectButton>
+                            </p-selectbutton>
                         </div>
 
                         <div class="mb-4 fadeIn">
                             @if (form.get('isStudent')?.value === true) {
 
-
-                            <label for="schoolCode" class="block font-bold mb-3">School Code
+                            <label for="schoolCode"
+                                class="block font-bold mb-3">School Code
                                 @if (form.controls['schoolCode'].invalid &&
                                 form.hasError('required', 'schoolCode') &&
                                 form.get('schoolCode')?.touched ||
                                 (form.controls['schoolCode'].dirty &&
                                 form.hasError('required', 'schoolCode')))
                                 {
-                                <small class="text-red-600">* is required</small>
+                                <small class="text-red-600">* is
+                                    required</small>
                                 }
                             </label>
 
-                            <input pInputText id="schoolCode" placeholder="Enter school code"
-                                formControlName="schoolCode" class="w-full md:w-120" (blur)="onCheckSchoolCode()" />
-
+                            <input pInputText id="schoolCode"
+                                placeholder="Enter school code"
+                                formControlName="schoolCode"
+                                class="w-full md:w-120"
+                                (blur)="onCheckSchoolCode()" />
 
                             }@else {
+                            <!--                                 
                             <label for="schoolName" class="block font-bold mb-3">School Name
                                 @if (form.controls['schoolName'].invalid &&
                                 form.hasError('required', 'schoolName') &&
@@ -118,33 +129,56 @@
                             </label>
                             <textarea pTextarea id="address" class="w-full" name="address"
                                 formControlName="address" required rows="3" fluid></textarea>
+ -->
+                            <div
+                                class="flex flex-col items-center gap-4 text-center">
 
+                                <p-message severity="error">
 
+                                    Registration for
+                                    Coordinator is Temporarily
+                                    Disabled
+                                </p-message>
+                                <p class="text-muted-color">
+                                    Please refer to the form link below.
+                                </p>
+                                <a href="https://forms.gle/Aw3Zcae2SsNjFEcm6"
+                                    target="_blank"
+                                    class="text-primary-500 underline ml-1">Registration
+                                    Form</a>
+
+                            </div>
                             }
                         </div>
 
-                        <p-stepper [(value)]="currentStep">
+                        <p-stepper *ngIf="form.get('isStudent')?.value === true"
+                            [(value)]="currentStep">
                             <p-step-list>
                                 <p-step [value]="1" class="text-red-600">
                                     Personal Info
                                     @if(step1HasError()){
-                                    <p-badge value="!" severity="danger" icon="pi pi-exclamation-triangle"
-                                        pTooltip="Some fields are missing or required" tooltipPosition="top">
+                                    <p-badge value="!" severity="danger"
+                                        icon="pi pi-exclamation-triangle"
+                                        pTooltip="Some fields are missing or required"
+                                        tooltipPosition="top">
                                     </p-badge>
                                     }
                                 </p-step>
                                 <p-step [value]="2">
                                     Credentials
                                     @if(step2HasError()){
-                                    <p-badge value="!" severity="danger" icon="pi pi-exclamation-triangle"
-                                        pTooltip="Some fields are missing or required" tooltipPosition="top">
+                                    <p-badge value="!" severity="danger"
+                                        icon="pi pi-exclamation-triangle"
+                                        pTooltip="Some fields are missing or required"
+                                        tooltipPosition="top">
                                     </p-badge>
                                     }
                                 </p-step>
                             </p-step-list>
                         </p-stepper>
 
-                        <div class="mt-2 mb-8">
+                        <div *ngIf="form.get('isStudent')?.value === true"
+                            class="mt-2 mb-8">
                             @if (currentStep == 1)
                             {
                             <div class="fadeIn">
@@ -158,12 +192,15 @@
                                     (form.controls['lastname'].dirty &&
                                     form.hasError('required', 'lastname')))
                                     {
-                                    <small class="text-red-600">* is required</small>
+                                    <small class="text-red-600">* is
+                                        required</small>
                                     }
                                 </label>
 
-                                <input pInputText id="lastname" placeholder="Enter your last name"
-                                    formControlName="lastname" class="w-full md:w-120 mb-4" />
+                                <input pInputText id="lastname"
+                                    placeholder="Enter your last name"
+                                    formControlName="lastname"
+                                    class="w-full md:w-120 mb-4" />
 
                                 <label for="firstname"
                                     class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
@@ -175,12 +212,15 @@
                                     (form.controls['firstname'].dirty &&
                                     form.hasError('required', 'firstname')))
                                     {
-                                    <small class="text-red-600">* is required</small>
+                                    <small class="text-red-600">* is
+                                        required</small>
                                     }
                                 </label>
 
-                                <input pInputText id="firstname" placeholder="Enter your first name"
-                                    formControlName="firstname" class="w-full md:w-120 mb-4" />
+                                <input pInputText id="firstname"
+                                    placeholder="Enter your first name"
+                                    formControlName="firstname"
+                                    class="w-full md:w-120 mb-4" />
 
                                 <label for="middlename"
                                     class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
@@ -192,48 +232,61 @@
                                     (form.controls['middlename'].dirty &&
                                     form.hasError('required', 'middlename')))
                                     {
-                                    <small class="text-red-600">* is required</small>
+                                    <small class="text-red-600">* is
+                                        required</small>
                                     }
                                 </label>
 
-                                <input pInputText id="middlename" placeholder="Enter your middle name"
-                                    formControlName="middlename" class="w-full md:w-120 mb-4" />
+                                <input pInputText id="middlename"
+                                    placeholder="Enter your middle name"
+                                    formControlName="middlename"
+                                    class="w-full md:w-120 mb-4" />
 
                             </div>
                             }@else{
 
                             <div class="fadeIn">
-                                <label for="email" class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
+                                <label for="email"
+                                    class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
                                     [class.error]="form.controls['email'].dirty && form.hasError('required', 'email')">
                                     Email
 
-                                    @if (form.get('email')?.errors?.['required'] && (form.get('email')?.dirty ||
+                                    @if (form.get('email')?.errors?.['required']
+                                    && (form.get('email')?.dirty ||
                                     form.get('email')?.touched)) {
-                                    <small class="text-red-600">* is required</small>
+                                    <small class="text-red-600">* is
+                                        required</small>
                                     }
                                 </label>
 
-
                                 <input #emailInput
                                     [class.error]="form.controls['email'].dirty && form.hasError('required', 'email')"
-                                    pInputText id="email" type="text" placeholder="Email address"
-                                    formControlName="email" name="email" class="w-full md:w-120" />
+                                    pInputText id="email" type="text"
+                                    placeholder="Email address"
+                                    formControlName="email" name="email"
+                                    class="w-full md:w-120" />
 
-                                @if ((form.get('email')?.errors?.['email'] || form.get('email')?.errors?.['pattern'])
-                                && (form.get('email')?.dirty || form.get('email')?.touched)) {
+                                @if ((form.get('email')?.errors?.['email'] ||
+                                form.get('email')?.errors?.['pattern'])
+                                && (form.get('email')?.dirty ||
+                                form.get('email')?.touched)) {
 
                                 <div class="text-red-600 mt-1">
                                     Invalid email format
                                 </div>
                                 }
 
+                                <div
+                                    class="flex flex-row gap-2 item-center justify-end mt-2">
+                                    <p-check-box id="autoUsername"
+                                        formControlName="autoUsername"
+                                        (onChange)="toggleAutoUsername($event)"
+                                        binary="true"
+                                        label="Auto-generate username"
+                                        binary="true" />
 
-                                <div class="flex flex-row gap-2 item-center justify-end mt-2">
-                                    <p-check-box id="autoUsername" formControlName="autoUsername"
-                                        (onChange)="toggleAutoUsername($event)" binary="true"
-                                        label="Auto-generate username" binary="true" />
-
-                                    <small class="text-dark-500">Set email ID to Username</small>
+                                    <small class="text-dark-500">Set email ID to
+                                        Username</small>
                                 </div>
 
                                 <label for="username"
@@ -246,15 +299,16 @@
                                     (form.controls['username'].dirty &&
                                     form.hasError('required', 'username')))
                                     {
-                                    <small class="text-red-600">* is required</small>
+                                    <small class="text-red-600">* is
+                                        required</small>
                                     }
                                 </label>
                                 <input
                                     [class.error]="form.controls['username'].dirty && form.hasError('required', 'username')"
-                                    pInputText id="username" type="text" placeholder="Username"
-                                    formControlName="username" name="username" class="w-full md:w-120 mb-4" />
-
-
+                                    pInputText id="username" type="text"
+                                    placeholder="Username"
+                                    formControlName="username" name="username"
+                                    class="w-full md:w-120 mb-4" />
 
                                 <label for="password"
                                     class="block text-surface-900 dark:text-surface-0 font-bold mb-2"
@@ -265,18 +319,24 @@
                                     form.get('password')?.touched ||
                                     (form.controls['password'].dirty &&
                                     form.hasError('required', 'password'))) {
-                                    <small class="text-red-600">* is required</small>
-                                    }@else if(form.hasError('minlength', 'password') &&
+                                    <small class="text-red-600">* is
+                                        required</small>
+                                    }@else if(form.hasError('minlength',
+                                    'password') &&
                                     form.get('password')?.touched){
-                                    <small class="text-danger">* must be at least 6
+                                    <small class="text-danger">* must be at
+                                        least 6
                                         characters long.</small>
                                     }@else if (passwordMismatch &&
                                     form.get('confirmPassword')?.touched) {
-                                    <small class="text-danger">* not match</small>
+                                    <small class="text-danger">* not
+                                        match</small>
                                     }
                                 </label>
-                                <p-password id="password" placeholder="Password" formControlName="password"
-                                    name="password" [toggleMask]="true" styleClass="mb-4" [fluid]="true"
+                                <p-password id="password" placeholder="Password"
+                                    formControlName="password"
+                                    name="password" [toggleMask]="true"
+                                    styleClass="mb-4" [fluid]="true"
                                     [feedback]="false"></p-password>
 
                                 <label for="confirmPassword"
@@ -284,20 +344,28 @@
                                     [class.error]="form.controls['confirmPassword'].dirty && form.hasError('required', 'confirmPassword')">
                                     Confirm Password
 
-                                    @if (form.controls['confirmPassword'].invalid &&
-                                    form.hasError('required', 'confirmPassword') &&
+                                    @if
+                                    (form.controls['confirmPassword'].invalid &&
+                                    form.hasError('required', 'confirmPassword')
+                                    &&
                                     form.get('confirmPassword')?.touched ||
                                     (form.controls['confirmPassword'].dirty &&
-                                    form.hasError('required', 'confirmPassword'))) {
-                                    <small class="text-red-600">* is required</small>
+                                    form.hasError('required',
+                                    'confirmPassword'))) {
+                                    <small class="text-red-600">* is
+                                        required</small>
                                     }@else if (passwordMismatch &&
                                     form.get('confirmPassword')?.touched) {
-                                    <small class="text-danger error">* not match</small>
+                                    <small class="text-danger error">* not
+                                        match</small>
                                     }
                                 </label>
-                                <p-password id="confirmPassword" placeholder="confirmPassword"
-                                    formControlName="confirmPassword" name="confirmPassword" [toggleMask]="true"
-                                    styleClass="mb-4" [fluid]="true" [feedback]="false"></p-password>
+                                <p-password id="confirmPassword"
+                                    placeholder="confirmPassword"
+                                    formControlName="confirmPassword"
+                                    name="confirmPassword" [toggleMask]="true"
+                                    styleClass="mb-4" [fluid]="true"
+                                    [feedback]="false"></p-password>
 
                                 <!-- 
                             <div class="flex items-center">
@@ -311,23 +379,24 @@
                             }
                         </div>
 
-
-
-                        <p-button type="button" label="Sign Up" styleClass="w-full" [loading]="isLoading"
+                        <p-button *ngIf="form.get('isStudent')?.value === true"
+                            type="button" label="Sign Up"
+                            styleClass="w-full" [loading]="isLoading"
                             (click)="onSubmit()" />
 
+                        <hr class="mb-6 border-gray-300" />
 
                         <div class="mt-4">
-                            <p class="text-muted-color font-medium text-center"> Already have Account?
-                                <em class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"
+                            <p class="text-muted-color font-medium text-center">
+                                Already have Account?
+                                <em
+                                    class="font-medium no-underline ml-2 text-right cursor-pointer text-primary"
                                     routerLink="/login">Login here!</em>
                             </p>
                         </div>
                     </div>
 
-
                 </form>
-
 
             </div>
         </div>

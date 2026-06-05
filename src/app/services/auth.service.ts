@@ -150,7 +150,7 @@ export class AuthService {
     this.logger.printLogs('i', 'Processing Registration...', userAccount);
 
     return of(userAccount).pipe(
-      delay(3000), // ⏳ Simulate a 3-second delay
+      delay(3000), 
       switchMap(account =>
         this.http.post<any>(`${this.apiUrl}Auth/register/`, account).pipe(
           catchError((err) => this.handleError(err)),

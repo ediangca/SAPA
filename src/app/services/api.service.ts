@@ -120,7 +120,7 @@ export class ApiService {
       minDuration?: number;
     }
   ): Observable<T> {
-
+    let responseData: any = null;
     this.loading.setLoadingVisible(true);
 
     const {
@@ -167,9 +167,11 @@ export class ApiService {
 
     const startTime = Date.now();
 
-    return request$.pipe(
+    return request$.pipe(tap((res) => {
+      responseData = res;
+    }),
+
       map((res: any) => {
-        // normalize common API response shapes
         if (Array.isArray(res)) return res;
         if (res?.items && Array.isArray(res.items)) return res.items;
         return res;
@@ -189,7 +191,10 @@ export class ApiService {
           this.logger.printLogs(
             'i',
             `Finished ${logAction || method.toUpperCase()}`,
-            endpoint
+            {
+              endpoint,
+              response: responseData
+            }
           );
         };
 
@@ -561,7 +566,7 @@ export class ApiService {
     if (hospitalID) {
       params.hospitalID = hospitalID;
     }
-    
+
     if (schoolID) {
       params.schoolID = schoolID;
     }
@@ -676,18 +681,18 @@ export class ApiService {
 
   getAppointedStudentsBySlots(slotIDs: string[]): Observable<any[]> {
     return this.http.post<any[]>(`${this.apiUrl}AppointedStudents/by-slots`, slotIDs).pipe(
-        tap(res => this.logger.printLogs('i', 'RAW getAppointedStudentsBySlots', res)),
-        map((res: any) => {
-            if (Array.isArray(res)) return res;
-            if (res?.items && Array.isArray(res.items)) return res.items;
-            return res;
-        }),
-        catchError(err => {
-            this.logger.printLogs('e', 'getAppointedStudentsBySlots error', err);
-            return throwError(() => err);
-        })
+      tap(res => this.logger.printLogs('i', 'RAW getAppointedStudentsBySlots', res)),
+      map((res: any) => {
+        if (Array.isArray(res)) return res;
+        if (res?.items && Array.isArray(res.items)) return res.items;
+        return res;
+      }),
+      catchError(err => {
+        this.logger.printLogs('e', 'getAppointedStudentsBySlots error', err);
+        return throwError(() => err);
+      })
     );
-}
+  }
 
   // GET: api/AppointedStudents/hospital/{id}
   getAppointedStudentsByHospitalID(hospitalID: string) {
@@ -839,18 +844,18 @@ export class ApiService {
 
   getAttendanceBySlots(slotIDs: string[]): Observable<any[]> {
     return this.http.post<any[]>(`${this.apiUrl}attendance/by-slots`, slotIDs).pipe(
-        tap(res => this.logger.printLogs('i', 'RAW getAttendanceBySlots', res)),
-        map((res: any) => {
-            if (Array.isArray(res)) return res;
-            if (res?.items && Array.isArray(res.items)) return res.items;
-            return res;
-        }),
-        catchError(err => {
-            this.logger.printLogs('e', 'getAttendanceBySlots error', err);
-            return throwError(() => err);
-        })
+      tap(res => this.logger.printLogs('i', 'RAW getAttendanceBySlots', res)),
+      map((res: any) => {
+        if (Array.isArray(res)) return res;
+        if (res?.items && Array.isArray(res.items)) return res.items;
+        return res;
+      }),
+      catchError(err => {
+        this.logger.printLogs('e', 'getAttendanceBySlots error', err);
+        return throwError(() => err);
+      })
     );
-}
+  }
   /*----------------------- HOSPITAL -----------------------*/
 
   // SHOW hospital
