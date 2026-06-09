@@ -261,6 +261,11 @@ export class ApiService {
 
   /*----------------------- DASHBOARD -----------------------*/
 
+
+  getHeartbeat() {
+    return this.handleRequest('post', 'auth/heartbeat', { logAction: 'Sending Heartbeat' });
+  } 
+
   getDashboardSummary(params?: any) {
     return this.handleRequest<any>(
       'get',
@@ -415,6 +420,10 @@ export class ApiService {
   /*----------------------- USERS -----------------------*/
   getUsers() {
     return this.handleRequest<any[]>('get', 'Users', { logAction: 'Fetching Users' });
+  }
+
+  getOnlineUsers() {
+    return this.handleRequest<any[]>('get', 'monitoring/online-users', { logAction: 'Fetching Online Users' }); 
   }
 
   getUserAccount(id: string) {
@@ -856,6 +865,53 @@ export class ApiService {
       })
     );
   }
+
+
+  /*----------------------- SETTINGS -----------------------*/
+
+  getSettings() {
+    return this.handleRequest<any[]>(
+      'get',
+      'Settings',
+      {
+        logAction: 'Fetching System Settings'
+      }
+    );
+  }
+
+  getSettingByName(name: string) {
+    return this.handleRequest<any>(
+      'get',
+      `Settings/${name}`,
+      {
+        logAction: `Fetching Setting ${name}`
+      }
+    );
+  }
+
+  updateSetting(name: string, value: string) {
+    return this.handleRequest(
+      'put',
+      `Settings/${name}`,
+      {
+        body: { value },
+        logAction: `Updating Setting ${name}`
+      }
+    );
+  }
+
+  bulkUpdateSettings(settings: any[]) {
+    return this.handleRequest(
+      'put',
+      'Settings',
+      {
+        body: settings,
+        logAction: 'Bulk Updating Settings'
+      }
+    );
+  }
+
+
   /*----------------------- HOSPITAL -----------------------*/
 
   // SHOW hospital

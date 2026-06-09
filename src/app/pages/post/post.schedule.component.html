@@ -18,7 +18,7 @@
             @if (tableOption) {
             <p-table #dt [value]="slots()" [rows]="100" [columns]="cols" [paginator]="true" [rowHover]="true"
                 [showGridlines]="true", [loading]="loading", 
-                [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionName', 'slotStatus', 'date_Created']"
+                [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionName', 'slotStatus', 'fullname', 'date_Created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
                 dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"

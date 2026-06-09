@@ -313,6 +313,9 @@ export class Schedule implements OnInit, OnChanges {
     s: boolean = false;
     p: boolean = false;
 
+    
+    bc: boolean = false; //billing
+
     constructor(private fb: FormBuilder,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
@@ -426,6 +429,11 @@ export class Schedule implements OnInit, OnChanges {
         this.s = this.store.isAllowedAction(moduleID, 'status');
         this.p = this.store.isAllowedAction(moduleID, 'printall');
 
+        
+        const billingModuleID = 'MOD0018';
+        this.bc = this.store.isAllowedAction(billingModuleID, 'create');
+
+
 
         // this.subcomponent = this.subcomponent.filter((item: any) => {
         //     this.logger.printLogs('i', `Component Accessability: s${this.s}, p${this.p}`, item);
@@ -465,6 +473,7 @@ export class Schedule implements OnInit, OnChanges {
                         id: 'billing_report',
                         label: 'Billing Report',
                         icon: 'fas fa-file-invoice-dollar',
+                        visible: this.bc,
                         command: () => this.openBillingReport()
                     }
                 ]
@@ -648,11 +657,11 @@ export class Schedule implements OnInit, OnChanges {
 
         this.eventSchoolID = this.isSchoolCoordinator() || this.isIntern() ? this.user.schoolID : null;
 
-        this.updateSlotRange(this.eventStartDate, this.eventEndDate, this.eventSchoolID, success, failure);
+        this.updateSlotRange(this.eventStartDate, this.eventEndDate, this.user.schoolID, success, failure);
 
     }
     updateSlotRange(startDate: string, endDate: string, schoolID: any, success: any, failure: any) {
-        this.api.getSlotsByRange(startDate, endDate, this.tokenPayload.role, this.tokenPayload.nameid, this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null).subscribe({
+        this.api.getSlotsByRange(startDate, endDate, this.tokenPayload.role, this.tokenPayload.nameid, this.isSupervisor() ? this.user.hospitalID : null, schoolID).subscribe({
             next: slots => {
                 success(
                     aggregateSlotsByDay(
@@ -660,7 +669,7 @@ export class Schedule implements OnInit, OnChanges {
                         this.tokenPayload.role,
                         this.tokenPayload.nameid,
                         schoolID,
-                        (this.tokenPayload.role === 'UGR0005' ? this.user.hospitalID : null)
+                        (this.isSupervisor() ? this.user.hospitalID : null)
                     )
                 );
                 this.logger.printLogs('i', 'Monthly slots loaded', slots);

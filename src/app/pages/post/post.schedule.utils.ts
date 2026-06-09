@@ -1,8 +1,9 @@
+import { LogsService } from '@/services/logs.service';
 import { EventInput } from '@fullcalendar/core';
 
 let eventGuid = 0;
 const TODAY_STR = new Date().toISOString().replace(/T.*$/, ''); // YYYY-MM-DD of today
-
+const logger = new LogsService();
 
 export function mapSlotsToEvents(slots: any[], roleID: string | null = null) {
   return slots.map(slot => ({
@@ -216,6 +217,10 @@ export function aggregateSlotsByDay(
   const isStudent = roleID === 'UGR0004';
 
   let filteredSlots = slots;
+
+  // logger.printLogs('d', 'Aggregating slots into events', { totalSlots: slots.length, roleID, currentUserID, currentSchoolID, currentHospitalID });
+
+  console.log('Aggregating slots into events', { totalSlots: slots.length, roleID, currentUserID, currentSchoolID, currentHospitalID });
 
   // 🔹 School Coordinator → only their school
   if (isSchoolCoordinator && currentSchoolID) {

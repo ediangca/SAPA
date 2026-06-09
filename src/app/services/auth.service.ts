@@ -12,6 +12,7 @@ import { LoadingService } from './loading.service';
 import { StoreService } from './store.service';
 import { NgToastService } from 'ng-angular-popup';
 import { ApiService } from './api.service';
+import { HeartbeatService } from './heartbeat';
 // import { HttpErrorHandler } from '@/helper/handler/http-error-handler';
 
 
@@ -29,8 +30,8 @@ export class AuthService {
 
   constructor(private http: HttpClient, private router: Router,
     private logger: LogsService, private store: StoreService,
-    private api: ApiService,
-    private loading: LoadingService, private toast: NgToastService,
+    private api: ApiService, private loading: LoadingService, 
+    private toast: NgToastService, private heartbeatService: HeartbeatService,
     // private errorHandler: HttpErrorHandler
   ) {
     this.tokenPayload = this.getTokenPayloadFromToken();
@@ -101,6 +102,7 @@ export class AuthService {
             );
           })
         );
+
       }),
       catchError(err => {
         this.logger.printLogs('e', 'Login error', err);
@@ -150,7 +152,7 @@ export class AuthService {
     this.logger.printLogs('i', 'Processing Registration...', userAccount);
 
     return of(userAccount).pipe(
-      delay(3000), 
+      delay(3000),
       switchMap(account =>
         this.http.post<any>(`${this.apiUrl}Auth/register/`, account).pipe(
           catchError((err) => this.handleError(err)),
@@ -164,35 +166,102 @@ export class AuthService {
     );
   }
 
+
+  // logout() {
+  //   Swal.fire({
+  //     title: 'Signout?',
+  //     text: 'Are you sure?',
+  //     icon: 'question',
+  //     showCancelButton: true,
+  //     confirmButtonText: 'Yes',
+  //     cancelButtonText: 'No',
+  //   }).then((result) => {
+  //     if (result.isConfirmed) {
+  //       this.loading.setLoadingVisible(true);
+  //       this.logger.printLogs('i', 'Logging out...', "");
+
+  //       of(null).pipe(
+  //         delay(2000),
+  //         finalize(() => {
+  //           this.loading.setLoadingVisible(false);
+  //           this.logger.printLogs('i', 'Finished logout process', "");
+  //         })
+  //       ).subscribe(() => {
+  //         this.exit();
+  //       });
+  //     }
+  //   });
+  // }
+
   logout() {
+
     Swal.fire({
-      title: 'Signout?',
+      title: 'Sign out?',
       text: 'Are you sure?',
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Yes',
       cancelButtonText: 'No',
     }).then((result) => {
-      if (result.isConfirmed) {
-        this.loading.setLoadingVisible(true);
-        this.logger.printLogs('i', 'Logging out...', "");
 
-        // Simulate delay (e.g., if you'd call an API to revoke token)
-        of(null).pipe(
-          delay(2000), // show spinner for 2s
-          finalize(() => {
-            this.loading.setLoadingVisible(false);
-            this.logger.printLogs('i', 'Finished logout process', "");
-          })
-        ).subscribe(() => {
-          this.exit();
-        });
+      if (!result.isConfirmed) {
+        return;
       }
+
+      this.loading.setLoadingVisible(true);
+
+      this.logger.printLogs(
+        'i',
+        'Logging out...',
+        ''
+      );
+
+      this.logoutApi()
+        .pipe(
+          finalize(() => {
+
+            this.loading.setLoadingVisible(false);
+
+            this.logger.printLogs(
+              'i',
+              'Finished logout process',
+              ''
+            );
+
+          })
+        )
+        .subscribe({
+          next: () => {
+
+            this.exit();
+
+          },
+          error: () => {
+
+            // Even if API fails,
+            // still allow local logout
+
+            this.exit();
+
+          }
+        });
+
     });
+
   }
 
+  logoutApi(): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}Auth/logout`,
+      {
+
+      }
+    );
+  }
+  
   exit() {
     localStorage.clear();
+    this.heartbeatService.stop();
     this.store.clearStore();
     this.router.navigate(['']);
   }

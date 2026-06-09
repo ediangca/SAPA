@@ -1,0 +1,132 @@
+<p-toast></p-toast>
+<div
+    class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 p-6">
+
+    <div class="mb-6">
+        <h2 class="text-2xl font-semibold">
+            System Settings
+        </h2>
+
+        <p class="text-muted-color">
+            Configure settings.
+        </p>
+    </div>
+
+    <div class="card space-y-5">
+
+        <!-- Registration -->
+
+        <div class="flex items-center justify-between">
+
+            <div>
+                <div class="font-medium">
+                    Activate Registration
+                </div>
+
+                <div class="text-sm text-muted-color">
+                    Allow new users to register.
+                </div>
+            </div>
+
+            <p-toggleswitch
+                [ngModel]="getBool('ActivateRegistration')"
+                (ngModelChange)="setBool('ActivateRegistration', $event)">
+            </p-toggleswitch>
+
+        </div>
+
+        <!-- Coordinator -->
+
+        <div class="flex items-center justify-between">
+
+            <div>
+                <div class="font-medium">
+                    Activate Coordinator Signup
+                </div>
+
+                <div class="text-sm text-muted-color">
+                    Allow coordinator account registration.
+                </div>
+            </div>
+
+            <p-toggleswitch
+                [ngModel]="getBool('ActivateCoordinatorSignup')"
+                (ngModelChange)="setBool('ActivateCoordinatorSignup', $event)">
+            </p-toggleswitch>
+
+        </div>
+
+        <!-- Intern -->
+
+        <div class="flex items-center justify-between">
+
+            <div>
+                <div class="font-medium">
+                    Activate Intern Signup
+                </div>
+
+                <div class="text-sm text-muted-color">
+                    Allow intern self-registration.
+                </div>
+            </div>
+
+            <p-toggleswitch
+                [ngModel]="getBool('ActivateInternSignup')"
+                (ngModelChange)="setBool('ActivateInternSignup', $event)">
+            </p-toggleswitch>
+
+        </div>
+
+        <!-- Attendance Restriction -->
+
+        <div class="flex items-center justify-between">
+
+            <div>
+                <div class="font-medium">
+                    Attendance Time Restriction
+                </div>
+
+                <div class="text-sm text-muted-color">
+                    Restrict attendance based on duty schedule.
+                </div>
+            </div>
+
+            <p-toggleswitch
+                [ngModel]="getBool('ActivateAttendanceTimeRestriction')"
+                (ngModelChange)="setBool('ActivateAttendanceTimeRestriction', $event)">
+            </p-toggleswitch>
+
+        </div>
+
+        <!-- Rate -->
+
+        <div>
+
+            <label class="block font-medium mb-2">
+                Rate per Shift / Day
+            </label>
+
+            <p-inputNumber
+                mode="currency"
+                currency="PHP"
+                locale="en-PH"
+                [ngModel]="getNumber('RatePerShiftDay')"
+                (ngModelChange)="setNumber('RatePerShiftDay', $event)"
+                class="w-full">
+            </p-inputNumber>
+
+        </div>
+
+    </div>
+
+    <div class="flex justify-end mt-8">
+
+        <p-button
+            label="Save Settings"
+            icon="pi pi-save"
+            (onClick)="saveSettings()">
+        </p-button>
+
+    </div>
+
+</div>

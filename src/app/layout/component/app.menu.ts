@@ -57,8 +57,9 @@ export class AppMenu implements OnInit {
                 ]
             },
             {
-                label: 'Settings',
+                label: 'Reports & Settings',
                 items: [
+                    { id: "MOD0015", label: 'General', icon: 'fas fa-gear', routerLink: ['/dashboard/settings/'] },
                     { id: "MOD0013", label: 'Users', icon: 'fas fa-users-gear', routerLink: ['/dashboard/settings/users'] },
                     { id: "MOD0015", label: 'Reports', icon: 'fas fa-chart-simple', routerLink: ['/dashboard/settings/reports'] },
                 ]

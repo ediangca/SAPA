@@ -5,6 +5,7 @@ import { AsyncPipe } from '@angular/common';
 import { NgToastModule, ToasterPosition } from 'ng-angular-popup'
 import { LoadingService } from '@/services/loading.service';
 import AOS from 'aos';
+import { HeartbeatService } from '@/services/heartbeat';
 
 @Component({
   selector: 'app-root',
@@ -65,7 +66,8 @@ export class AppComponent implements OnInit {
 
   ToasterPosition = ToasterPosition
 
-  constructor(private loadingService: LoadingService) { }
+  constructor(private loadingService: LoadingService, 
+  private heartbeatService: HeartbeatService) { }
 
   get isLoading() {
     return this.loadingService.loading$; // observable<boolean>
@@ -74,5 +76,13 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     AOS.init({ disable: 'mobile' });
     AOS.refresh();
+
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      this.heartbeatService.start();
+    }else{
+      this.heartbeatService.stop();
+    }
   }
 }

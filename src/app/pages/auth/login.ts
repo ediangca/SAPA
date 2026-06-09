@@ -15,6 +15,7 @@ import Swal from 'sweetalert2';
 import { ProgressSpinnerModule } from 'primeng/progressspinner'
 import { StoreService } from '@/services/store.service';
 import { DialogModule } from 'primeng/dialog';
+import { HeartbeatService } from '@/services/heartbeat';
 
 declare var bootstrap: any;
 
@@ -58,7 +59,8 @@ export class Login {
     constructor(private fb: FormBuilder, private auth: AuthService,
         private router: Router, private api: ApiService,
         private vf: ValidateForm, private logger: LogsService,
-        private store: StoreService) {
+        private store: StoreService,
+        private heartbeat: HeartbeatService) {
 
         this.form = this.fb.group({
             username: ['', Validators.required],
@@ -110,6 +112,8 @@ export class Login {
                                     this.router.navigate(['']);
 
                                     this.logger.printLogs('i', 'ACCESS GRANTED', res.message);
+
+                                    this.heartbeat.start();
                                     this.api.showToast(res.message, 'ACCESS GRANTED', 'success');
                                 }
                             });
