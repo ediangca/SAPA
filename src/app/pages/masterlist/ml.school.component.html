@@ -7,7 +7,7 @@
                 [globalFilterFields]="['schoolID', 'schoolName', 'address', 'createdBy', 'status', 'code', 'date_created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSchools"
                 [rowHover]="true" dataKey="schoolID"
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} schools"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Schools"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" scrollable="true" scrollHeight="flex"
                 paginatorDropdownAppendTo="body" (selectionChange)="onSchoolSelectionChange($event)">
 
