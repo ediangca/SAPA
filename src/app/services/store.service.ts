@@ -15,6 +15,7 @@ export class StoreService {
   private user$ = new BehaviorSubject<any>(null);
   private tokenPayload$ = new BehaviorSubject<any>(null);
   private privileges$ = new BehaviorSubject<any[]>([]);
+  private settings$ = new BehaviorSubject<Record<string, string>>({});
 
 
   constructor(private api: ApiService, private logger: LogsService) {
@@ -113,13 +114,13 @@ export class StoreService {
       });
     return null;
   }
-  
+
   getPrivilegesLoaded(): Observable<any[]> {
     return this.privileges$.pipe(
-        filter(privs => privs.length > 0),
-        take(1)
+      filter(privs => privs.length > 0),
+      take(1)
     );
-}
+  }
 
 
   isModuleActive(moduleID: string): boolean {
@@ -170,4 +171,31 @@ export class StoreService {
   //   );
   // }
 
+
+  /*** Settings ***/
+  setSettings(settings: Record<string, string>) {
+
+    this.logger.printLogs(
+        'i',
+        'System Settings Loaded',
+        settings
+    );
+    this.settings$.next(settings);
+  }
+
+  getSettings() {
+    return this.settings$.asObservable();
+  }
+
+  getSetting(key: string): string | null {
+    return this.settings$.getValue()[key] ?? null;
+  }
+
+  getBooleanSetting(key: string): boolean {
+    return this.settings$.getValue()[key] === '1';
+  }
+
+  getNumberSetting(key: string): number {
+    return Number(this.settings$.getValue()[key] ?? 0);
+  }
 }

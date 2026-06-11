@@ -795,6 +795,11 @@ export class ApiService {
     );
   }
 
+  deleteAppointedStudentBySlot(id: number) {
+    return this.handleRequest('delete', 'AppointedStudents/slot', { id, logAction: 'Deleting Appointments' });
+  }
+
+
   // GET: api/AppointedStudents/exists/{slotId}
   isSlotAlreadyAppointed(slotID: string) {
     return this.handleRequest<any>(
@@ -831,6 +836,7 @@ export class ApiService {
     return this.handleRequest('delete', 'Appointments', { id, logAction: 'Deleting Appointments' });
   }
 
+  
 
   /*----------------------- ATTENDANCES -----------------------*/
   getAttendanceBySlot(slotId: string) {

@@ -7,7 +7,7 @@
                 [globalFilterFields]="['hospitalID', 'hospitalName', 'address', 'sections.sectionName']"
                 [tableStyle]="{ 'min-width': '60rem' }" [(selection)]="selectHospitals" 
                 [rowHover]="true" dataKey="hospitalID" 
-                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} hospitals"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Hospitals"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" scrollable="true" scrollHeight="flex"
                 paginatorDropdownAppendTo="body" scrollHeight="flex"> 
                 
@@ -149,6 +149,7 @@
         <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
             <ml-hospital-properties [hospitals]="hospitals()" [section] = "section", [p] = "p" ></ml-hospital-properties>
         </div>
+            
     </div>
 
 </div>

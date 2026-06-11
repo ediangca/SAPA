@@ -20,7 +20,7 @@
                 [showGridlines]="true", [loading]="loading", 
                 [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionName', 'slotStatus', 'fullname', 'date_Created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
-                dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} slots"
+                dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Schedules"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"
                 paginatorDropdownAppendTo="body" scrollable="true" scrollHeight="calc(100vh - 28rem)"
                 (onFilter)="onFilterChange($event.filteredValue)"
@@ -695,13 +695,21 @@
 
         </div>
     </div>
-
+<!--
     <ng-template pTemplate="footer">
-        @if(canManageStudent(selectedEvent)){
+        @if(canManageStudent(selectedEvent) && isFutureDate(selectedEvent.dateSlot)){
             <p-button icon="pi pi-users" label="Appoint Student" severity="primary"  [outlined]="true"
-                pTooltip="Manage Student" tooltipPosition="top" (click)="openManageStudent(selectedEvent)">
+                pTooltip="Appoint Student" tooltipPosition="top" (click)="openManageStudent(selectedEvent)">
+            </p-button>
+
+        }
+        
+        @if(isFutureDate(slot.dateSlot)){
+            <p-button if icon="pi pi-user-minus" label="Remove All Appointed Students" severity="danger"
+                pTooltip="Remove All Appointed Students" tooltipPosition="top" (click)="deleteAppointedStudents(selectedEvent.slotID)">
             </p-button>
         }
+
         <p-button *ngIf="selectedEvent.slotStatus === 1" label="Attendance" icon="pi pi-list-check" severity="info" [outlined]="true"
             pTooltip="Attendance" tooltipPosition="top" (click)="openAttendance(selectedEvent)">
         </p-button>
@@ -720,6 +728,82 @@
         }
         <button pButton type="button" label="Close" class="p-button-secondary"
             (click)="onCloseDetails()"></button>
+    </ng-template>
+-->
+
+    <ng-template pTemplate="footer">
+        <div class="flex flex-wrap justify-content-between align-items-center gap-2 w-full">
+
+            <div class="flex flex-wrap gap-2">
+
+                @if (canManageStudent(selectedEvent) && isFutureDate(selectedEvent.dateSlot)) {
+                    <p-button
+                        icon="pi pi-users"
+                        label="Appoint Student"
+                        severity="primary"
+                        [outlined]="true"
+                        pTooltip="Appoint Student"
+                        tooltipPosition="top"
+                        (click)="openManageStudent(selectedEvent)">
+                    </p-button>
+                }
+
+                @if (isFutureDate(selectedEvent.dateSlot)) {
+                    <p-button
+                        icon="pi pi-user-minus"
+                        label="Remove All Appointed Students"
+                        severity="danger"
+                        pTooltip="Remove All Appointed Students"
+                        tooltipPosition="top"
+                        (click)="deleteAppointedStudents(selectedEvent.slotID)">
+                    </p-button>
+                }
+
+                <p-button
+                    *ngIf="selectedEvent.slotStatus === 1"
+                    label="Attendance"
+                    icon="pi pi-list-check"
+                    severity="info"
+                    [outlined]="true"
+                    pTooltip="Attendance"
+                    tooltipPosition="top"
+                    (click)="openAttendance(selectedEvent)">
+                </p-button>
+
+                @if (selectedEvent.slotStatus == 1 && !isWithinTwoWeeks(selectedEvent.dateSlot)) {
+                    <p-button
+                        icon="pi pi-file-export"
+                        label="Request to Cancel"
+                        severity="warn"
+                        [outlined]="true"
+                        pTooltip="Request to Cancel"
+                        tooltipPosition="top"
+                        (click)="changeStatus(3, selectedEvent)">
+                    </p-button>
+                }
+
+                @if (canApproveCancel(selectedEvent)) {
+                    <p-button
+                        label="Confirm Cancel Request"
+                        icon="pi pi-check"
+                        severity="danger"
+                        (click)="changeStatus(4, selectedEvent)">
+                    </p-button>
+                }
+
+            </div>
+
+            <div>
+                <p-button
+                    label="Close"
+                    icon="pi pi-times"
+                    severity="secondary"
+                    [outlined]="true"
+                    (click)="onCloseDetails()">
+                </p-button>
+            </div>
+
+        </div>
     </ng-template>
 </p-dialog>
 
@@ -1142,9 +1226,10 @@
         <p-button label="Close" icon="pi pi-times" [text]="true" (onClick)="onCloseManageStudent()">
         </p-button>
         
-        <p-button label="Print" icon="pi pi-save" (onClick)="saveAssignStudentStudent()">
+        <p-button label="Save" icon="pi pi-save" (onClick)="saveAssignStudentStudent()">
         </p-button>
         
+
     </ng-template>
 </p-dialog>
 

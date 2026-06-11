@@ -1,18 +1,26 @@
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { ApplicationConfig, inject } from '@angular/core';
+import { ApplicationConfig, inject,
+    APP_INITIALIZER } from '@angular/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withEnabledBlockingInitialNavigation, withInMemoryScrolling } from '@angular/router';
 import Aura from '@primeuix/themes/aura';
 import { providePrimeNG } from 'primeng/config';
 import { appRoutes } from './app.routes';
 import { provideToastr } from 'ngx-toastr';
-import { ToastrService } from 'ngx-toastr';
 import { tokenInterceptor } from '@/helper/interceptor/token.interceptor';
+import { SettingsLoaderService } from '@/services/settings-loader-service';
+
+export function initializeSettings(
+    settingsLoader: SettingsLoaderService
+) {
+    return () => settingsLoader.load();
+}
 
 export const appConfig: ApplicationConfig = {
+
     providers: [
         provideRouter(appRoutes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withEnabledBlockingInitialNavigation()),
-        provideHttpClient(withFetch()),
+        provideHttpClient(withFetch(), withInterceptors([tokenInterceptor])),
         provideAnimationsAsync(),
         providePrimeNG({ theme: { preset: Aura, options: { darkModeSelector: '.app-dark' } } }),
         provideToastr({
@@ -20,12 +28,20 @@ export const appConfig: ApplicationConfig = {
             positionClass: 'toast-bottom-right',
             preventDuplicates: true,
         }),
-        provideHttpClient(withInterceptors([tokenInterceptor]))
+        // 👇 ADD THIS
+        {
+            provide: APP_INITIALIZER,
+            useFactory: initializeSettings,
+            deps: [SettingsLoaderService],
+            multi: true
+        }
+        
+
     ]
 };
 
-
-setTimeout(() => {
-  const toastr = inject(ToastrService);
-  // toastr.success('Testing toastr!', 'Success');
-}, 3000);
+ 
+// setTimeout(() => {
+//   const toastr = inject(ToastrService);
+//   // toastr.success('Testing toastr!', 'Success');
+// }, 3000);

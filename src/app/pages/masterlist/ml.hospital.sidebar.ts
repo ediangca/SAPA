@@ -74,14 +74,14 @@ export class HospitalProperties implements OnInit {
             },
 
         ];
-        // this.properties = [
-        //     {
-        //         items: [
-        //             // { label: 'Assign Section', icon: 'fas fa-table-columns', command: () => this.openAssignDialog() },
-        //             // { label: 'Allocation', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
-        //         ]
-        //     }
-        // ];
+        this.properties = [
+            {
+                // items: [
+                    // { label: 'Assign Section', icon: 'fas fa-table-columns', command: () => this.openAssignDialog() },
+                    // { label: 'Allocation', icon: 'fas fa-table-columns', routerLink: ['/dashboard/masterlist/sections'] },
+                // ]
+            }
+        ];
 
         // this.loadSections();
         // this.loadHospitals();

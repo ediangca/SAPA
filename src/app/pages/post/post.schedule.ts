@@ -313,7 +313,7 @@ export class Schedule implements OnInit, OnChanges {
     s: boolean = false;
     p: boolean = false;
 
-    
+
     bc: boolean = false; //billing
 
     constructor(private fb: FormBuilder,
@@ -429,7 +429,7 @@ export class Schedule implements OnInit, OnChanges {
         this.s = this.store.isAllowedAction(moduleID, 'status');
         this.p = this.store.isAllowedAction(moduleID, 'printall');
 
-        
+
         const billingModuleID = 'MOD0018';
         this.bc = this.store.isAllowedAction(billingModuleID, 'create');
 
@@ -891,7 +891,7 @@ export class Schedule implements OnInit, OnChanges {
     exportCSV() {
         this.dt.exportCSV();
     }
-    
+
     exportCSV1() {
 
         const slots = this.forPrintExport() || this.slots();
@@ -907,7 +907,7 @@ export class Schedule implements OnInit, OnChanges {
             Hospital: h.hospitalName,
             Section: h.sectionName,
             Status: h.slotStatus,
-            Appointted_Allocations: (h.studentCount || 0) +'/'+ (h.allocation || 0),
+            Appointted_Allocations: (h.studentCount || 0) + '/' + (h.allocation || 0),
             DateCreated: h.date_Created,
             CreatedBy: h.fullname,
 
@@ -931,8 +931,8 @@ export class Schedule implements OnInit, OnChanges {
 
     }
 
-    
-    printAll(){
+
+    printAll() {
         const slots = this.forPrintExport() || this.slots();
         this.pdfService.generateUserReport(slots, 'LIST OF SCHEDULES');
     }
@@ -973,8 +973,8 @@ export class Schedule implements OnInit, OnChanges {
                     this.coordinators = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A') || []; //Role ID - Coordinators
                     this.schools = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A') || []; //Role ID - Clinical Instructor
                 } else {
-                    this.schools = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A' && user.schoolID === this.user.schoolID) || []; 
-                    this.coordinators = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A' && user.schoolID === this.user.schoolID) || []; 
+                    this.schools = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A' && user.schoolID === this.user.schoolID) || [];
+                    this.coordinators = users.filter((user: any) => user.roleID === 'UGR0003' && user.status === 'A' && user.schoolID === this.user.schoolID) || [];
                 }
 
                 this.logger.printLogs('i', 'CI Users loaded', this.coordinators)
@@ -1365,6 +1365,21 @@ export class Schedule implements OnInit, OnChanges {
         this.loadClinicalInstructors();
         this.assignDialog = true;
         this.CIID = null;
+    }
+
+    isFutureDate(dateSlot: string): boolean {
+        const slotDate = new Date(dateSlot);
+        slotDate.setHours(0, 0, 0, 0);
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        this.logger.printLogs('i', 'Checking if slot date is in the future', {
+            slotDate,
+            today,
+            isFuture: slotDate > today
+        });
+        return slotDate > today;
     }
 
     canManageStudent(slot: any): boolean {
@@ -1946,6 +1961,51 @@ export class Schedule implements OnInit, OnChanges {
         });
     }
 
+    deleteAppointedStudents(slotID: any) {
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to remove all appointed students from this schedule?',
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            rejectLabel: 'Cancel',
+            acceptLabel: "Yes! I'm Sure",
+            rejectIcon: 'pi pi-times',
+            acceptIcon: 'pi pi-check',
+            acceptButtonStyleClass: 'p-button-outlined p-button-success',
+            rejectButtonStyleClass: 'p-button-danger',
+            accept: () => {
+
+                this.api.deleteAppointedStudentBySlot(slotID).subscribe({
+
+                    next: (res: any) => {
+                        this.logger.printLogs('i', 'All appointed students removed from schedule successfully', res);
+                        // this.showErrorAlert('Successful', res.message, false, 'success');
+                        
+                         this.messageService.add({
+                            severity: 'success',
+                            summary: 'Students Removed',
+                            detail: 'All appointed students have been removed from this schedule.',
+                            life: 3000
+                        });
+                        this.loadAvailableStudents();
+                    },
+                    error: (err) => {
+                        this.logger.printLogs('e', 'Failed to remove all appointed students from schedule', err);
+                        // this.showErrorAlert('Removal Appointed Students Failed', err, false, 'error');
+                    this.messageService.add({
+                            severity: 'error',
+                            summary: 'Failed to Remove Appointed Students',
+                            detail: err.message || 'Failed to remove appointed students from this schedule.',
+                            life: 3000
+                        });
+                    }
+                });
+
+            }
+
+        });
+    }
+
+
 
     // saveAssignStudentStudent() {
     //     if (!this.slot || !this.targetStudent.length) {
@@ -2117,6 +2177,7 @@ export class Schedule implements OnInit, OnChanges {
                 life: 3000
             });
 
+            this.isSavingAppointedAssignments = false;
             return;
         }
 
@@ -2228,7 +2289,7 @@ export class Schedule implements OnInit, OnChanges {
     openPrintDialog() {
         const slots = this.forPrintExport() || this.slots();
 
-        if(slots.length === 0) {
+        if (slots.length === 0) {
             this.showErrorAlert(
                 'No Schedule Found',
                 'There are no schedules to print.',

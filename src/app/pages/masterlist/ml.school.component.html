@@ -125,8 +125,9 @@
 
     <!-- SUBMENU -->
     <div class="md:w-1/5">
-        <div class="card" [style]="{ height: 'calc(100vh - 12rem)'}">
-            <div class="">
+        <div class="card flex flex-col" [style]="{ height: 'calc(100vh - 12rem)'}">
+            
+            <div class="flex-1 overflow-auto">
                 <h5 class="m-0">Sub Component</h5>
                 <!-- 
                 <ul class="layout-menu">
@@ -145,10 +146,10 @@
                 <p-panelmenu [model]="properties" />
             </div> -->
 
-            <!-- <div class="h-1/2">
+            <div class="flex-1 overflow-auto">
                 <h5 class="m-0">Properties</h5>
-                <p-tieredMenu [model]="properties" class="w-full"></p-tieredMenu>
-            </div> -->
+                <!-- <p-tieredMenu [model]="properties" class="w-full"></p-tieredMenu> -->
+            </div>
 
         </div>
     </div>

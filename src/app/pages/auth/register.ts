@@ -24,6 +24,7 @@ import { Tooltip } from "primeng/tooltip";
 import { Badge, BadgeModule } from "primeng/badge";
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
+import { StoreService } from '@/services/store.service';
 
 @Component({
     selector: 'app-register',
@@ -66,6 +67,8 @@ export class Register implements OnInit {
     @ViewChild('schoolCodeInput') schoolCodeInput!: ElementRef;
 
     checked: boolean = false;
+    activateCoordinatorSignup: boolean = false;
+    activateInternSignup: boolean = false;
 
     isLoading = false;
 
@@ -82,7 +85,8 @@ export class Register implements OnInit {
 
     constructor(private fb: FormBuilder, private auth: AuthService,
         private router: Router, private api: ApiService,
-        private vf: ValidateForm, private logger: LogsService, private toast: NgToastService) {
+        private vf: ValidateForm, private logger: LogsService, 
+        private toast: NgToastService, private store: StoreService) {
 
         this.form = this.fb.group({
             lastname: ['', Validators.required],
@@ -111,6 +115,12 @@ export class Register implements OnInit {
         if (this.auth.isAuthenticated()) {
             this.router.navigate(['dashboard']);
         }
+
+        this.activateCoordinatorSignup =
+            this.store.getBooleanSetting('ActivateCoordinatorSignup');
+        this.activateInternSignup =
+            this.store.getBooleanSetting('ActivateInternSignup');
+
     }
 
     ngOnInit(): void {
