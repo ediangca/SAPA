@@ -34,8 +34,10 @@ import { MenuModule } from 'primeng/menu';
 import { TieredMenuModule } from 'primeng/tieredmenu';
 import { AppMenuitem } from '@/layout/component/app.menuitem';
 import { RouterModule } from '@angular/router';
-import { filter, switchMap, take, tap } from 'rxjs';
+import { filter, forkJoin, switchMap, take, tap } from 'rxjs';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { DatePickerModule } from 'primeng/datepicker';
+import { SkeletonModule } from 'primeng/skeleton';
 
 interface Column {
     field: string;
@@ -78,6 +80,8 @@ interface ExportColumn {
         IconFieldModule,
         ConfirmDialogModule,
         ReactiveFormsModule,
+        SkeletonModule,
+        DatePickerModule,
         FormsModule,
         RouterModule,
     ],
@@ -121,6 +125,22 @@ export class ClinicalInstructor implements OnInit {
 
     assignDialog: boolean = false;
     schoolID: any | null;
+
+    showFilter: boolean = true;
+
+    hospitals: any[] = [];
+    selectedHospitalID: number | null = null;
+    sections: any[] = [];
+
+    shiftOption: any[] = [];
+
+    loadingSchedules = false;
+
+    minDate!: Date;
+    selectedCI: any = null;
+    scheduleDialog = false;
+    scheduleRange: Date[] = [];
+    schedules: any[] = [];
 
     c: boolean = false;
     r: boolean = false;
@@ -203,6 +223,9 @@ export class ClinicalInstructor implements OnInit {
                 this.loadRoles();
                 this.loadSchools();
                 this.loadClinicalInstructors()
+                this.loadHospitals();
+                this.loadSections();
+                this.loadShifts();
             });
 
         this.cols = [
@@ -229,6 +252,54 @@ export class ClinicalInstructor implements OnInit {
             next: (roles) => this.roles = roles,
             error: (err) => this.logger.printLogs('e', 'Failed to fetch Roles', err)
         });
+    }
+
+    loadHospitals() {
+        this.api.getHospitals().subscribe({
+            next: (hospitals) => {
+                this.hospitals = hospitals || [];
+                this.logger.printLogs('i', 'Hospitals loaded', this.hospitals)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch hospitals', err)
+        });
+    }
+
+    loadSections() {
+        this.api.getSections().subscribe({
+            next: (sections) => {
+                this.sections = sections || [];
+                this.logger.printLogs('i', 'Sections loaded', sections)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch Sections', err)
+        });
+    }
+
+
+    loadShifts() {
+        this.api.getShifts().subscribe({
+            next: (shifts) => {
+                this.shiftOption = shifts || [];
+                this.logger.printLogs('i', 'Shifts loaded', this.shiftOption)
+            },
+            error: (err) => this.logger.printLogs('e', 'Failed to fetch shifts', err)
+        });
+    }
+
+    getShiftSeverity(shift: any): any {
+        // this.logger.printLogs('i', 'Shift:', shift);
+        switch (shift.toLowerCase()) {
+            case 'morning':
+                return 'success'
+            case 'afternoon':
+                return 'warn'
+            case 'evening':
+                return 'secondary'
+            case 'closed':
+                return 'danger'
+
+            default:
+                return 'contrast';
+        }
     }
 
     initPrivileges() {
@@ -280,8 +351,8 @@ export class ClinicalInstructor implements OnInit {
                     this.users.set(users.filter((user: any) => user.roleID === 'UGR0006'))
                     this.logger.printLogs('i', 'Clinical Instructors loaded for AdminSys | SAP Admin', this.users)
                 } else {
-                     this.users.set(users.filter((user: any) => user.roleID === 'UGR0006' && user.schoolID === this.loggedUser.schoolID))
-                            this.logger.printLogs('i', 'Clinical Instructors loaded under School', this.loggedUser.schoolID)
+                    this.users.set(users.filter((user: any) => user.roleID === 'UGR0006' && user.schoolID === this.loggedUser.schoolID))
+                    this.logger.printLogs('i', 'Clinical Instructors loaded under School', this.loggedUser.schoolID)
                 }
 
                 this.forPrintExport.set(this.users());
@@ -557,6 +628,7 @@ export class ClinicalInstructor implements OnInit {
         this.user = user;
         this.logger.printLogs('i', 'Edit users', user)
         this.form.patchValue(user);
+        this.selectedSchoolID = user.schoolID;
         this.itemDialog = true;
     }
 
@@ -746,11 +818,170 @@ export class ClinicalInstructor implements OnInit {
         });
     }
 
+    showSchedule(user: any) {
+        this.logger.printLogs('i', `Show Schedule of ${user.fullname}`, user);
+        this.selectedCI = user;
+        this.scheduleRange = [];
+        this.schedules = [];
+        this.scheduleDialog = true;
+
+    }
+
+    onRangeSelected() {
+        if (this.scheduleRange?.length === 2) {
+            this.loadSchedules();
+        }
+    }
+
+    getSelectedHospitalName(): string | null {
+        return this.hospitals?.find(h => h.hospitalID === this.selectedHospitalID)?.hospitalName || null;
+    }
+
+    loadSchedules() {
+
+        if (
+            !this.scheduleRange ||
+            this.scheduleRange.length < 2
+        ) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Warning',
+                detail: 'Please select a date range.'
+            });
+            return;
+        }
+
+
+        this.loadingSchedules = true;   // LOADING
+
+        const start = this.formatDate(this.scheduleRange[0]);
+        const end = this.formatDate(this.scheduleRange[1]);
+
+        this.api.getSchedulesByCI(
+            this.selectedCI.userID,
+            start,
+            end
+        ).subscribe({
+            next: (res) => {
+                this.schedules = res;
+                this.loadingSchedules = false;
+            },
+            error: (err) => {
+                this.logger.printLogs('e', 'Failed loading schedules', err);
+                this.loadingSchedules = false;
+            }
+        });
+    }
+
+    formatDate(date: Date): string {
+
+        const year = date.getFullYear();
+
+        const month = String(date.getMonth() + 1)
+            .padStart(2, '0');
+
+        const day = String(date.getDate())
+            .padStart(2, '0');
+
+        return `${year}-${month}-${day}`;
+    }
+
+    formatDateFormal(date: string | Date): string {
+        return new Date(date).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+
     printAll() {
         const users = this.forPrintExport() || this.users();
         this.pdfService.generateUserReport(users, 'LIST OF STUDENTS');
     }
 
+
+    async printAllStudent() {
+        const slots = this.schedules || [];
+        if (!slots.length) return;
+
+        const slotIDs = slots.map((s: any) => s.slotID);
+        this.loadingSchedules = true;
+
+        forkJoin({
+            students: this.api.getAppointedStudentsBySlots(slotIDs),
+            attendance: this.api.getAttendanceBySlots(slotIDs)
+        }).subscribe({
+            next: ({ students, attendance }) => {
+                this.loadingSchedules = false;
+
+                this.logger.printLogs('i', 'RAW students', students);
+                this.logger.printLogs('i', 'RAW attendance', attendance);
+                this.logger.printLogs('i', 'Slot IDs from schedules', slots.map((s: any) => s.slotID));
+                this.logger.printLogs('i', 'SlotIDs from students', [...new Set(students.map((s: any) => s.slotID ?? s.SlotID))]);
+
+                // Merge per slot — same logic as openAttendance()
+                const mergedSlots = slots.map((slot: any) => {
+
+                    // Normalize slot ID from filteredSlots()
+                    const slotID = slot.slotID ?? slot.SlotID;
+
+                    const slotStudents = students
+                        .filter((s: any) => {
+                            const sSlotID = s.slotID ?? s.SlotID;  // handle both casings
+                            return sSlotID === slotID;
+                        })
+                        .map((student: any) => {
+                            const sUserID = student.userID ?? student.UserID;
+
+                            const record = attendance.find((a: any) => {
+                                const aSlotID = a.slotID ?? a.SlotID;
+                                const aUserID = a.userID ?? a.UserID;
+                                return aSlotID === slotID && aUserID === sUserID;
+                            });
+
+                            return {
+                                ...student,
+                                fullname: student.fullname ?? student.Fullname,
+                                hasAttendance: !!record,
+                                date_created: record?.dateCreated ?? record?.DateCreated ?? null
+                            };
+                        });
+
+                    this.logger.printLogs('i', `Slot ${slotID} → ${slotStudents.length} students`, slotStudents);
+                    return { slot, students: slotStudents };
+                });
+
+                const [start, end] = this.scheduleRange;
+                // const dateFrom = start.toISOString().split('T')[0];
+                // const dateTo = end.toISOString().split('T')[0];
+
+                const startDate = this.formatDate(start);
+                const endDate = this.formatDate(end);
+
+                this.logger.printLogs('i', 'Merged slots with attendance', mergedSlots);
+                const formattedStart = this.formatDateFormal(startDate);
+                const formattedEnd = this.formatDateFormal(endDate);
+
+                const subtitle =
+                    startDate === endDate
+                        ? `(${formattedStart})`
+                        : `(${formattedStart} – ${formattedEnd})`;
+
+                this.pdfService.generateAttendanceReportMulti(
+                    'LIST OF STUDENTS',
+                    subtitle,
+                    mergedSlots,
+                    true
+                );
+
+                // this.printAttDialogVisible = false;
+            },
+            error: (err) => {
+                this.loadingSchedules = false;
+                this.logger.printLogs('e', 'Failed to load schedules for print', err);
+            }
+        });
+    }
 
 
     private showErrorAlert(title: string, message: any, dialogOpen: boolean, severity: 'success' | 'error' | 'warning' | 'info' | 'question' | undefined = 'info') {
@@ -777,9 +1008,9 @@ export class ClinicalInstructor implements OnInit {
         });
     }
 
-    // helper to reset and close
     private closeDialog() {
         this.itemDialog = false;
+        this.scheduleDialog = false;
         this.form.reset({
             email: '',
         });

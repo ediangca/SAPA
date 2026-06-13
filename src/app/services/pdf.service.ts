@@ -600,7 +600,7 @@ export class PdfService {
 
                   ...shiftEntries.map((item: any, idx: number) => [
                     { text: idx + 1, alignment: 'center', fontSize: 9 },
-                    { text: item.schoolName +"\n("+ item.fullname + ")", fontSize: 9, noWrap: false },
+                    { text: item.schoolName + "\n(" + item.fullname + ")", fontSize: 9, noWrap: false },
                     { text: item.hospitalName, fontSize: 9, noWrap: false },
                     { text: item.sectionName, fontSize: 9 },
                     { text: (item.studentCount?.toString() ?? '0') + "/" + (item.allocation?.toString() ?? '0'), fontSize: 9 },
@@ -1258,7 +1258,8 @@ export class PdfService {
     pdfMakeLib.createPdf(docDefinition).open();
   }
 
-  async generateAttendanceReportMulti(title: string, subtitle: string, mergedSlots: { slot: any; students: any[] }[]) {
+  async generateAttendanceReportMulti(title: string, subtitle: string, mergedSlots: { slot: any; students: any[] }[], listOnly: boolean = false
+  ) {
     if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
       await this.loadLogos();
       await this.loadSapaWatermark();
@@ -1328,6 +1329,7 @@ export class PdfService {
                   {}, {}
                 ]
               ]
+
             },
             layout: {
               hLineWidth: () => 0.5, vLineWidth: () => 0.5,
@@ -1339,47 +1341,106 @@ export class PdfService {
           });
 
           // Student attendance table
+          // const studentRows = students.length > 0
+          //   ? students.map((s, i) => [
+          //     { text: (i + 1).toString(), alignment: 'center', fontSize: 8 },
+          //     {
+          //       stack: [
+          //         { text: s.fullname ?? s.Fullname ?? '—', fontSize: 8 },
+          //         { text: s.userID ?? s.UserID ?? '', fontSize: 7, color: '#999' }
+          //       ]
+          //     },
+          //     {
+          //       text: s.hasAttendance && s.date_created
+          //         ? new Date(s.date_created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          //         : '—',
+          //       alignment: 'center', fontSize: 8
+          //     },
+          //     {
+          //       text: s.hasAttendance ? 'Present' : 'Absent',
+          //       color: s.hasAttendance ? 'green' : 'red',
+          //       alignment: 'center', fontSize: 8, bold: true
+          //     }
+          //   ])
+          //   : [[
+          //     {
+          //       text: 'No appointed students found.',
+          //       colSpan: 4, alignment: 'center',
+          //       fontSize: 8, color: '#999', italics: true
+          //     },
+          //     {}, {}, {}
+          //   ]];
           const studentRows = students.length > 0
-            ? students.map((s, i) => [
-              { text: (i + 1).toString(), alignment: 'center', fontSize: 8 },
-              {
-                stack: [
-                  { text: s.fullname ?? s.Fullname ?? '—', fontSize: 8 },
-                  { text: s.userID ?? s.UserID ?? '', fontSize: 7, color: '#999' }
-                ]
-              },
-              {
-                text: s.hasAttendance && s.date_created
-                  ? new Date(s.date_created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                  : '—',
-                alignment: 'center', fontSize: 8
-              },
-              {
-                text: s.hasAttendance ? 'Present' : 'Absent',
-                color: s.hasAttendance ? 'green' : 'red',
-                alignment: 'center', fontSize: 8, bold: true
-              }
-            ])
+            ? students.map((s, i) => listOnly
+              ? [
+                { text: (i + 1).toString(), alignment: 'center', fontSize: 8 },
+                {
+                  stack: [
+                    { text: s.fullname ?? s.Fullname ?? '—', fontSize: 8 },
+                    { text: s.userID ?? s.UserID ?? '', fontSize: 7, color: '#999' }
+                  ]
+                }
+              ]
+              : [
+                { text: (i + 1).toString(), alignment: 'center', fontSize: 8 },
+                {
+                  stack: [
+                    { text: s.fullname ?? s.Fullname ?? '—', fontSize: 8 },
+                    { text: s.userID ?? s.UserID ?? '', fontSize: 7, color: '#999' }
+                  ]
+                },
+                {
+                  text: s.hasAttendance && s.date_created
+                    ? new Date(s.date_created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    : '—',
+                  alignment: 'center',
+                  fontSize: 8
+                },
+                {
+                  text: s.hasAttendance ? 'Present' : 'Absent',
+                  color: s.hasAttendance ? 'green' : 'red',
+                  alignment: 'center',
+                  fontSize: 8,
+                  bold: true
+                }
+              ]
+            )
             : [[
               {
-                text: 'No appointed students found.',
-                colSpan: 4, alignment: 'center',
-                fontSize: 8, color: '#999', italics: true
+                text: listOnly
+                  ? 'No students found.'
+                  : 'No appointed students found.',
+                colSpan: listOnly ? 2 : 4,
+                alignment: 'center',
+                fontSize: 8,
+                color: '#999',
+                italics: true
               },
-              {}, {}, {}
+              ...(listOnly ? [] : [{}, {}, {}])
             ]];
+
+          const widths = listOnly
+            ? ['10%', '90%']
+            : ['6%', '52%', '22%', '20%'];
+
+          const headerRow = listOnly
+            ? [
+              { text: '#', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' },
+              { text: 'Student Name', bold: true, fontSize: 9, fillColor: '#e8e8e8' }
+            ]
+            : [
+              { text: '#', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' },
+              { text: 'Student Name', bold: true, fontSize: 9, fillColor: '#e8e8e8' },
+              { text: 'Time', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' },
+              { text: 'Status', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' }
+            ];
 
           content.push({
             table: {
               headerRows: 1,
-              widths: ['6%', '52%', '22%', '20%'],
+              widths,
               body: [
-                [
-                  { text: '#', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' },
-                  { text: 'Student Name', bold: true, fontSize: 9, fillColor: '#e8e8e8' },
-                  { text: 'Time', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' },
-                  { text: 'Status', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' }
-                ],
+                headerRow,
                 ...studentRows
               ]
             },
@@ -1395,11 +1456,37 @@ export class PdfService {
 
           // Per-slot summary
           content.push({
-            columns: [
-              { text: `Total: ${students.length}`, bold: true, fontSize: 8, color: '#333' },
-              { text: `Present: ${presentCount}`, bold: true, fontSize: 8, color: 'green', alignment: 'center' },
-              { text: `Absent: ${absentCount}`, bold: true, fontSize: 8, color: 'red', alignment: 'right' }
-            ],
+            columns: listOnly
+              ? [
+                {
+                  text: `Total: ${students.length}`,
+                  bold: true,
+                  fontSize: 8,
+                  color: '#333'
+                }
+              ]
+              : [
+                {
+                  text: `Total: ${students.length}`,
+                  bold: true,
+                  fontSize: 8,
+                  color: '#333'
+                },
+                {
+                  text: `Present: ${presentCount}`,
+                  bold: true,
+                  fontSize: 8,
+                  color: 'green',
+                  alignment: 'center'
+                },
+                {
+                  text: `Absent: ${absentCount}`,
+                  bold: true,
+                  fontSize: 8,
+                  color: 'red',
+                  alignment: 'right'
+                }
+              ],
             margin: [0, 1, 0, 8]
           });
         });
@@ -1432,7 +1519,7 @@ export class PdfService {
       }
     };
 
-    // ✅ Avoids browser popup block inside async/subscribe
+    // Avoids browser popup block inside async/subscribe
     pdfMakeLib.createPdf(docDefinition).getBlob((blob: Blob) => {
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
@@ -1446,7 +1533,7 @@ export class PdfService {
     action: 'open' | 'download' | 'print' = 'open',
     preparedBy?: string,
     reviewedBy?: string,
-    notedBy?: string
+    notedBy?: string,
   ) {
 
     if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {

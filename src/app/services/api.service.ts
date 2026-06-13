@@ -264,7 +264,7 @@ export class ApiService {
 
   getHeartbeat() {
     return this.handleRequest('post', 'auth/heartbeat', { logAction: 'Sending Heartbeat' });
-  } 
+  }
 
   getDashboardSummary(params?: any) {
     return this.handleRequest<any>(
@@ -423,7 +423,7 @@ export class ApiService {
   }
 
   getOnlineUsers() {
-    return this.handleRequest<any[]>('get', 'monitoring/online-users', { logAction: 'Fetching Online Users' }); 
+    return this.handleRequest<any[]>('get', 'monitoring/online-users', { logAction: 'Fetching Online Users' });
   }
 
   getUserAccount(id: string) {
@@ -619,6 +619,19 @@ export class ApiService {
     });
   }
 
+  getSchedulesByCI(ciid: string, start: string, end: string, hospitalID?: string): Observable<any> {
+    const params: any = { start, end };
+
+    if (hospitalID) {
+      params.hospitalID = hospitalID;
+    }
+    
+    return this.handleRequest<any[]>(
+      'get',
+      'Slots/clinical-instructor/' + ciid,
+      { params, logAction: 'Fetch Slots By Clinical Instructor' }
+    );
+  }
 
   updateSlotStatus(status: number, slotIDs: string[]) {
     return this.handleRequest('put', `Slots/status/${status}`, {
@@ -836,7 +849,7 @@ export class ApiService {
     return this.handleRequest('delete', 'Appointments', { id, logAction: 'Deleting Appointments' });
   }
 
-  
+
 
   /*----------------------- ATTENDANCES -----------------------*/
   getAttendanceBySlot(slotId: string) {

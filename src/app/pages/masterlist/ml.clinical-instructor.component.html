@@ -149,6 +149,10 @@
                                     <p-button class="mr-2 hover:animate-bounce" icon="fa fa-thumbs-up" severity="info" pTooltip="Approve Account"
                                     tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="approve(user)" />
                                 }
+
+                                <p-button *ngIf="r && user.status === 'A'" class="mr-2 hover:animate-bounce transition-colors" icon="pi pi-calendar" severity="info"   
+                                pTooltip="Schedule" tooltipPosition="top" [rounded]="true" [outlined]="true"
+                                    (click)="showSchedule(user)" />
                             </div>
                         </td>
                     </tr>
@@ -187,6 +191,7 @@
 
 </div>
 
+<!-- Form Dialog -->
 <p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="User Details" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
@@ -263,6 +268,355 @@
         <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
         <p-button label="Save" icon="pi pi-check" (click)="save()" />
     </ng-template>
+</p-dialog>
+
+<!-- Show Schedule Dialog -->
+<p-dialog
+    [(visible)]="scheduleDialog"
+    [modal]="true"
+    [style]="{width:'70vw'}"
+    header="Clinical Instructor Schedule">
+
+    <div class="flex flex-row gap-4 w-full" style="min-height: 500px;">
+
+        <!-- ===== FILTER PANEL (30%) ===== -->
+        <div *ngIf="showFilter" style="width: 30%; min-width: 260px;" class="flex-shrink-0">
+
+            <!-- Header row -->
+            <div class="flex align-items-center justify-between mb-3">
+                <span class="font-semibold text-sm text-gray-600">Filters</span>
+                <p-button
+                    icon="pi pi-chevron-left"
+                    label="Hide"
+                    severity="contrast"
+                    [text]="true"
+                    size="small"
+                    (onClick)="showFilter = false">
+                </p-button>
+            </div>
+            <p class="text-gray-700 mt-0 text-sm flex flex-col gap-1 items-center">
+                Select the date range you want to print schedule of 
+                <span class="font-semibold text-primary text-lg">Mr./Ms. {{ selectedCI?.fullname }}</span>.
+            </p>
+            <p-datepicker
+                [(ngModel)]="scheduleRange"
+                class="w-full"
+                [inline]="true"
+                selectionMode="range"
+                dateFormat="yyyy-MM-dd"
+                placeholder="Select date range">
+            </p-datepicker>
+            <!-- HINT -->
+            <p class="mt-3 text-xs text-red-500">
+                * Choose a date range to filter and preview.
+            </p>
+            
+            <!-- OPTIONAL FILTERS -->
+            <div *ngIf="scheduleRange?.length === 2 && scheduleRange?.[0] !== null && scheduleRange?.[1] !== null"
+                class="mt-3">
+                <!-- HOSPITAL SELECT -->
+                <div class="mb-3" *ngIf="isSchoolCoordinator || isIntern">
+                    <label class="block font-bold mb-2 text-sm">Hospital</label>
+                    <p-select
+                        styleClass="w-full"
+                        [options]="hospitals"
+                        optionLabel="hospitalName"
+                        optionValue="hospitalID"
+                        appendTo="body"
+                        [(ngModel)]="selectedHospitalID"
+                        placeholder="All Hospitals">
+                    </p-select>
+                </div>
+                
+                <p-button label="Show" icon="pi pi-eye" severity="info"` size="small" (onClick)="loadSchedules()"> </p-button>
+
+            </div>
+            <!-- FILTER SUMMARY -->
+            <div *ngIf="scheduleRange?.length === 2"
+                class="mt-3 p-2 border-round border-1 surface-border surface-50 flex flex-row flex-wrap align-items-center gap-3 text-xs">
+
+                <div class="flex align-items-center gap-1">
+                    <i class="pi pi-calendar text-primary-400"></i>
+                    <span class="font-medium">
+                        {{ scheduleRange[0] | date:'MMM d' }} – {{ scheduleRange[1] | date:'MMM d, y' }}
+                    </span>
+                </div>
+
+                <span class="text-gray-300">|</span>
+
+                <div class="flex align-items-center gap-1">
+                    <i class="pi pi-building text-primary-400"></i>
+                    <span>{{ getSelectedHospitalName() || 'All Hospitals' }}</span>
+                </div>
+
+            </div>
+
+        </div>
+        
+        <!-- ===== VERTICAL DIVIDER ===== -->
+        <div class="border-left-1 surface-border flex-shrink-0"></div>
+
+
+    
+        <!-- Collapsed toggle button (when filter is hidden) -->
+        <div *ngIf="!showFilter" class="flex flex-row align-items-center gap-2 flex-shrink-0">
+                
+            <!-- Mini active filter indicators -->
+            <ng-container *ngIf="scheduleRange?.length === 2">
+                <div class="flex flex-col align-items-center gap-2">
+                    <span class="flex align-items-center gap-1">
+                        <i class="pi pi-calendar text-primary-400 text-xs cursor-pointer"
+                        [pTooltip]="(scheduleRange[0] | date:'MMM d') + ' – ' + (scheduleRange[1] | date:'MMM d')"
+                        tooltipPosition="bottom"></i>
+                        {{(scheduleRange[0] | date:'MMM d') + ' – ' + (scheduleRange[1] | date:'MMM d')}}
+                    </span>
+                        
+                    <span class="flex align-items-center gap-1">
+                    <i class="pi pi-building text-primary-400 text-xs cursor-pointer"
+                        [pTooltip]="getSelectedHospitalName() || 'All Hospitals'"
+                        tooltipPosition="bottom"></i>
+                        {{getSelectedHospitalName() || 'All Hospitals'}}
+                    </span>
+                </div>
+                <span class="text-gray-300">|</span>
+            </ng-container>
+
+            <p-button
+                icon="pi pi-chevron-right"
+                severity="secondary"
+                [text]="true"
+                size="small"
+                pTooltip="Show filters"
+                tooltipPosition="bottom"
+                (onClick)="showFilter = true">
+                </p-button>
+        </div>
+
+        
+        <!-- ===== RESULTS PANEL (70%) ===== -->
+        <div class="flex-1 overflow-auto min-w-0">
+            
+            <!-- Loading skeleton -->
+            <ng-container *ngIf="loadingSchedules">
+                <div *ngFor="let i of [1,2,3,4,5]" class="flex align-items-center gap-3 mb-3">
+                    <p-skeleton width="60%" height="1.5rem"></p-skeleton>
+                    <p-skeleton shape="circle" size="1.8rem"></p-skeleton>
+                    <p-skeleton width="20%" height="1.5rem"></p-skeleton>
+                </div>
+            </ng-container>
+
+            <!-- Empty state -->
+            <div *ngIf="!loadingSchedules && schedules.length === 0"
+                class="flex flex-column align-items-center justify-content-center text-center text-gray-400 py-6 gap-3"
+                style="min-height: 300px;">
+                <i class="pi pi-filter text-5xl"></i>
+                <p class="text-sm m-0">
+                    Select a date range and click <strong>Show</strong> to view schedules.
+                </p>
+            </div>
+
+            <p-table
+                *ngIf="!loadingSchedules && schedules.length > 0"
+                [value]="schedules"
+                dataKey="slotID"
+                [scrollable]="true"
+                scrollHeight="600px"
+                responsiveLayout="scroll"
+                class="p-datatable-sm">
+
+                <ng-template pTemplate="header">
+                    <tr>
+
+                        <th pSortableColumn="dateSlot">
+                            Date
+                            <p-sortIcon field="dateSlot" />
+                        </th>
+
+                        <th pSortableColumn="shiftName">
+                            <div class="flex justify-between items-center">
+                                Shift
+
+                                <p-columnFilter
+                                    field="shiftName"
+                                    matchMode="in"
+                                    display="menu"
+                                    [showMatchModes]="false"
+                                    [showOperator]="false"
+                                    [showAddButton]="false">
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Shift Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect
+                                            [ngModel]="value"
+                                            [options]="shiftOption"
+                                            optionLabel="shiftName"
+                                            optionValue="shiftName"
+                                            placeholder="Any"
+                                            class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+
+                                </p-columnFilter>
+
+                            </div>
+                        </th>
+
+                        <th pSortableColumn="hospitalName" style="min-width:12rem">
+                            <div class="flex justify-between items-center">
+                                Hospital
+
+                                <p-columnFilter
+                                    field="hospitalName"
+                                    matchMode="in"
+                                    display="menu"
+                                    [showMatchModes]="false"
+                                    [showOperator]="false"
+                                    [showAddButton]="false">
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Hospital Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect
+                                            [ngModel]="value"
+                                            [options]="hospitals"
+                                            optionLabel="hospitalName"
+                                            optionValue="hospitalName"
+                                            placeholder="Any"
+                                            class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+
+                                </p-columnFilter>
+
+                            </div>
+                        </th>
+
+                        <th pSortableColumn="sectionName">
+                            Section
+                            <p-sortIcon field="sectionName" />
+                        </th>
+
+                        <th pSortableColumn="schoolName" *ngIf="isAdmin()">
+                            <div class="flex justify-between items-center">
+                                School
+
+                                <p-columnFilter
+                                    field="schoolName"
+                                    matchMode="in"
+                                    display="menu"
+                                    [showMatchModes]="false"
+                                    [showOperator]="false"
+                                    [showAddButton]="false">
+
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">School Picker</span>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect
+                                            [ngModel]="value"
+                                            [options]="schools"
+                                            optionLabel="schoolName"
+                                            optionValue="schoolName"
+                                            placeholder="Any"
+                                            class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+
+                                </p-columnFilter>
+
+                            </div>
+                        </th>
+
+                        <th *ngIf="isAdmin()">
+                            Coordinator
+                        </th>
+                        <th *ngIf="isAdmin()">
+                            Clinical Instructor
+                        </th>
+
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-slot>
+                    <tr>
+
+                        <td>
+                            {{ slot.dateSlot | date:'yyyy-MM-dd' }}
+                        </td>
+
+                        <td>
+                            <p-tag
+                                [value]="slot.shiftName"
+                                [severity]="getShiftSeverity(slot.shiftName)"
+                                [rounded]="true">
+                            </p-tag>
+                        </td>
+
+                        <td>
+                            {{ slot.hospitalName }}
+                        </td>
+
+                        <td>
+                            {{ slot.sectionName }} 
+                            <p-tag severity="info" class="p-5" [value]="slot.studentCount+' / ' + slot.allocation" [rounded]="true" />
+                        </td>
+
+                        <td *ngIf="isAdmin()">
+                            {{ slot.schoolName }}
+                        </td>
+
+                        <td *ngIf="isAdmin()">
+                            {{ slot.fullname }}
+                        </td>
+
+                        <td *ngIf="isAdmin()">
+                            {{ slot.ci_fullname }}
+                        </td>
+
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="8" class="text-center p-4 text-gray-400">
+                            No schedules found for the selected date range.
+                        </td>
+                    </tr>
+                </ng-template>
+
+            </p-table>
+        </div>
+    </div>
+
+
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="scheduleDialog = false">
+        </p-button>
+        <p-button
+            *ngIf="schedules && schedules.length > 0"
+            label="Print"
+            icon="pi pi-file-pdf"
+            severity="primary"
+            (onClick)="printAllStudent()"> 
+        </p-button>
+    </ng-template>
+
 </p-dialog>
 
 <p-confirmDialog [style]="{ width: '450px' }" acceptIcon="pi pi-check text-white" rejectIcon="pi pi-times text-white"

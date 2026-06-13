@@ -840,6 +840,14 @@ export class Schedule implements OnInit, OnChanges {
 
         return `${year}-${month}-${day}`;
     }
+    
+    formatDateFormal(date: string | Date): string {
+        return new Date(date).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
 
     toLocalDateString(date: Date): string {
         const year = date.getFullYear();
@@ -1002,7 +1010,7 @@ export class Schedule implements OnInit, OnChanges {
         this.api.getHospitals().subscribe({
             next: (hospitals) => {
                 this.hospitals = hospitals || [];
-                if (this.tokenPayload.role === 'UGR0005') {
+                if (this.isSupervisor()) {
                     this.hospitals = this.hospitals.filter((h: any) => h.hospitalID === this.user.hospitalID);
                 }
                 this.logger.printLogs('i', 'Hospitals loaded', this.hospitals)
@@ -2600,11 +2608,22 @@ export class Schedule implements OnInit, OnChanges {
                 const startDate = this.formatDate(start);
                 const endDate = this.formatDate(end);
 
+                
                 this.logger.printLogs('i', 'Merged slots with attendance', mergedSlots);
+                const formattedStart = this.formatDateFormal(startDate);
+                const formattedEnd = this.formatDateFormal(endDate);
+
+                const subtitle =
+                    startDate === endDate
+                        ? `(${formattedStart})`
+                        : `(${formattedStart} – ${formattedEnd})`;
+
+                this.logger.printLogs('i', 'Merged slots with attendance', mergedSlots);
+
                 this.pdfService.generateAttendanceReportMulti(
                     'LIST OF ATTENDANCE',
-                    `(${this.dateFormat(startDate)} – ${this.dateFormat(endDate)})`,
-                    mergedSlots
+                    subtitle,
+                    mergedSlots, 
                 );
 
                 // this.printAttDialogVisible = false;

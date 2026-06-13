@@ -268,8 +268,7 @@
                         </td>
                         <td>{{ slot.hospitalName }}</td>
                         <td>{{ slot.sectionName }}
-                            
-                    <p-tag severity="info" class="p-5" [value]="slot.studentCount+' / ' + slot.allocation" [rounded]="true" />
+                            <p-tag severity="info" class="p-5" [value]="slot.studentCount+' / ' + slot.allocation" [rounded]="true" />
                         </td>
                         <td>{{ slot.schoolName }}</td>
                         <td>
@@ -465,7 +464,7 @@
 
 </div>
 
-<!-- Post Schedule -->
+<!-- Schedule Form -->
 <p-dialog header="Post Schedule" [(visible)]="itemDialog" [style]="{ width: '450px' }" [modal]="true" [closable]="true" [dismissableMask]="true" >
     <ng-template #content>
         <div class="flex flex-col gap-6">
@@ -1554,6 +1553,10 @@
                 dateFormat="yyyy-MM-dd"
                 placeholder="Select date range">
             </p-datepicker>
+            <!-- HINT -->
+            <p class="mt-3 text-xs text-red-500">
+                * Choose a date range to filter and preview.
+            </p>
 
             <!-- OPTIONAL FILTERS -->
             <div *ngIf="printDateRange?.length === 2 && printDateRange?.[0] !== null && printDateRange?.[1] !== null"
@@ -1609,10 +1612,6 @@
 
             </div>
 
-            <!-- HINT -->
-            <p class="mt-3 text-xs text-red-500">
-                * Choose a date range to filter and preview.
-            </p>
 
             <!-- FILTER SUMMARY -->
             <div *ngIf="printDateRange?.length === 2"
