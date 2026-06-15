@@ -117,6 +117,28 @@
 
         </div>
 
+        
+        <!-- Maintenance Activation -->
+
+        <div class="flex items-center justify-between">
+
+            <div>
+                <div class="font-medium">
+                    Maintenance Mode
+                </div>
+
+                <div class="text-sm text-muted-color">
+                    Activate or Inactive Maintenance Mode
+                </div>
+            </div>
+
+            <p-toggleswitch
+                [ngModel]="getBool('ActivateMaintenance')"
+                (ngModelChange)="setBool('ActivateMaintenance', $event)">
+            </p-toggleswitch>
+
+        </div>
+
     </div>
 
     <div class="flex justify-end mt-8">

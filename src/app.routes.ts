@@ -14,6 +14,8 @@ import { ResetExpired } from '@/pages/auth/reset-expired.component';
 import { ConfirmSlots } from '@/pages/post/confirm-slot';
 import { ScheduleTokenConfrimationResolver } from '@/helper/resolver/schedule.token.confirmation.resolver';
 import { Angular } from '@/pages/temp/angular';
+import { Maintenance } from '@/pages/maintenance/maintenance';
+import { maintenanceGuard } from '@/helper/guard/maintenance.guard';
 
 
 export const appRoutes: Routes = [
@@ -23,7 +25,7 @@ export const appRoutes: Routes = [
         path: 'dashboard',
         component: AppLayout,
         resolve: { user: UserResolver },
-        canActivate: [authGuard],
+        canActivate: [authGuard, maintenanceGuard],
         data: { title: 'Dashboard' },
         children: [
             { path: '', component: Dashboard },
@@ -50,7 +52,11 @@ export const appRoutes: Routes = [
     { path: 'confirm-success', component: ConfirmAppointmentSuccess },
     // { path: 'landing', component: Landing },
     { path: 'notfound', component: Notfound },
-    { path: 'angular', component: Angular},
+    { path: 'angular', component: Angular },
+    {
+        path: 'maintenance',
+        component: Maintenance
+    },
     // { path: 'auth', loadChildren: () => import('./app/pages/auth/auth.routes') },
     { path: '**', redirectTo: '/notfound' },
 

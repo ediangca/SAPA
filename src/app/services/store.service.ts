@@ -31,6 +31,10 @@ export class StoreService {
     return this.user$.asObservable();
   }
 
+  getCurrentUser() {
+    return this.user$.getValue();
+  }
+
   public getUserPayload() {
     return this.tokenPayload$.asObservable();
   }
@@ -176,11 +180,15 @@ export class StoreService {
   setSettings(settings: Record<string, string>) {
 
     this.logger.printLogs(
-        'i',
-        'System Settings Loaded',
-        settings
+      'i',
+      'System Settings Loaded',
+      settings
     );
     this.settings$.next(settings);
+  }
+
+  getAllSettings(): Record<string, string> {
+    return this.settings$.getValue();
   }
 
   getSettings() {
@@ -198,4 +206,20 @@ export class StoreService {
   getNumberSetting(key: string): number {
     return Number(this.settings$.getValue()[key] ?? 0);
   }
+
+  isMaintenanceMode(): boolean {
+
+    const enabled =
+      this.getBooleanSetting('ActivateMaintenance');
+
+    this.logger.printLogs(
+      'i',
+      'Maintenance Mode',
+      enabled
+    );
+
+    return enabled;
+  }
+
+
 }

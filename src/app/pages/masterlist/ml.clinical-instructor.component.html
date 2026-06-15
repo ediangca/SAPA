@@ -274,13 +274,14 @@
 <p-dialog
     [(visible)]="scheduleDialog"
     [modal]="true"
+    [maximizable]="true"
     [style]="{width:'70vw'}"
     header="Clinical Instructor Schedule">
 
     <div class="flex flex-row gap-4 w-full" style="min-height: 500px;">
 
-        <!-- ===== FILTER PANEL (30%) ===== -->
-        <div *ngIf="showFilter" style="width: 30%; min-width: 260px;" class="flex-shrink-0">
+        <!-- ===== FILTER PANEL (25%) ===== -->
+        <div *ngIf="showFilter" style="width: 25%; min-width: 260px;" class="flex-shrink-0">
 
             <!-- Header row -->
             <div class="flex align-items-center justify-between mb-3">
@@ -393,7 +394,7 @@
         </div>
 
         
-        <!-- ===== RESULTS PANEL (70%) ===== -->
+        <!-- ===== RESULTS PANEL (75%) ===== -->
         <div class="flex-1 overflow-auto min-w-0">
             
             <!-- Loading skeleton -->
@@ -415,14 +416,38 @@
                 </p>
             </div>
 
-            <p-table
+            <p-table #st
                 *ngIf="!loadingSchedules && schedules.length > 0"
                 [value]="schedules"
-                dataKey="slotID"
+                [rows]="100" [columns]="cols_schedule" [paginator]="true" [showGridlines]="true"
+                [globalFilterFields]="['slotID', 'shiftName', 'hospitalName', 'sectionName', 'fullname', 'ci_fullname']" [tableStyle]="{ 'min-width': '75rem'}"
+                [rowHover]="true" dataKey="slotID"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Schedule"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" paginatorDropdownAppendTo="body"
+                scrollable="true" scrollHeight="flex" 
                 [scrollable]="true"
-                scrollHeight="600px"
-                responsiveLayout="scroll"
+                scrollHeight="600px" scrollHeight="flex"
                 class="p-datatable-sm">
+
+                <ng-template pTemplate="caption">
+                    <div class="flex items-center justify-between">
+                        <h5 class="m-0 text-primary-900">List of Schedule Assigned</h5>
+                        <p-iconfield>
+                            <p-inputicon styleClass="pi pi-search" />
+                            <input pInputText type="text" [(ngModel)]="schedule_filter" (input)="onScheduleFilter(st)"
+                                placeholdernewsupdates="Search..." />
+                            @if (schedules && schedules.length > 0) {
+                            <p-inputicon styleClass="pi pi-times cursor-pointer" style="margin-left: -1.5rem;"
+                                (click)="clearScheduleFilter(st)" />
+                            }
+                            <p-button class="mx-2" icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
+                                (click)="loadSchedules()" />
+                            <p-button *ngIf="schedules && schedules.length > 0" label="Print" icon="pi pi-print" severity="info" rounded="true"
+                                pTooltip="Export" (onClick)="printAllStudent()" />
+                        </p-iconfield>
+
+                    </div>
+                </ng-template>
 
                 <ng-template pTemplate="header">
                     <tr>
@@ -607,13 +632,6 @@
 
     <ng-template pTemplate="footer">
         <p-button label="Cancel" icon="pi pi-times" [text]="true" (onClick)="scheduleDialog = false">
-        </p-button>
-        <p-button
-            *ngIf="schedules && schedules.length > 0"
-            label="Print"
-            icon="pi pi-file-pdf"
-            severity="primary"
-            (onClick)="printAllStudent()"> 
         </p-button>
     </ng-template>
 

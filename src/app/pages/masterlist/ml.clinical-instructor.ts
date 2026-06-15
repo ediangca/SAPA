@@ -117,6 +117,7 @@ export class ClinicalInstructor implements OnInit {
 
     // model: MenuItem[] = [];
     filter: string = '';
+    schedule_filter: string = '';
     tokenPayload: any | null;
 
     roles: any | [];
@@ -141,6 +142,7 @@ export class ClinicalInstructor implements OnInit {
     scheduleDialog = false;
     scheduleRange: Date[] = [];
     schedules: any[] = [];
+    cols_schedule!: Column[];
 
     c: boolean = false;
     r: boolean = false;
@@ -234,6 +236,14 @@ export class ClinicalInstructor implements OnInit {
             { field: 'email', header: 'Email' },
             { field: 'role', header: 'Role' },
             { field: 'status', header: 'Status' },
+        ];
+        
+        this.cols_schedule = [
+            { field: 'slotID', header: 'ID', customExportHeader: 'Slot ID' },
+            { field: 'shiftName', header: 'Shift' },
+            { field: 'hospitalName', header: 'Hospital' },
+            { field: 'fullname', header: 'Coordinator' },
+            { field: 'ci_fullname', header: 'Clinical Instructor' },
         ];
 
 
@@ -415,9 +425,17 @@ export class ClinicalInstructor implements OnInit {
     onGlobalFilter(table: Table) {
         table.filterGlobal(this.filter, 'contains');
     }
+    
+    onScheduleFilter(table: Table) {
+        table.filterGlobal(this.schedule_filter, 'contains');
+    }
 
     clear(table: Table,) {
         this.filter = ''
+        table.clear();
+    }
+    clearScheduleFilter(table: Table,) {
+        this.schedule_filter = ''
         table.clear();
     }
 

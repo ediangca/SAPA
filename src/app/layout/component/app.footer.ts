@@ -1,7 +1,15 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { FloatingUsers } from "./app.floatingusers.onlinestatus";
+import { StoreService } from '@/services/store.service';
+import { CommonModule } from '@angular/common';
+import { LogsService } from '@/services/logs.service';
 
 @Component({
     standalone: true,
+    imports: [
+        CommonModule,
+        FloatingUsers
+    ],
     selector: 'app-footer',
     template: `
     <div class="layout-footer border-t border-gray-200 dark:border-gray-800 p-4 w-full">
@@ -55,6 +63,34 @@ import { Component } from '@angular/core';
 
     </div>
 
-</div>`
+</div>
+
+@if(isAdmin()){
+    <app-floating-users />
+}
+
+
+`,
 })
-export class AppFooter { }
+export class AppFooter implements OnInit {
+
+
+    private user: any = null;
+
+    constructor(private store: StoreService, private logger: LogsService) {
+
+        this.user = this.store.getCurrentUser();
+
+        this.logger.printLogs('i', 'Footer current user', this.user);
+    }
+
+    ngOnInit() {
+    }
+
+    isAdmin() {
+        return this.user?.roleID === 'UGR0001' || this.user?.roleID === 'UGR0002';
+    }
+
+
+
+}

@@ -30,7 +30,7 @@ export class AuthService {
 
   constructor(private http: HttpClient, private router: Router,
     private logger: LogsService, private store: StoreService,
-    private api: ApiService, private loading: LoadingService, 
+    private api: ApiService, private loading: LoadingService,
     private toast: NgToastService, private heartbeatService: HeartbeatService,
     // private errorHandler: HttpErrorHandler
   ) {
@@ -67,6 +67,31 @@ export class AuthService {
   // }
 
   login(credentials: any): Observable<any> {
+
+    const user =
+      this.store.getCurrentUser();
+
+    const maintenance =
+      this.store.getBooleanSetting('ActivateMaintenance');
+
+    if (maintenance) {
+
+      const isAdmin =
+        user?.roleName === 'System Administrator' ||
+        user?.roleID === 'UGR0001';
+
+      if (!isAdmin) {
+
+        this.api.showToast(
+          'System is currently under maintenance.',
+          'Maintenance',
+          'warning'
+        );
+        this.router.createUrlTree(['/maintenance']);
+      }
+
+    }
+
     this.loading.setLoadingVisible(true);
     this.logger.printLogs('i', 'Logging in...', credentials);
 
@@ -258,7 +283,7 @@ export class AuthService {
       }
     );
   }
-  
+
   exit() {
     localStorage.clear();
     this.heartbeatService.stop();

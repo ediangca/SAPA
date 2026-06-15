@@ -1,13 +1,14 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, delay, finalize, map, Observable, tap, throwError } from 'rxjs';
+import { catchError, delay, finalize, map, Observable, of, switchMap, tap, throwError } from 'rxjs';
 import { Environment } from '../environment';
 import { LogsService } from './logs.service';
 import { NgToastService } from 'ng-angular-popup';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { LoadingService } from './loading.service';
 import { AuthService } from './auth.service';
+import { StoreService } from './store.service';
 // import { HttpErrorHandler } from '@/helper/handler/http-error-handler';
 
 
@@ -21,11 +22,36 @@ export class ApiService {
 
   private apiUrl: string = Environment.apiUrl;
 
+
   constructor(private http: HttpClient, private router: Router,
     private logger: LogsService, private toast: NgToastService,
     private loading: LoadingService
     // private errorHandler: HttpErrorHandler
-  ) { }
+
+  ) {
+
+    // const user =
+    //   this.store.getCurrentUser();
+
+    // const maintenance =
+    //   this.store.getBooleanSetting('ActivateMaintenance');
+
+    // if (maintenance) {
+
+    //   const isAdmin =
+    //     user?.roleName === 'Administrator' ||
+    //     user?.role === 'Administrator';
+
+    //   if (!isAdmin) {
+    //     this.showToast(
+    //       'System is currently under maintenance.',
+    //       'Maintenance',
+    //       'warning'
+    //     );
+    //     this.router.createUrlTree(['/maintenance']);
+    //   }
+    // }
+  }
 
 
   showToast(msg: string, title: string, type: 'success' | 'warning' | 'error' | 'info' = 'info') {
@@ -118,10 +144,43 @@ export class ApiService {
       params?: Record<string, any>;   // 🔥 NEW
       logAction?: string;
       minDuration?: number;
-    }
+    },
+    allowloading: boolean = true
   ): Observable<T> {
+
+    // const user =
+    //   this.store.getCurrentUser();
+
+    // const maintenance =
+    //   this.store.getBooleanSetting('ActivateMaintenance');
+
+    // if (maintenance) {
+    //   const isAdmin =
+    //     user?.roleName === 'System Administrator' ||
+    //     user?.roleID === 'UGR0001';
+
+    //   if (!isAdmin) {
+    //     this.showToast(
+    //       'System is currently under maintenance.',
+    //       'Maintenance',
+    //       'warning'
+    //     );
+
+    //     this.router.navigate(['/maintenance']);
+    //     return of(null as any).pipe(
+    //       tap(() => {
+    //         this.router.navigate(['/maintenance']);
+    //       }),
+    //       switchMap(() => throwError(() => new Error('System under maintenance')))
+    //     );
+    //   }
+    // }
+
     let responseData: any = null;
-    this.loading.setLoadingVisible(true);
+
+    if (allowloading) {
+      this.loading.setLoadingVisible(true);
+    }
 
     const {
       id,
@@ -208,8 +267,9 @@ export class ApiService {
     endpoint: string,
     body: string,
     logAction?: string,
-    minDuration: number = 500
+    minDuration: number = 500,
   ): Observable<T> {
+
     this.loading.setLoadingVisible(true);
 
     const url = `${this.apiUrl}${endpoint}/`;
@@ -418,8 +478,8 @@ export class ApiService {
   }
 
   /*----------------------- USERS -----------------------*/
-  getUsers() {
-    return this.handleRequest<any[]>('get', 'Users', { logAction: 'Fetching Users' });
+  getUsers(showloading: boolean = true) {
+    return this.handleRequest<any[]>('get', 'Users', { logAction: 'Fetching Users'}, showloading);
   }
 
   getOnlineUsers() {
@@ -625,7 +685,7 @@ export class ApiService {
     if (hospitalID) {
       params.hospitalID = hospitalID;
     }
-    
+
     return this.handleRequest<any[]>(
       'get',
       'Slots/clinical-instructor/' + ciid,

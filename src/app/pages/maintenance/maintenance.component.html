@@ -1,0 +1,106 @@
+
+<div class="maintenance-root">
+
+    <!-- Starfield canvas -->
+    <div class="stars-layer">
+        <span *ngFor="let s of stars" class="star"
+            [style.left.%]="s.x"
+            [style.top.%]="s.y"
+            [style.width.px]="s.size"
+            [style.height.px]="s.size"
+            [style.animationDelay]="s.delay"
+            [style.animationDuration]="s.duration">
+        </span>
+    </div>
+
+    <!-- Ambient orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Main content -->
+    <div class="content-wrapper">
+
+        <!-- Icon / gear cluster -->
+        <div class="gear-cluster">
+            <div class="gear gear-large">
+                <svg viewBox="0 0 100 100" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M43.3 5.8l-3.1 9.4a35.5 35.5 0 00-8.5 3.5L22.5 14 14 22.5l4.7 9.2a35.5 35.5 0 00-3.5 8.5l-9.4 3.1v12l9.4 3.1c.8 3 2 5.9 3.5 8.5L14 77.5 22.5 86l9.2-4.7c2.6 1.5 5.5 2.7 8.5 3.5l3.1 9.4h12l3.1-9.4a35.5 35.5 0 008.5-3.5l9.2 4.7L86 77.5l-4.7-9.2c1.5-2.6 2.7-5.5 3.5-8.5l9.4-3.1v-12l-9.4-3.1a35.5 35.5 0 00-3.5-8.5L86 22.5 77.5 14l-9.2 4.7a35.5 35.5 0 00-8.5-3.5l-3.1-9.4h-12z"
+                        stroke="currentColor" stroke-width="4"
+                        stroke-linejoin="round" />
+                    <circle cx="50" cy="50" r="15" stroke="currentColor"
+                        stroke-width="4" />
+                </svg>
+            </div>
+            <div class="gear gear-small">
+                <svg viewBox="0 0 100 100" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M43.3 5.8l-3.1 9.4a35.5 35.5 0 00-8.5 3.5L22.5 14 14 22.5l4.7 9.2a35.5 35.5 0 00-3.5 8.5l-9.4 3.1v12l9.4 3.1c.8 3 2 5.9 3.5 8.5L14 77.5 22.5 86l9.2-4.7c2.6 1.5 5.5 2.7 8.5 3.5l3.1 9.4h12l3.1-9.4a35.5 35.5 0 008.5-3.5l9.2 4.7L86 77.5l-4.7-9.2c1.5-2.6 2.7-5.5 3.5-8.5l9.4-3.1v-12l-9.4-3.1a35.5 35.5 0 00-3.5-8.5L86 22.5 77.5 14l-9.2 4.7a35.5 35.5 0 00-8.5-3.5l-3.1-9.4h-12z"
+                        stroke="currentColor" stroke-width="4"
+                        stroke-linejoin="round" />
+                    <circle cx="50" cy="50" r="15" stroke="currentColor"
+                        stroke-width="4" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Badge -->
+        <div class="badge">
+            <span class="badge-dot"></span>
+            <span>System Update in Progress</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="headline">
+            <span class="headline-line">Under</span>
+            <span class="headline-line accent">Maintenance</span>
+        </h1>
+
+        <!-- Subtext -->
+        <p class="subtext">
+            We're polishing every pixel and tuning every system.<br>
+            Something resolution is on its way.
+        </p>
+
+        <!-- Progress bar -->
+        <div class="progress-container">
+            <div class="progress-labels">
+                <span>Progress</span>
+                <span class="progress-pct">{{ progressValue }}%</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill"
+                    [style.width.%]="progressValue"></div>
+            </div>
+        </div>
+
+        <!-- Countdown -->
+        <div class="countdown-grid">
+            <div class="countdown-cell" *ngFor="let unit of countdown">
+                <div class="countdown-value">{{ unit.value }}</div>
+                <div class="countdown-label">{{ unit.label }}</div>
+            </div>
+        </div>
+
+        <!-- Notify strip -->
+        <!-- <div class="notify-strip">
+          <input type="email" class="notify-input" placeholder="your@email.com" />
+          <button class="notify-btn">Notify Me</button>
+        </div> -->
+
+        <!-- Social links -->
+        <div class="social-row">
+            <span class="social-label">Stay updated →</span>
+            <a href="https://www.facebook.com/peedodavnorofficial"
+                class="social-link">Facebook</a>
+            <!-- <a href="#" class="social-link">Discord</a>
+          <a href="#" class="social-link">GitHub</a> -->
+        </div>
+
+        <p-button class="mt-5" label="Go to Home page" routerLink="/" />
+
+    </div>
+</div>

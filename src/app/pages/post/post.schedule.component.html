@@ -1524,8 +1524,8 @@
 
     <div class="flex flex-row gap-4 w-full" style="min-height: 500px;">
 
-        <!-- ===== FILTER PANEL (30%) ===== -->
-        <div *ngIf="showFilter" style="width: 30%; min-width: 260px;" class="flex-shrink-0">
+        <!-- ===== FILTER PANEL (25%) ===== -->
+        <div *ngIf="showFilter" style="width: 25%; min-width: 260px;" class="flex-shrink-0">
 
             <!-- Header row -->
             <div class="flex align-items-center justify-between mb-3">
@@ -1695,7 +1695,7 @@
         <!-- ===== VERTICAL DIVIDER ===== -->
         <div class="border-left-1 surface-border flex-shrink-0"></div>
 
-        <!-- ===== RESULTS PANEL (70%) ===== -->
+        <!-- ===== RESULTS PANEL (75%) ===== -->
         <div class="flex-1 overflow-auto min-w-0">
 
             <!-- Loading skeleton -->
@@ -1919,6 +1919,7 @@
 
 </p-dialog>
 
+<!-- BILLING DIALOG -->
 <p-dialog
     header="Billing Report"
     [(visible)]="billingDialogVisible"
