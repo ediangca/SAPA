@@ -65,9 +65,9 @@ import { LogsService } from '@/services/logs.service';
 
 </div>
 
-@if(isAdmin()){
+<!-- @if(isAdmin()){
     <app-floating-users />
-}
+} -->
 
 
 `,
@@ -79,17 +79,17 @@ export class AppFooter implements OnInit {
 
     constructor(private store: StoreService, private logger: LogsService) {
 
-        this.user = this.store.getCurrentUser();
 
-        this.logger.printLogs('i', 'Footer current user', this.user);
     }
 
     ngOnInit() {
+        // this.user = this.store.getCurrentUser();
+        this.logger.printLogs('i', 'Footer current user', this.user);
     }
 
-    isAdmin() {
-        return this.user?.roleID === 'UGR0001' || this.user?.roleID === 'UGR0002';
-    }
+    // isAdmin() {
+    //     return this.user?.roleID === 'UGR0001' || this.user?.roleID === 'UGR0002';
+    // }
 
 
 

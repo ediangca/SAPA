@@ -807,10 +807,19 @@
 </p-dialog>
 
 <!-- Schedule Conflict -->
-<p-dialog header="Slot Conflict Detected" [(visible)]="showForceDialog" [modal]="true"  [closable]="true" [dismissableMask]="true"  
-    [style]="{ width: '90%', maxWidth: '1024px' }">
+<p-dialog header="Slot Conflict Detected" [(visible)]="showForceDialog" 
+    [modal]="true"
+    [closable]="true"
+    [dismissableMask]="true"
+    [maximizable]="true"
+    [style]="{
+        width: '80vw',
+        height: '80vh'
+    }"
+    contentStyleClass="h-full overflow-hidden p-0"
+    >
 
-    <p> <span class="text-red-500 font-bold">Note:</span> Some slots you requested already exist but are unconfirmed and
+    <p> <span class="text-red-500 font-bold">Note:</span> Some slots you requested already exist but are unconfirmed, to confirm cancel request and
         others is not avaliable.</p>
 
     <div class="overflow-auto" style="max-height: 60vh;">
@@ -863,9 +872,22 @@
 
                             <div class="flex flex-row justify-between">
                                 <span class="w-1/2 border border px-4 py-2">{{ blockedSlots[i].dateSlot |
-                                    date:'mediumDate' }} - {{ blockedSlots[i].shiftName }} </span>
+                                    date:'mediumDate' }} - {{ blockedSlots[i].shiftName }} 
+                                
+                                </span>
                                 <span class="w-1/2 border border px-4 py-2"> {{ blockedSlots[i].hospitalName }} ({{
                                     blockedSlots[i].sectionName }})</span>
+
+                                <span class="w-1/2 border border-gray-800 font-bold px-4 py-2"
+                                    [ngClass]="{
+                                        'text-blue-500': blockedSlots[i].status === 1,
+                                        'text-yellow-500': blockedSlots[i].status === 3
+                                    }"
+                                    >
+                                    {{ getStatus(blockedSlots[i].status, 'value') }}
+                                    <!-- <p-tag [value]="getStatus(blockedSlots[i].status,'value')"
+                                        [severity]="getStatus(blockedSlots[i].status,'severirty')" /> -->
+                                </span>
                             </div>
                             <!-- {{ blockedSlots[i].dateSlot | date:'mediumDate' }} - {{ blockedSlots[i].shiftName }} <br> 
                             {{ blockedSlots[i].hospitalName }} ({{ blockedSlots[i].sectionName }}) -->
@@ -887,21 +909,21 @@
     -->
     
         <!-- Add only available -->
-        <button *ngIf="availableSlots.length > 0 && existingSlots.length === 0"
-            pButton type="button" label="Add Available Only"
-            class="p-button-primary mr-2" (click)="addAvailableOnly()">
-        </button>
-
-        <!-- Force add available + unconfirmed -->
         <button *ngIf="availableSlots.length > 0 && existingSlots.length > 0"
-            pButton type="button" label="Add Available + Unconfirmed"
-            class="p-button-success mr-2" (click)="forceAddAll()">
+            pButton type="button" label="Add Available Only"
+            class="p-button-info mr-2" (click)="addAvailableOnly()">
         </button>
 
         <!-- Force add unconfirmed only -->
         <button *ngIf="existingSlots.length > 0"
             pButton type="button" label="Add Unconfirmed Only"
-            class="p-button-warning mr-2" (click)="forceAddSkippedOnly()">
+            class="p-button-warn mr-2" (click)="forceAddSkippedOnly()">
+        </button>
+
+        <!-- Force add available + unconfirmed -->
+        <button *ngIf="availableSlots.length > 0 && existingSlots.length > 0"
+            pButton type="button" label="Add Available + Unconfirmed"
+            class="p-button-primary mr-2" (click)="forceAddAll()">
         </button>
 
         <!-- Cancel -->

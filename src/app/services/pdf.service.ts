@@ -1377,9 +1377,10 @@ export class PdfService {
                 {
                   stack: [
                     { text: s.fullname ?? s.Fullname ?? '—', fontSize: 8 },
-                    { text: s.userID ?? s.UserID ?? '', fontSize: 7, color: '#999' }
+                    // { text: s.userID ?? s.UserID ?? '', fontSize: 7, color: '#999' }
                   ]
-                }
+                },
+                { text: s.email ?? s.email ?? '', fontSize: 8 }
               ]
               : [
                 { text: (i + 1).toString(), alignment: 'center', fontSize: 8 },
@@ -1420,13 +1421,14 @@ export class PdfService {
             ]];
 
           const widths = listOnly
-            ? ['10%', '90%']
+            ? ['10%', '60%', '30%']
             : ['6%', '52%', '22%', '20%'];
 
           const headerRow = listOnly
             ? [
               { text: '#', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' },
-              { text: 'Student Name', bold: true, fontSize: 9, fillColor: '#e8e8e8' }
+              { text: 'Student Name', bold: true, fontSize: 9, fillColor: '#e8e8e8' },
+              { text: 'Remarks', bold: true, fontSize: 9, fillColor: '#e8e8e8' }
             ]
             : [
               { text: '#', bold: true, fontSize: 9, alignment: 'center', fillColor: '#e8e8e8' },

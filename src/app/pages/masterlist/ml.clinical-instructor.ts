@@ -234,8 +234,8 @@ export class ClinicalInstructor implements OnInit {
             { field: 'UserID', header: 'ID', customExportHeader: 'User ID' },
             { field: 'fullname', header: 'Fullname' },
             { field: 'email', header: 'Email' },
-            { field: 'role', header: 'Role' },
             { field: 'status', header: 'Status' },
+            { field: 'date_Created', header: 'Date Created' },
         ];
         
         this.cols_schedule = [
@@ -960,6 +960,7 @@ export class ClinicalInstructor implements OnInit {
                             return {
                                 ...student,
                                 fullname: student.fullname ?? student.Fullname,
+                                email: student.email ?? student.email,
                                 hasAttendance: !!record,
                                 date_created: record?.dateCreated ?? record?.DateCreated ?? null
                             };

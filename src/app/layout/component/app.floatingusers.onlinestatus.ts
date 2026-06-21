@@ -16,7 +16,7 @@ interface User {
     standalone: true,
     imports: [CommonModule, ButtonModule, StyleClassModule],
     template: `
-        <div class="fixed bottom-4 right-4 z-50 flex flex-column align-items-end gap-2"
+        <div class="fixed bottom-20 right-4 z-50 flex flex-column align-items-end gap-2"
     [ngClass]="{ 'fixed': float() }">
 
     <!-- User List Panel -->
@@ -49,6 +49,7 @@ interface User {
                 (onClick)="togglePanel()" />
         </div>
 
+        <!-- Search -->
         <div class="p-3 border-b border-surface-200 dark:border-surface-700">
             <span class="relative block">
                 <i
@@ -134,6 +135,7 @@ interface User {
         severity="primary"
         [rounded]="true"
         (onClick)="togglePanel()"
+        label="Online Users"
         [badge]="onlineBadge()"
         badgeClass="p-badge-success" />
 

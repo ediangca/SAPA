@@ -4,7 +4,7 @@
     <div class="md:w-4/5">
         <div class="card"  [style]="{ height: 'calc(100vh - 12rem)'}">
             <p-table #dt [value]="users()" [rows]="100" [columns]="cols" [paginator]="true" [showGridlines]="true"
-                [globalFilterFields]="['userID', 'fullname', 'email', 'roleName', 'status', 'date_Created']" [tableStyle]="{ 'min-width': '75rem'}"
+                [globalFilterFields]="['userID', 'fullname', 'email', 'status', 'date_Created']" [tableStyle]="{ 'min-width': '75rem'}"
                 [(selection)]="selectUsers" [rowHover]="true" dataKey="userID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Clinical Instructors"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"  
@@ -420,7 +420,7 @@
                 *ngIf="!loadingSchedules && schedules.length > 0"
                 [value]="schedules"
                 [rows]="100" [columns]="cols_schedule" [paginator]="true" [showGridlines]="true"
-                [globalFilterFields]="['slotID', 'shiftName', 'hospitalName', 'sectionName', 'fullname', 'ci_fullname']" [tableStyle]="{ 'min-width': '75rem'}"
+                [globalFilterFields]="['slotID', 'shiftName', 'hospitalName', 'sectionName', 'fullname']" [tableStyle]="{ 'min-width': '75rem'}"
                 [rowHover]="true" dataKey="slotID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Schedule"
                 [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]" paginatorDropdownAppendTo="body"

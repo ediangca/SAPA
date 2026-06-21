@@ -10,20 +10,29 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AuthService } from '@/services/auth.service';
 import { StoreService } from '@/services/store.service';
 import { LogsService } from '@/services/logs.service';
+import { FloatingUsers } from "./app.floatingusers.onlinestatus";
+import { AppFloatingConfigurator } from "./app.floatingconfigurator";
 
 @Component({
     selector: 'app-layout',
     standalone: true,
-    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter, ProgressSpinnerModule],
+    imports: [CommonModule, AppTopbar, AppSidebar, RouterModule, AppFooter, ProgressSpinnerModule, FloatingUsers, AppFloatingConfigurator],
     template: `
     <div class="layout-wrapper" [ngClass]="containerClass">
         <app-topbar></app-topbar>
         <app-sidebar></app-sidebar>
         <div class="layout-main-container">
+            
+            <app-floating-configurator />
+
             <div class="layout-main">
                 <router-outlet></router-outlet>
             </div>
             <app-footer></app-footer>
+            
+            @if(isAdmin()){
+                <app-floating-users />
+            }
         </div>
         <div class="layout-mask animate-fadein"></div>
     </div> 
@@ -89,6 +98,12 @@ export class AppLayout implements OnInit, OnDestroy {
                 }
             });
             */
+        this.user = this.store.getCurrentUser();
+        this.logger.printLogs('i', 'Footer current user', this.user);
+    }
+
+    isAdmin() {
+        return this.user?.roleID === 'UGR0001' || this.user?.roleID === 'UGR0002';
     }
 
     isOutsideClicked(event: MouseEvent) {
