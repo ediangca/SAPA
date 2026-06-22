@@ -95,7 +95,8 @@ export const STATUS_TRANSITIONS: Record<number, number[]> = {
     ],
 
     [SLOT_STATUS.CANCEL_REQUEST]: [
-        SLOT_STATUS.CANCELED
+        SLOT_STATUS.CANCELED,
+        SLOT_STATUS.CONFIRM
     ],
 
     [SLOT_STATUS.CANCELED]: [
@@ -693,6 +694,10 @@ export class Schedule implements OnInit, OnChanges {
         this.logger.printLogs('i', 'Selected CI ID : ', CIID);
     }
 
+    isSysAdmin(): boolean {
+        return this.tokenPayload.role === 'UGR0001';
+    }
+
     isAdmin(): boolean {
         return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
     }
@@ -840,7 +845,7 @@ export class Schedule implements OnInit, OnChanges {
 
         return `${year}-${month}-${day}`;
     }
-    
+
     formatDateFormal(date: string | Date): string {
         return new Date(date).toLocaleDateString('en-US', {
             month: 'long',
@@ -1344,12 +1349,22 @@ export class Schedule implements OnInit, OnChanges {
             rejectButtonStyleClass: 'p-button-secondary p-button-outlined',
 
             accept: () => {
+                const isdisplayEventDialog = this.displayEventDialog;
+                const isDayDialogVisible = this.dayDialog;
+                if (this.displayEventDialog) {
+                    this.displayEventDialog = false;
+                }
+                if (this.dayDialog) {
+                    this.dayDialog = false;
+                }
+
                 this.api.updateSlotStatus(status, slotIDs).subscribe({
                     next: (res: any) => {
-
                         this.selectSlots = [];
                         this.showErrorAlert("Status Saved", res.message ?? 'Slot status updated.', false, "success")
                         this.loadSlots();
+                        this.dayDialog = isDayDialogVisible;
+                        this.displayEventDialog = isdisplayEventDialog;
                     },
                     error: (err: any) => {
                         this.showErrorAlert("Status Failed to Updadte", err.message ?? 'Failed to update slot status.', false, "warning")
@@ -1758,10 +1773,8 @@ export class Schedule implements OnInit, OnChanges {
         return item.userID;
     }
 
-
-    openAttendance(slot: any, studentID: string | null = null) {
-
-        this.slot = slot;
+    //  studentID: string | null = null,
+    openAttendance(slot: any) {
 
         this.logger.printLogs('i', 'Attendance for Slot:', slot);
         this.slot = slot;
@@ -1769,7 +1782,6 @@ export class Schedule implements OnInit, OnChanges {
         // this.dayDialog = false;
         // this.displayEventDialog = false;
         // this.manageStudentDialog = false;
-        this.manageAttendanceDialog = true;
 
         if (!slot?.slotID) return;
 
@@ -1784,7 +1796,21 @@ export class Schedule implements OnInit, OnChanges {
 
                 this.attendanceRecords = res.attendance;
 
-                // 🔥 Merge logic
+                if (res.students.length < 1) {
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'No Student Appointed',
+                        detail: 'No Student appointed to this Schedule',
+                        life: 3000
+                    });
+
+                    this.loadingAttendance = false; 
+                    return
+
+                }
+
+                this.manageAttendanceDialog = true;
+
                 this.appointedStudents = res.students.map(student => {
                     ;
 
@@ -1987,8 +2013,8 @@ export class Schedule implements OnInit, OnChanges {
                     next: (res: any) => {
                         this.logger.printLogs('i', 'All appointed students removed from schedule successfully', res);
                         // this.showErrorAlert('Successful', res.message, false, 'success');
-                        
-                         this.messageService.add({
+
+                        this.messageService.add({
                             severity: 'success',
                             summary: 'Students Removed',
                             detail: 'All appointed students have been removed from this schedule.',
@@ -1999,7 +2025,7 @@ export class Schedule implements OnInit, OnChanges {
                     error: (err) => {
                         this.logger.printLogs('e', 'Failed to remove all appointed students from schedule', err);
                         // this.showErrorAlert('Removal Appointed Students Failed', err, false, 'error');
-                    this.messageService.add({
+                        this.messageService.add({
                             severity: 'error',
                             summary: 'Failed to Remove Appointed Students',
                             detail: err.message || 'Failed to remove appointed students from this schedule.',
@@ -2236,9 +2262,21 @@ export class Schedule implements OnInit, OnChanges {
 
         if (!this.slot) return;
 
+        // if (this.appointedStudents.length < 1) {
+
+        //     this.messageService.add({
+        //         severity: 'warn',
+        //         summary: 'No Student Appointed',
+        //         detail: 'No Student appointed to this Schedule',
+        //         life: 3000
+        //     });
+        //     return
+        // }
+
         const slotInfo = `${this.dateFormat(this.slot.dateSlot)} - ${this.slot.hospitalName} (${this.slot.sectionName})`;
 
         const slotsArray = this.appointedStudents; // already contains slot + student merged
+
 
         const attendanceRecords = this.appointedStudents
             .filter(s => s.hasAttendance)
@@ -2246,6 +2284,7 @@ export class Schedule implements OnInit, OnChanges {
                 userID: s.userID,
                 dateCreated: s.date_created
             }));
+
 
         this.pdfService.generateAttendanceReport(
             `Attendance Report`,
@@ -2550,6 +2589,11 @@ export class Schedule implements OnInit, OnChanges {
         });
     }
 
+    printSlotAttendance(slot: any) {
+        this.openAttendance(slot)
+        this.printAttendance()
+    }
+
     async printAllAttendance() {
         const slots = this.filteredSlots();
         if (!slots.length) return;
@@ -2608,7 +2652,7 @@ export class Schedule implements OnInit, OnChanges {
                 const startDate = this.formatDate(start);
                 const endDate = this.formatDate(end);
 
-                
+
                 this.logger.printLogs('i', 'Merged slots with attendance', mergedSlots);
                 const formattedStart = this.formatDateFormal(startDate);
                 const formattedEnd = this.formatDateFormal(endDate);
@@ -2623,7 +2667,7 @@ export class Schedule implements OnInit, OnChanges {
                 this.pdfService.generateAttendanceReportMulti(
                     'LIST OF ATTENDANCE',
                     subtitle,
-                    mergedSlots, 
+                    mergedSlots,
                 );
 
                 // this.printAttDialogVisible = false;

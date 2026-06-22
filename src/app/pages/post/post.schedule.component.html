@@ -786,7 +786,16 @@
                         label="Confirm Cancel Request"
                         icon="pi pi-check"
                         severity="danger"
+                        pTooltip="Confirm Cancel Request"
                         (click)="changeStatus(4, selectedEvent)">
+                    </p-button>
+                    
+                    <p-button 
+                        label="Revoke Cancel Request"
+                        icon="pi pi-file-import" 
+                        severity="danger"
+                        [outlined]="true"
+                        pTooltip="Revoke Cancel Request" tooltipPosition="top" (click)="changeStatus(1, slot)">
                     </p-button>
                 }
 
@@ -934,7 +943,7 @@
 </p-dialog>
 
 <!-- Schedule Selected Day -->
-<p-dialog  [(visible)]="dayDialog" [header]="'Schedules (' + selectedDay + ')' " [closable]="true" [dismissableMask]="true"  modal [style]="{ width: '70vw' }"
+<p-dialog  [header]="'Schedules (' + selectedDay + ')'" [(visible)]="dayDialog" [closable]="true" [dismissableMask]="true"  modal [style]="{ width: '70vw' }"
     [resizable]="false">
     <!-- <div class="flex justify-start gap-4 pl-4 py-3">
         <div class="flex items-center gap-2">
@@ -1110,15 +1119,20 @@
                     <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
                     (click)="onEventClick(slot)" />
 
-                    @if (canRequestCancel(slot) && !isWithinTwoWeeks(slot.dateSlot)) {
+                    <!-- @if (canRequestCancel(slot) && !isWithinTwoWeeks(slot.dateSlot)) { -->
+                    @if (slot.slotStatus === 1  && (isSysAdmin() || isSchoolCoordinator() ) && !isWithinTwoWeeks(slot.dateSlot)) {
                     <!-- STUDENT: Request Cancel -->
                     <p-button icon="pi pi-file-export" severity="warn" [rounded]="true" [outlined]="true"
                         pTooltip="Request to Cancel" tooltipPosition="top" (click)="changeStatus(3, slot)">
                     </p-button>
-                    } @else if (canApproveCancel(slot)) {
+                    <!-- } @else if (canApproveCancel(slot)) { -->
+                    } @else if (slot.slotStatus === 3 && isAdmin()) {
                     <!-- ADMIN / COORDINATOR: Approve Cancel -->
                     <p-button icon="pi pi-check" severity="danger" [rounded]="true" [outlined]="true"
                         pTooltip="Confirm Cancel Request" tooltipPosition="top" (click)="changeStatus(4, slot)">
+                    </p-button>
+                    <p-button icon="pi pi-file-import" severity="danger" [rounded]="true" [outlined]="true"
+                        pTooltip="Revoke Cancel Request" tooltipPosition="top" (click)="changeStatus(1, slot)">
                     </p-button>
                     }
 
@@ -1223,7 +1237,7 @@
                             <span class="font-medium text-sm">{{ item.fullname }}</span>
                         </div>
                         <button p-button icon="pi pi-list-check" severity="info" rounded outlined="true" 
-                        pTooltip="Attendance" (click)="openAttendance(slot, item.userID)"></button>
+                        pTooltip="Attendance" (click)="openAttendance(slot)"></button>
                     </div>
                 </ng-template>
 
@@ -1415,7 +1429,7 @@
         </p-button>
         
         @if(isAdmin() || isSchoolCoordinator() || isClinicalInstructor() || isSupervisor()){
-            <p-button label="Print" icon="pi pi-file-pdf" (onClick)="printAttendance()">
+            <p-button label="Print" icon="pi pi-print" severity="info" (onClick)="printAttendance()">
             </p-button>
         }
     </ng-template>
@@ -1541,8 +1555,19 @@
 </p-dialog>
 
 <!-- PRINT ATTENDANCE DIALOG -->
-<p-dialog header="Print Attendance" contentStyleClass="h-full overflow-hidden p-0" [(visible)]="printAttDialogVisible" [modal]="true" [closable]="false"
-    [dismissableMask]="true" [style]="{ width: '100vw', height: '80vh', maxWidth: '1200px', minWidth: '600px' }">
+<p-dialog header="Print Attendance" 
+    [(visible)]="printAttDialogVisible" 
+    [modal]="true" 
+    [closable]="true"
+    [dismissableMask]="true"
+    [maximizable]="true"
+    [style]="{
+        width: '95vw',
+        height: '95vh'
+    }"
+    contentStyleClass="h-full overflow-hidden p-0" 
+    
+    >
 
     <div class="flex flex-row gap-4 w-full" style="min-height: 500px;">
 
@@ -1823,7 +1848,7 @@
                         <th pSortableColumn="slotID">
                             Appointed/ Attendance
                         </th>
-                        <th pSortableColumn="schoolName" style="min-width:10rem">
+                        <th *ngIf="isAdmin()" pSortableColumn="schoolName" style="min-width:10rem">
                             <div class="flex justify-between items-center">
                                 School
                                 <p-columnFilter field="schoolName" matchMode="in" display="menu"
@@ -1845,22 +1870,26 @@
                                 </p-columnFilter>
                             </div>
                         </th>
+                        
+                        <th *ngIf="isAdmin()">
+                            Incharge
+                        </th>
                     </tr>
                 </ng-template>
 
-                <ng-template pTemplate="body" let-student>
+                <ng-template pTemplate="body" let-slot>
                     <tr>
                         <td>
-                            {{ student.dateSlot | date:'yyyy-MM-dd' }}
+                            {{ slot.dateSlot | date:'yyyy-MM-dd' }}
                         </td>
                         <td>
-                            <p-tag [severity]="getShiftSeverity(student.shiftName)" class="p-5" [value]="student.shiftName" [rounded]="true" />
+                            <p-tag [severity]="getShiftSeverity(slot.shiftName)" class="p-5" [value]="slot.shiftName" [rounded]="true" />
                         </td>
                         <td class="text-center">
-                            {{ student.hospitalName }}
+                            {{ slot.hospitalName }}
                         </td>
                         <td class="text-center">
-                            {{ student.sectionName }}
+                            {{ slot.sectionName }}
                         </td>
                         <td class="text-center"><div
                                 class="flex flex-col items-center justify-center gap-2">
@@ -1869,7 +1898,7 @@
                                 <div class="flex items-center gap-1">
 
                                     <p-tag
-                                        [value]="student.studentCount + ' appointed'"
+                                        [value]="slot.studentCount + ' appointed'"
                                         severity="info">
                                     </p-tag>
 
@@ -1880,7 +1909,7 @@
                                         [text]="true"
                                         pTooltip="View Appointed Students"
                                         tooltipPosition="top"
-                                        (click)="openManageStudent(student)">
+                                        (click)="openManageStudent(slot)">
                                     </p-button>
 
                                 </div>
@@ -1889,7 +1918,7 @@
                                 <div class="flex items-center gap-1">
 
                                     <p-tag
-                                        [value]="student.attendedStudentCount + ' present'"
+                                        [value]="slot.attendedStudentCount + ' present'"
                                         severity="success">
                                     </p-tag>
 
@@ -1900,15 +1929,28 @@
                                         [text]="true"
                                         pTooltip="View Attendance"
                                         tooltipPosition="top"
-                                        (click)="openAttendance(student)">
+                                        (click)="openAttendance(slot)">
                                     </p-button>
 
                                 </div>
 
                             </div>
                         </td>
-                        <td class="text-center">
-                            {{ student.schoolName }}
+                        <td *ngIf="isAdmin()" class="text-center">
+                            {{ slot.schoolName }}
+                        </td>
+                        
+                        <td *ngIf="isAdmin()">
+                            <div class="flex flex-col items-start gap-1">
+                                <div>
+                                    <span>Coordinator : </span>
+                                    <span class="font-bold italic">{{ slot.fullname }}</span>
+                                </div>
+                                <div>
+                                    <span>Clinical Instructor :</span> 
+                                    <span class="font-bold italic">{{ slot.ci_fullname }}</span>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 </ng-template>
@@ -1932,9 +1974,9 @@
         </p-button>
         <p-button
             *ngIf="filteredSlots() && filteredSlots().length > 0"
-            label="Print"
-            icon="pi pi-file-pdf"
-            severity="primary"
+            label="Print All"
+            icon="pi pi-print"
+            severity="info"
             (onClick)="printAllAttendance()">
         </p-button>
     </ng-template>

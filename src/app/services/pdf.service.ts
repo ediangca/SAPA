@@ -1095,7 +1095,7 @@ export class PdfService {
 
 
   // Print Attendance Report
-  async generateAttendanceReport(title: string, slots: any[], attendanceRecords: any[]) {
+  async generateAttendanceReport(title: string, slots: any[], attendanceRecords: any[], listOnly: boolean = false) {
     this.logger.printLogs('i', 'Generate Attendance Report', { title, attendanceRecords });
 
     // Ensure logos are loaded
