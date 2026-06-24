@@ -220,7 +220,7 @@ export function aggregateSlotsByDay(
 
   // logger.printLogs('d', 'Aggregating slots into events', { totalSlots: slots.length, roleID, currentUserID, currentSchoolID, currentHospitalID });
 
-  console.log('Aggregating slots into events', { totalSlots: slots.length, roleID, currentUserID, currentSchoolID, currentHospitalID });
+  // console.log('Aggregating slots into events', { totalSlots: slots.length, roleID, currentUserID, currentSchoolID, currentHospitalID });
 
   // 🔹 School Coordinator → only their school
   if (isSchoolCoordinator && currentSchoolID) {

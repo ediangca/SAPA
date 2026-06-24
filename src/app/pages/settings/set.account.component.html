@@ -20,8 +20,9 @@
                 </div>
 
                 <!-- Right: QR Code -->
+                 <!-- Show in SysAdmin, Students and CI -->
                 <div
-                    *ngIf="tokenPayload.role === 'UGR0004' || tokenPayload.role === 'UGR0006'"
+                    *ngIf="isSysAdmin() || isClinicalInstructor() || isIntern()"
                     class="shrink-0 text-center" (click)="openQrZoom()">
                     <qrcode
                         [qrdata]="user.userID"
@@ -103,7 +104,7 @@
 
                 <!-- School -->
                 <div
-                    *ngIf="isSchoolCoordinator() || isIntern()">
+                    *ngIf="isSchoolCoordinator() || isClinicalInstructor() || isIntern()">
                     <label
                         class="text-sm font-medium text-gray-600">School</label>
                     <div
@@ -119,7 +120,7 @@
                 </div>
 
                 <!-- Supervisor -->
-                <div *ngIf="tokenPayload.role === 'UGR0005'">
+                <div *ngIf="isSupervisor()">
                     <label
                         class="text-gray-600">Hospital</label>
                     <div
@@ -145,7 +146,7 @@
             </div>
 
             <div
-                *ngIf="tokenPayload.role === 'UGR0003' || tokenPayload.role === 'UGR0006'" 
+                *ngIf="isAdmin() || isSchoolCoordinator() || isClinicalInstructor()" 
                 class="mt-8 flex justify-center  border-2 border-dashed border-gray-300 rounded-lg p-5">
                 <div class=" w-full">
                 
@@ -341,13 +342,24 @@
 <p-dialog [(visible)]="showQrModal" [style]="{ width: 'auto' }"
     header="QR Code" [modal]="true">
     <ng-template #content>
-        <qrcode
-            [qrdata]="user.userID"
-            [width]="260"
-            [errorCorrectionLevel]="'M'"></qrcode>
-        <p class="text-center  text-primary">
-            Use this QR code for Attendance.
-        </p>
+        <div class="flex flex-col items-center gap-4">
+            <div #qrCodeElement>
+                <qrcode
+                    [qrdata]="user.userID"
+                    [width]="260"
+                    [errorCorrectionLevel]="'M'"></qrcode>
+            </div>
+
+            <p class="text-center text-primary">
+                Use this QR code for Attendance.
+            </p>
+
+            <p-button
+                label="Download QR"
+                icon="pi pi-download"
+                (onClick)="downloadQr()">
+            </p-button>
+        </div>
     </ng-template>
 
 </p-dialog>

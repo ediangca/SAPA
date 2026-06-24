@@ -60,7 +60,7 @@
                             Coordinator
                             <p-sortIcon field="coordinator" />
                         </th>
-                        <th pSortableColumn="status" style="min-width:10rem">
+                        <th pSortableColumn="status" style="min-width:5rem">
                             Status
                             <p-sortIcon field="status" />
                         </th>
@@ -84,9 +84,13 @@
                         <td style="min-width: 3rem">{{ school.schoolName }}</td>
                         <td style="min-width: 10rem">{{ school.address }}</td>
                         <td style="min-width: 3rem">{{ school.createdBy }}</td>
-                        <td style="min-width: 3rem">
-                            <p-tag [value]="getStatus(school.status,'value')"
-                                [severity]="getStatus(school.status,'severirty')" styleClass="dark:bg-surface-900!" />
+                        <td style="min-width: 5rem">
+                            <div class="flex flex-row justify-center gap-2">
+                                <p-tag class="w-full"
+                                    [value]="getStatus(school.status, 'value')"
+                                    [severity]="getStatus(school.status, 'severity')" 
+                                    styleClass="dark:bg-surface-900!" />
+                            </div>
                         </td>
                         <td style="min-width: 3rem">{{ school.code }}
                             <p-button icon="pi pi-copy" [rounded]="true"

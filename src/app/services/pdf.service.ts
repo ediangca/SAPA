@@ -1152,7 +1152,7 @@ export class PdfService {
 
               [
                 { text: 'DATE & SHIFT', bold: true, fontSize: 9, color: '#555', fillColor: '#f2f2f2' },
-                { text: slot?.dateSlot ? new Date(slot.dateSlot).toLocaleDateString() + ' - ' + (slot?.shiftName ? `${slot.shiftName} (${slot.startTime} - ${slot.endTime})` : '—') : '—', fontSize: 9 },
+                { text: slot?.dateSlot ? new Date(slot.dateSlot).toLocaleDateString() + ' - ' + (slot?.shiftName ? `${slot.shiftName} (${slot.startTime} - ${slot.endTime})` : '—') : '—', fontSize: 9, colSpan: 3 },
                 {},
                 {}
               ],
@@ -1239,11 +1239,70 @@ export class PdfService {
         // ===============================
         // 📈 SUMMARY
         // ===============================
+        // {
+        //   text: `Total: ${mergedData.length} | Present: ${presentCount} | Absent: ${absentCount}`,
+        //   bold: true,
+        //   fontSize: 10,
+        //   margin: [0, 5, 0, 0]
+        // }, 
         {
-          text: `Total: ${mergedData.length} | Present: ${presentCount} | Absent: ${absentCount}`,
-          bold: true,
-          fontSize: 10,
-          margin: [0, 5, 0, 0]
+          table: {
+            widths: ['16.66%', '16.66%', '16.66%', '16.66%', '16.66%', '16.66%',],
+            body: [
+
+              [
+
+                {
+                  text: 'Total',
+                  bold: true,
+                  fontSize: 8,
+                  color: '#333',
+                },
+                {
+                  text: `${mergedData.length}`,
+                  bold: true,
+                  fontSize: 8,
+                  color: '#333',
+                  alignment: 'left',
+                },
+                {
+                  text: 'Present',
+                  bold: true,
+                  fontSize: 8,
+                  color: 'green',
+                  alignment: 'center',
+                },
+                {
+                  text: `${presentCount}`,
+                  bold: true,
+                  fontSize: 8,
+                  color: 'green',
+                  alignment: 'left',
+                },
+                {
+                  text: 'Absent',
+                  bold: true,
+                  fontSize: 8,
+                  color: 'red',
+                  alignment: 'center'
+                },
+                {
+                  text: `${absentCount}`,
+                  bold: true,
+                  fontSize: 8,
+                  color: 'red',
+                  alignment: 'left',
+                }
+              ],
+            ]
+          },
+          layout: {
+            hLineWidth: () => 0.5, vLineWidth: () => 0.5,
+            hLineColor: () => '#ccc', vLineColor: () => '#ccc',
+            paddingLeft: () => 4, paddingRight: () => 4,
+            paddingTop: () => 3, paddingBottom: () => 3,
+          },
+          margin: [0, 0, 0, 3]
         }
       ],
 

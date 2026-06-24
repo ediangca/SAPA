@@ -177,7 +177,7 @@
                                 </p-columnFilter>
                             </div>
                         </th>
-                        <th pSortableColumn="schoolName" style="min-width:10rem">
+                        <th *ngIf="!isSchoolCoordinator() && !isClinicalInstructor()" pSortableColumn="schoolName" style="min-width:10rem">
                             <div class="flex justify-between items-center">
                                 School
                                 <p-columnFilter field="schoolName" matchMode="in" display="menu"
@@ -270,7 +270,7 @@
                         <td>{{ slot.sectionName }}
                             <p-tag severity="info" class="p-5" [value]="slot.studentCount+' / ' + slot.allocation" [rounded]="true" />
                         </td>
-                        <td>{{ slot.schoolName }}</td>
+                        <td *ngIf="!isSchoolCoordinator() && !isClinicalInstructor()">{{ slot.schoolName }}</td>
                         <td>
                             <p-tag [value]="getStatus(slot.slotStatus,'value')"
                                 [severity]="getStatus(slot.slotStatus,'severirty')" />
@@ -300,6 +300,7 @@
                         <td><p-skeleton width="7rem" height="1rem" /></td>
                         <td><p-skeleton width="7rem" height="1rem" /></td>
                         <td><p-skeleton width="5rem" height="1.4rem" borderRadius="1rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
                         <td><p-skeleton width="6rem" height="1rem" /></td>
                         <td><p-skeleton width="6rem" height="1rem" /></td>
                         <td>
@@ -1078,6 +1079,29 @@
                         </p-columnFilter>
                     </div>
                 </th>
+                
+                <th *ngIf="isAdmin()" pSortableColumn="fullname" style="min-width:10rem">
+                    <div class="flex justify-between items-center">
+                        Created By
+                        <p-columnFilter field="fullname" matchMode="in" display="menu"
+                            [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+
+                            <ng-template #header>
+                                <div class="px-3 pt-3 pb-0">
+                                    <span class="font-bold">Coordinator Picker</span>
+                                </div>
+                            </ng-template>
+
+                            <ng-template #filter let-value let-filter="filterCallback">
+                                <p-multiSelect [ngModel]="value" [options]="coordinators" optionLabel="fullname"
+                                    optionValue="fullname" placeholder="Any" class="w-full"
+                                    (onChange)="filter($event.value)">
+                                </p-multiSelect>
+                            </ng-template>
+
+                        </p-columnFilter>
+                    </div>
+                </th>
                 <th>
                     Action
                 </th>
@@ -1109,6 +1133,7 @@
                     <p-tag [value]="getStatus(slot.slotStatus, 'value')"
                         [severity]="getStatus(slot.slotStatus, 'severirty')" />
                 </td>
+                <td *ngIf="isAdmin()"><small class="block text-gray-500">{{ slot.fullname }}</small></td>
                 <td class="flex justify-content gap-2">
                     <!-- @if(canManageStudent(slot)){
                     <p-button icon="pi pi-users" severity="primary" [rounded]="true" [outlined]="true"

@@ -118,20 +118,21 @@
                         <td style="min-width: 10rem">{{ user.fullname }}</td>
                         <td style="min-width: 10rem">{{ user.email }}</td>
                         <td style="min-width: 10rem">{{ user.schoolName }}</td>
-                        <td style="min-width: 10rem">
-                            <p-tag [value]="getStatus(user.status,'value')"
-                                [severity]="getStatus(user.status,'severity')" styleClass="dark:bg-surface-900!" />
-                            <!-- @if (getStatus(user.status,'value').toLowerCase() == 'unverified') {
-                            <button class="ml-2" (click)="resendVerification(user)" pTooltip=" Resend Verification?"
-                                tooltipPosition="top"> <i
-                                    class="fa-solid fa-paper-plane text-blue-500 hover:animate-bounce transition-colors"></i>
-                            </button>
-                            }@else if (getStatus(user.status,'value').toLowerCase() == 'pending') {
-                            <button class="ml-2" (click)="approve(user)" pTooltip=" Approve Account?"
-                                tooltipPosition="top"> <i
-                                    class="fa-solid fa-thumbs-up text-blue-500 hover:animate-bounce transition-colors"></i>
-                            </button>
-                            } -->
+                        <td style="min-width: 7rem">
+                            <div class="flex flex-col justify-center gap-2">
+                                @if(user.status == 'U' || user.email_Verified_At == null){
+                                    <p-tag class="w-full" [value]="getStatus('U','value')"
+                                        [severity]="getStatus('U','severirty')" styleClass="dark:bg-surface-900!" />
+                                }
+                                @if(user.status == 'A') {
+                                    <p-tag class="w-full" [value]="getStatus(user.status,'value')"
+                                        [severity]="getStatus(user.status,'severirty')" styleClass="dark:bg-surface-900!" />
+                                }
+                                @if(user.status !== 'U' && user.status !== 'A') { 
+                                    <p-tag class="w-full" [value]="getStatus(user.status,'value')"
+                                        [severity]="getStatus(user.status,'severirty')" styleClass="dark:bg-surface-900!" />
+                                }
+                            </div>
                         </td>
                         <td style="min-width: 10rem">{{dateFormat(user.date_Created)}}</td>
                         <td *ngIf="r || s" >
@@ -141,12 +142,13 @@
                                 pTooltip="Edit" tooltipPosition="top" [rounded]="true" [outlined]="true"
                                     (click)="edit(user)" />
 
-                                @if (user.status === 'U' && s) {
+                                @if ((user.status == 'U' || user.email_Verified_At == null) && s) {
                                     <p-button *ngIf="d"  class="mr-2 hover:animate-bounce" icon="pi pi-trash" severity="danger" pTooltip="Delete" tooltipPosition="top"
                                     [rounded]="true" [outlined]="true" (click)="delete(user)" />
                                     <p-button class="mr-2 hover:animate-bounce" icon="fa fa-paper-plane" severity="info" pTooltip="Resend Verification"
                                     tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="resendVerification(user)" />
                                 }@else if(user.status === 'P' && s){
+                                    
                                     <p-button class="mr-2 hover:animate-bounce" icon="fa fa-thumbs-up" severity="info" pTooltip="Approve Account"
                                     tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="approve(user)" />
                                 }

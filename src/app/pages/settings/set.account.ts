@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -54,6 +54,8 @@ import { QRCodeComponent } from 'angularx-qrcode';
 })
 
 export class Account implements OnInit {
+
+    @ViewChild('qrCodeElement') qrCodeElement!: ElementRef<HTMLElement>;
 
     user!: any;
     tokenPayload: any | null;
@@ -156,6 +158,10 @@ export class Account implements OnInit {
                 usernameControl.setValue(filteredValue, { emitEvent: false });
             }
         }
+    }
+
+    isSysAdmin(): boolean {
+        return this.tokenPayload.role === 'UGR0001';
     }
     
     isAdmin(): boolean {
@@ -282,7 +288,8 @@ export class Account implements OnInit {
         if (this.user?.userID) {
             // ✅ UPDATE user
             let id = this.user.userID
-            this.user = this.form.value;
+            // this.user = this.form.value;
+            this.user = this.form.getRawValue(); // <-- fix here
             this.logger.printLogs('i', 'user details', this.user);
             this.api.updateUser(id, this.user).subscribe({
                 next: (res) => {
@@ -350,6 +357,22 @@ export class Account implements OnInit {
 
     }
 
+    downloadQr(): void {
+        const container = this.qrCodeElement.nativeElement;
+        const canvas = container.querySelector('canvas') as HTMLCanvasElement | null;
+        const img = container.querySelector('img') as HTMLImageElement | null;
+
+        const dataUrl = canvas ? canvas.toDataURL('image/png') : img?.src;
+        if (!dataUrl) return;
+
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = `MySAPAQRCode.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
     private showErrorAlert(title: string, message: any, dialogOpen: boolean, severity: 'success' | 'error' | 'warning' | 'info' | 'question' | undefined = 'info') {
 
         this.logger.printLogs(severity, title, message);
@@ -378,8 +401,8 @@ export class Account implements OnInit {
     private closeDialog() {
         this.itemDialog = false;
         this.form.reset({
-            email:  [{ value: '', disabled: true }, Validators.required],
-            username:  [{ value: '', disabled: true }, Validators.required],
+            email: [{ value: '', disabled: true }, Validators.required],
+            username: [{ value: '', disabled: true }, Validators.required],
         });
         this.user = {}; // reset form
     }

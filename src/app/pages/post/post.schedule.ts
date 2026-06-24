@@ -575,7 +575,7 @@ export class Schedule implements OnInit, OnChanges {
                         text: 'New Schedule',
                         click: () => {
                             // This function runs when the button is clicked
-                            console.log('Custom button clicked!');
+                            // console.log('Custom button clicked!');
                             // You can open a modal, add an event, etc.
                             this.openNew(null);
                         }
