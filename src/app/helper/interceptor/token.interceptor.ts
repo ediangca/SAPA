@@ -34,7 +34,7 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
 
     // catchError((err) => errorHandler.handle(err)),
-    
+
     catchError((err: any) => {
 
       let messages: any | null = null;
@@ -77,10 +77,11 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
           }
         } else if (err.status === 401) {
 
-          messages = err.error?.message || "Token is Expired!, Please login again!"; // Get the message from the error response
+          // messages = err.error?.message || "Token is Expired!, Please login again!"; // Get the message from the error response
+          messages = err.error?.message || "Either Token or Session Expired! Please login again!";
           // toast.warning("Token is Expired!, Please login again! " + err.status, "Warning!", 5000);
           toast.warning(messages, "Warning!", 5000);
-          // authService.exit();
+          authService.exit();
 
         } else if (err.status === 404) {
           messages = err.error?.message;
@@ -95,9 +96,9 @@ export const tokenInterceptor: HttpInterceptorFn = (req, next) => {
         }
       }
 
-      return throwError(() => messages );
+      return throwError(() => messages);
       // return throwError(() => new Error(`${messages! || err?.message || err.error?.message}`));
     })
-    
+
   );
 };

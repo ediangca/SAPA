@@ -288,7 +288,8 @@ export class AuthService {
     localStorage.clear();
     this.heartbeatService.stop();
     this.store.clearStore();
-    this.router.navigate(['']);
+    this.heartbeatService.stop();
+    this.router.navigate(['login']);
   }
 
   storeLocal(result: any) {
@@ -417,7 +418,7 @@ export class AuthService {
         }
       } else if (error.status === 401) {
 
-        errorMessage = error.error?.message || "Token is Expired!, Please login again!"; // Get the message from the error response
+        errorMessage = error.error?.message || "Either Token or Session is Expired!, Please login again!"; // Get the message from the error response
         // toast.warning("Token is Expired!, Please login again! " + err.status, "Warning!", 5000);
         this.toast.warning(errorMessage, "Warning!", 5000);
         this.exit();

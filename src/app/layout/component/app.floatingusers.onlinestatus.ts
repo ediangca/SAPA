@@ -3,12 +3,13 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { StyleClassModule } from 'primeng/styleclass';
 import { ApiService } from '@/services/api.service';
+import { LogsService } from '@/services/logs.service';
 
 interface User {
     userID: string;
     fullname: string;
     rolename: string;
-    isOnline: boolean;
+    onlineStatus: number; // 0 = Offline, 1 = Online, 2 = Away
 }
 
 @Component({
@@ -84,9 +85,11 @@ interface User {
                     <div
                         class="w-3 h-3 rounded-full"
                         [ngClass]="{
-                            'bg-green-500': user.isOnline,
-                            'bg-gray-400': !user.isOnline
-                        }"></div>
+                            'bg-green-500': user.onlineStatus === 1,
+                            'bg-yellow-500': user.onlineStatus === 2,
+                            'bg-gray-400': user.onlineStatus === 0
+                        }">
+                        </div>
 
                     <div>
                         <div class="font-medium text-sm">
@@ -146,21 +149,17 @@ interface User {
 export class FloatingUsers implements OnInit {
 
     private api = inject(ApiService);
+    private logger = inject(LogsService);
 
     float = input<boolean>(true);
-
     open = signal(false);
     users = signal<User[]>([]);
     searchTerm = signal('');
 
     ngOnInit() {
         this.loadUsers();
-
-        // optional auto refresh
         setInterval(() => this.loadUsers(), 10000);
     }
-
-
 
     togglePanel() {
         this.open.update(v => !v);
@@ -168,29 +167,40 @@ export class FloatingUsers implements OnInit {
 
     loadUsers() {
         this.api.getUsers(false).subscribe(users => {
+            // Sort: Online first, then Away, then Offline
+            const approvedUsers = users.filter(u => u.status === 'A');
 
-            users.sort((a, b) => {
-                if (a.isOnline === b.isOnline) return 0;
-                return a.isOnline ? -1 : 1;
-            });
+            approvedUsers.sort((a, b) => b.onlineStatus - a.onlineStatus);
 
-            this.users.set(users);
+            this.logger.printLogs('i', 'User Status List', approvedUsers);
+            this.users.set(approvedUsers);
         });
     }
 
-    onlineBadge = computed(() => {
-        const count = this.users().filter(x => x.isOnline).length;
+    getStatusColor(status: number): string {
+        switch (status) {
+            case 1: return 'bg-green-500';   // Online
+            case 2: return 'bg-yellow-400';  // Away
+            default: return 'bg-gray-400';   // Offline
+        }
+    }
 
+    getStatusLabel(status: number): string {
+        switch (status) {
+            case 1: return 'Online';
+            case 2: return 'Away';
+            default: return 'Offline';
+        }
+    }
+
+    onlineBadge = computed(() => {
+        const count = this.users().filter(x => x.onlineStatus === 1).length;
         return count > 99 ? '99+' : count.toString();
     });
 
     filteredUsers = computed(() => {
         const search = this.searchTerm().toLowerCase().trim();
-
-        if (!search) {
-            return this.users();
-        }
-
+        if (!search) return this.users();
         return this.users().filter(user =>
             user.fullname?.toLowerCase().includes(search) ||
             user.rolename?.toLowerCase().includes(search)

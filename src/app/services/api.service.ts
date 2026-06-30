@@ -487,7 +487,7 @@ export class ApiService {
   }
 
   getUserAccount(id: string) {
-    return this.handleRequest<any[]>('get', 'Users', { id: id, logAction: 'Fetching Users' });
+    return this.handleRequest<any[]>('get', 'Users', { id: id, logAction: 'Fetching User Account' });
   }
 
   GetUserbyUsername(userame: string): Observable<any> {

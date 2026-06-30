@@ -564,6 +564,7 @@ export class SchoolCoordinator implements OnInit {
         this.user = user;
         this.logger.printLogs('i', 'Edit users', user)
         this.form.patchValue(user);
+        this.selectedSchoolID = user.schoolID
         this.itemDialog = true;
     }
 

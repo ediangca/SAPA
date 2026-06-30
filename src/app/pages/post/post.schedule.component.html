@@ -281,8 +281,25 @@
                             <div class="flex gap-2">
                                 <p-button *ngIf="slot.slotStatus==0 && d" icon="pi pi-trash" severity="danger"
                                     [rounded]="true" [outlined]="true" (click)="delete(slot)" />
-                                <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
-                                    (click)="onEventClick(slot)" />
+                                
+                                <p-button icon="pi pi-eye" severity="info"
+                                [rounded]="true" 
+                                [outlined]="true"
+                                pTooltip="View Details"
+                                tooltipPosition="top"
+                                (click)="onEventClick(slot)" />
+
+                                @if(slot.slotStatus === 1 && slot.studentCount > 0){
+                                    <p-button
+                                        icon="pi pi-list-check"
+                                        severity="info"
+                                        [rounded]="true"
+                                        [outlined]="true"
+                                        pTooltip="Attendance"
+                                        tooltipPosition="top"
+                                        (click)="openAttendance(slot)">
+                                    </p-button>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -748,7 +765,7 @@
                     </p-button>
                 }
 
-                @if (isFutureDate(selectedEvent.dateSlot)) {
+                @if (selectedEvent.slotStatus === 1 && isFutureDate(selectedEvent.dateSlot)) {
                     <p-button
                         icon="pi pi-user-minus"
                         label="Remove All Appointed Students"
@@ -759,8 +776,8 @@
                     </p-button>
                 }
 
+                @if(selectedEvent.slotStatus === 1){
                 <p-button
-                    *ngIf="selectedEvent.slotStatus === 1"
                     label="Attendance"
                     icon="pi pi-list-check"
                     severity="info"
@@ -769,6 +786,7 @@
                     tooltipPosition="top"
                     (click)="openAttendance(selectedEvent)">
                 </p-button>
+                }
 
                 @if (selectedEvent.slotStatus == 1 && !isWithinTwoWeeks(selectedEvent.dateSlot)) {
                     <p-button
@@ -1283,13 +1301,14 @@
     <ng-template pTemplate="footer" to>
         <!-- Add only available -->
         
+        @if (canManageStudent(selectedEvent) && isFutureDate(selectedEvent.dateSlot)) {
+            <p-button label="Save" icon="pi pi-save" (onClick)="saveAssignStudentStudent()">
+            </p-button>
+        }
+
         <p-button label="Close" icon="pi pi-times" [text]="true" (onClick)="onCloseManageStudent()">
         </p-button>
         
-        <p-button label="Save" icon="pi pi-save" (onClick)="saveAssignStudentStudent()">
-        </p-button>
-        
-
     </ng-template>
 </p-dialog>
 
@@ -1342,7 +1361,7 @@
         </span>
         on
         <span class="block text-primary-500 font-bold">
-            {{ slot?.dateSlot ?? 'Date Slot' }}
+            {{ slot?.dateSlot ? dateFormat(slot.dateSlot) : 'Date Slot' }}
             ({{ slot?.shiftName ?? 'Shift Name' }})
         </span>.
     </p>

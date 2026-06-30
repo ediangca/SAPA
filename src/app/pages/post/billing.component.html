@@ -1,7 +1,7 @@
 <!-- billing.component.html -->
 
 <div
-    class="w-full h-full bg-surface-0 dark:bg-surface-900 p-4 md:p-6 flex flex-col overflow-hidden">
+    class="w-full h-full bg-surface-0 dark:bg-surface-900 pt-4 md:px-6 flex flex-col overflow-hidden">
 
     <!-- HEADER -->
     <div
@@ -59,6 +59,11 @@
                 icon="pi pi-search"
                 label="Load"
                 (click)="loadBilling()">
+            </p-button>
+            <p-button
+                icon="pi pi-filter-slash"
+                label="Clear"
+                (click)="clear()">
             </p-button>
 
         </div>
@@ -153,8 +158,8 @@
         <div
             class="sticky top-0 z-10 hidden md:grid grid-cols-12 px-5 py-3 text-sm font-semibold border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 shrink-0">
 
-            <div class="col-span-1">Date</div>
-            <div class="col-span-3">Hospital</div>
+            <div class="col-span-1">Date & Shift</div>
+            <div class="col-span-3">Hospital & Department</div>
             <div class="col-span-2">School</div>
             <div class="col-span-2">Coordinator</div>
             <div class="col-span-2">Clinical Instructor</div>
@@ -191,9 +196,9 @@
                     No billing records found
                 </div>
 
-                <div class="text-surface-500 text-sm mt-1">
+                <!-- <div class="text-surface-500 text-sm mt-1">
                     Try adjusting your filters
-                </div>
+                </div> -->
 
             </div>
 
@@ -419,4 +424,10 @@
 
     </div>
 
+    <div
+        class="border-t border-surface-200 dark:border-surface-700 p-4 flex justify-end shrink-0">
+        <p-button *ngIf="billingItems.length > 0"
+            label="Save Bill" icon="pi pi-money-bill" (onClick)="saveBill()">
+        </p-button>
+    </div>
 </div>

@@ -265,6 +265,10 @@ export class Student implements OnInit {
     isSchoolCoordinator(): boolean {
         return this.tokenPayload.role === 'UGR0003';
     }
+    
+    isClinicalInstructor(): boolean {
+        return this.tokenPayload.role === 'UGR0006';
+    }
 
     isIntern(): boolean {
         return this.tokenPayload.role === 'UGR0004';
@@ -312,7 +316,7 @@ export class Student implements OnInit {
         this.api.getSchools().subscribe({
             next: (schools) => {
                 this.schools = schools || [];
-                if (this.isSchoolCoordinator()) {
+                if (this.isSchoolCoordinator() || this.isClinicalInstructor()) {
                     this.schools = this.schools.filter((s: any) => s.schoolID === this.loggedUser.schoolID);
                     this.selectedSchoolID = this.loggedUser.schoolID;
                 }
@@ -323,7 +327,7 @@ export class Student implements OnInit {
     }
 
     exportCSV() {
-        const users = this.users();
+        const users = this.forPrintExport() || this.users();
 
         if (!users || users.length === 0) {
             this.logger.printLogs('i', 'No users to export', null)
@@ -571,6 +575,7 @@ export class Student implements OnInit {
         this.user = user;
         this.logger.printLogs('i', 'Edit users', user)
         this.form.patchValue(user);
+        this.selectedSchoolID = user.schoolID
         this.itemDialog = true;
     }
 

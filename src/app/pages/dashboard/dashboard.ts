@@ -24,7 +24,7 @@ import { CommonModule } from '@angular/common';
                     />
                 </div>
                 <!-- <app-announcements-widget [tokenPayload]="tokenPayload" /> -->
-                asdasd
+                
             </div>
             <div class="col-span-12 xl:col-span-12 gap-2">
                 

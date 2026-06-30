@@ -13,6 +13,7 @@ import { LogsService } from '@/services/logs.service';
 import { Tooltip } from "primeng/tooltip";
 import { MessageService } from 'primeng/api';
 import { PdfService } from '@/services/pdf.service';
+import { StoreService } from '@/services/store.service';
 
 @Component({
     selector: 'app-billing',
@@ -63,12 +64,14 @@ export class Billing implements OnInit {
     };
 
     displayDateRange = '';
+    ratePerShiftDay: number = 0;
 
     constructor(
         private messageService: MessageService,
         private api: ApiService,
         private logger: LogsService,
-        private pdfService: PdfService,) {
+        private pdfService: PdfService,
+        private store: StoreService) {
         this.loadHospitals();
         this.loadSchools();
         this.loadBilling();
@@ -145,6 +148,11 @@ export class Billing implements OnInit {
 
     loadBilling() {
 
+        this.ratePerShiftDay =
+            this.store.getNumberSetting('RatePerShiftDay');
+
+        this.logger.printLogs('i', 'Rete per shift Day: ', this.ratePerShiftDay)
+
         const [start, end] = this.dateRange;
 
         if (!start || !end) return;
@@ -210,6 +218,11 @@ export class Billing implements OnInit {
         });
     }
 
+    clear() {
+        this.selectedHospital = null;
+        this.selectedSchool = null
+    }
+
     computeAmount(item: any): number {
 
         // SAMPLE BILLING COMPUTATION
@@ -233,6 +246,7 @@ export class Billing implements OnInit {
             [...new Set(this.billingItems.map(x => x.hospitalID))].length;
     }
 
+    //ComputeBillingAmount
     computeBillingAmount(item: any): number {
 
         const attendedStudents =
@@ -241,7 +255,7 @@ export class Billing implements OnInit {
                 ? item.attendedStudentCount
                 : 10;
 
-        return attendedStudents * 100;
+        return attendedStudents * this.ratePerShiftDay;
     }
 
     downloadBillingReport() {
@@ -257,7 +271,8 @@ export class Billing implements OnInit {
         this.pdfService.generateBillingReport(
             'SAPA Billing Report',
             this.billingItems,
-            'print'
+            'print',
+            { cost: this.ratePerShiftDay }
         );
     }
     previewBillingReport() {
@@ -265,7 +280,8 @@ export class Billing implements OnInit {
         this.pdfService.generateBillingReport(
             'SAPA Billing Report',
             this.billingItems,
-            'open'
+            'open',
+            { cost: this.ratePerShiftDay }
         );
     }
 
@@ -299,5 +315,9 @@ export class Billing implements OnInit {
     viewAttendance(item: any) {
 
         this.attendance.emit(item);
+    }
+
+    saveBill() {
+
     }
 }

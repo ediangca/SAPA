@@ -3,12 +3,21 @@ import * as pdfMake from 'pdfmake/build/pdfmake';
 import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { LogsService } from './logs.service';
 
+interface BillingReportOptions {
+  preparedBy?: string;
+  reviewedBy?: string;
+  notedBy?: string;
+  cost?: number;
+}
+
+
 const pdfMakeLib: any = pdfMake;
 pdfMakeLib.vfs = (pdfFonts as any).pdfMake?.vfs || (pdfFonts as any).vfs;
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class PdfService {
   private leftLogo: string | null = null;
   private rightLogo: string | null = null;
@@ -1592,9 +1601,7 @@ export class PdfService {
     title: string,
     billingItems: any[],
     action: 'open' | 'download' | 'print' = 'open',
-    preparedBy?: string,
-    reviewedBy?: string,
-    notedBy?: string,
+    options: BillingReportOptions = {}
   ) {
 
     if (!this.leftLogo || !this.rightLogo || !this.sapaWatermark) {
@@ -1912,7 +1919,7 @@ export class PdfService {
               ? item.attendedStudentCount
               : 10;
 
-          const amountPerStudent = 100;
+          const amountPerStudent = options.cost || 0;
 
           const total = students * amountPerStudent;
 
@@ -2030,7 +2037,7 @@ export class PdfService {
                   ? item.attendedStudentCount
                   : 10;
 
-              return sum + (students * 100);
+              return sum + (students * (options.cost || 0));
 
             }, 0).toLocaleString(undefined, {
               minimumFractionDigits: 2
@@ -2119,7 +2126,7 @@ export class PdfService {
 
                 {
                   text:
-                    preparedBy ||
+                    options.preparedBy ||
                     'JOREY JANE N. CABALLERO',
 
                   bold: true
@@ -2143,7 +2150,7 @@ export class PdfService {
 
                 {
                   text:
-                    reviewedBy ||
+                    options.reviewedBy ||
                     'SHALOVE C. GETIZO, RN, MAHA',
 
                   bold: true
@@ -2172,7 +2179,7 @@ export class PdfService {
 
                 {
                   text:
-                    notedBy ||
+                    options.notedBy ||
                     'DOMINIC R. BASALO, MD, MPM',
 
                   bold: true

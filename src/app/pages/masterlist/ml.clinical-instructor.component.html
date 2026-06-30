@@ -227,21 +227,6 @@
                         *ngIf="submitted && (!form.value['email'] || isEmailInvalid())"> Valid
                         Email is
                         required.</small>
-                    
-                    <!-- School (conditional) -->
-                    <div *ngIf="form.get('roleID')?.value === 'UGR0003' || form.get('roleID')?.value === 'UGR0004' || form.get('roleID')?.value === 'UGR0006'">
-                        <label for="schools" class="block font-bold mb-2">Schools</label>
-                        <p-select id="schools" [options]="schools" optionLabel="schoolName"
-                                    optionValue="schoolID" appendTo="body" formControlName="schoolID"
-                                    [(ngModel)]="selectedSchoolID"
-                                    (onChange)="selectedSchool($event.value)" placeholder="Select School"
-                                    styleClass="w-full">
-                        </p-select>
-                        <small class="text-red-500" *ngIf="submitted && form.get('schoolID')?.invalid">
-                            School is required.
-                        </small>
-                    </div>
-
 
                     <div class="flex flex-row gap-2 item-center justify-end mt-2">
                         <p-check-box id="autoUsername" formControlName="autoUsername"
@@ -257,6 +242,21 @@
                     <small class="flex flex-row w-full justify-end text-red-500"
                         *ngIf="submitted && !form.value['username']"> Username is
                         required.</small>
+
+                    
+                    <!-- School (conditional) -->
+                    <div *ngIf="isSchoolCoordinator() || isClinicalInstructor() || isAdmin()">
+                        <label for="schools" class="block font-bold mb-2">Schools</label>
+                        <p-select id="schools" [options]="schools" optionLabel="schoolName"
+                                    optionValue="schoolID" appendTo="body" formControlName="schoolID"
+                                    [(ngModel)]="selectedSchoolID"
+                                    (onChange)="selectedSchool($event.value)" placeholder="Select School"
+                                    styleClass="w-full">
+                        </p-select>
+                        <small class="text-red-500" *ngIf="submitted && form.get('schoolID')?.invalid">
+                            School is required.
+                        </small>
+                    </div>
 
                     <input type="text" pInputText id="roleID" name="roleID" formControlName="roleID" hidden />
 
