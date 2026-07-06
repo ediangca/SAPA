@@ -682,19 +682,7 @@ export class Schedule implements OnInit, OnChanges {
         this.dayDialog = false;
     }
 
-    selectedSchool(schoolID: any) {
-        this.logger.printLogs('i', 'Selected School ID : ', schoolID);
-    }
-
-    setSelectedSchoolCoorID(coorID: any) {
-        this.logger.printLogs('i', 'Selected Coord ID : ', coorID);
-    }
-
-    setSelectedCIID(CIID: any) {
-        this.logger.printLogs('i', 'Selected CI ID : ', CIID);
-    }
-
-    isSysAdmin(): boolean {
+     isSysAdmin(): boolean {
         return this.tokenPayload.role === 'UGR0001';
     }
 
@@ -716,6 +704,18 @@ export class Schedule implements OnInit, OnChanges {
 
     isSupervisor(): boolean {
         return this.tokenPayload.role === 'UGR0005';
+    }
+    
+    selectedSchool(schoolID: any) {
+        this.logger.printLogs('i', 'Selected School ID : ', schoolID);
+    }
+
+    setSelectedSchoolCoorID(coorID: any) {
+        this.logger.printLogs('i', 'Selected Coord ID : ', coorID);
+    }
+
+    setSelectedCIID(CIID: any) {
+        this.logger.printLogs('i', 'Selected CI ID : ', CIID);
     }
 
     loadSlots() {

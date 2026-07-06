@@ -283,6 +283,31 @@ export class Users implements OnInit {
     onGlobalFilter(table: Table) {
         table.filterGlobal(this.filter, 'contains');
     }
+    
+     isSysAdmin(): boolean {
+        return this.tokenPayload.role === 'UGR0001';
+    }
+
+    isAdmin(): boolean {
+        return this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002';
+    }
+
+    isSchoolCoordinator(): boolean {
+        return this.tokenPayload.role === 'UGR0003';
+    }
+
+    isClinicalInstructor(): boolean {
+        return this.tokenPayload.role === 'UGR0006';
+    }
+
+    isIntern(): boolean {
+        return this.tokenPayload.role === 'UGR0004';
+    }
+
+    isSupervisor(): boolean {
+        return this.tokenPayload.role === 'UGR0005';
+    }
+    
 
     clear(table: Table,) {
         this.filter = ''

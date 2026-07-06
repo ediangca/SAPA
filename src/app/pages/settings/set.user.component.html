@@ -167,7 +167,7 @@
 
 </div>
 
-<!-- Post User -->
+<!-- User Form -->
 <p-dialog [(visible)]="itemDialog" [style]="{ width: '450px' }" header="User Details" [modal]="true">
     <ng-template #content>
         <div class="flex flex-col gap-6">
@@ -209,7 +209,7 @@
                     <div class="flex flex-row gap-6 items-start mt-2">
 
                     <!-- QR Code -->
-                    <div *ngIf="user?.userID && user?.roleID === 'UGR0004'" class="shrink-0 text-center cursor-pointer" (click)="openQrZoom()">
+                    <div *ngIf="isAdmin() || isClinicalInstructor() || isIntern()" class="shrink-0 text-center cursor-pointer" (click)="openQrZoom()">
                         <qrcode
                             [qrdata]="user.userID"
                             [width]="120"
