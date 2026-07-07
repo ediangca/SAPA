@@ -682,7 +682,7 @@ export class Schedule implements OnInit, OnChanges {
         this.dayDialog = false;
     }
 
-     isSysAdmin(): boolean {
+    isSysAdmin(): boolean {
         return this.tokenPayload.role === 'UGR0001';
     }
 
@@ -705,7 +705,7 @@ export class Schedule implements OnInit, OnChanges {
     isSupervisor(): boolean {
         return this.tokenPayload.role === 'UGR0005';
     }
-    
+
     selectedSchool(schoolID: any) {
         this.logger.printLogs('i', 'Selected School ID : ', schoolID);
     }
@@ -815,6 +815,35 @@ export class Schedule implements OnInit, OnChanges {
                 }
             });
         }
+    }
+
+    isConfirmationExpired(slot: any): boolean {
+        const expiryHours = 24;
+        const created = new Date(slot.date_Created);
+        const expiry = new Date(created.getTime() + expiryHours * 60 * 60 * 1000);
+        return new Date() > expiry;
+    }
+
+    // Returns true if the whole BookID group still has any unconfirmed slot (status 0)
+    // AND the confirmation window has expired — i.e. resend is actually useful.
+    canResendConfirmation(bookID: string): boolean {
+        const groupSlots = this.slots().filter(s => s.bookID === bookID);
+        const hasUnconfirmed = groupSlots.some(s => s.slotStatus === 0);
+        const isExpired = groupSlots.some(s => this.isConfirmationExpired(s));
+        return hasUnconfirmed && isExpired;
+    }
+
+    resendConfirmation(bookID: string) {
+        this.api.resendSlotConfirmation(bookID).subscribe({
+            next: (res: any) => {
+                this.logger.printLogs('i', 'Confirmation resent', res);
+                this.messageService.add({ severity: 'success', summary: 'Sent', detail: 'Confirmation email resent.' });
+            },
+            error: (err: any) => {
+                this.logger.printLogs('e', 'Failed to resend confirmation', err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to resend confirmation.' });
+            }
+        });
     }
 
     onMonthEventClick(info: any) {
@@ -1804,7 +1833,7 @@ export class Schedule implements OnInit, OnChanges {
                         life: 3000
                     });
 
-                    this.loadingAttendance = false; 
+                    this.loadingAttendance = false;
                     return
 
                 }

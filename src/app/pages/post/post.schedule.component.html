@@ -16,7 +16,8 @@
             </div>
 
             @if (tableOption) {
-            <p-table #dt [value]="slots()" [rows]="100" [columns]="cols" [paginator]="true" [rowHover]="true"
+            <!-- ////////////////////////////////////////////// -->
+           <p-table *ngIf="!isSysAdmin()" #dt [value]="slots()" [rows]="100" [columns]="cols" [paginator]="true" [rowHover]="true"
                 [showGridlines]="true", [loading]="loading", 
                 [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionName', 'slotStatus', 'fullname', 'date_Created']"
                 [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
@@ -330,7 +331,289 @@
                 </ng-template>
 
             </p-table>
+            <!-- ////////////////////////////////////////////// -->
 
+            <p-table *ngIf="isSysAdmin()"  #dt [value]="slots()" [rows]="100" [columns]="cols" [paginator]="true" [rowHover]="true"
+                [showGridlines]="true" [loading]="loading"
+                [globalFilterFields]="['dateSlot', 'shiftName','hospitalName', 'sectionName', 'slotStatus', 'fullname', 'date_Created']"
+                sortField="bookID" sortMode="single" rowGroupMode="subheader" groupRowsBy="bookID"
+                [tableStyle]="{ 'min-width': '60rem', 'table-layout': 'fixed' }" [(selection)]="selectSlots"
+                dataKey="slotID" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Schedules"
+                [showCurrentPageReport]="true" [rowsPerPageOptions]="[100, 500, 1000, 2000]"
+                paginatorDropdownAppendTo="body" scrollable="true" scrollHeight="calc(100vh - 28rem)"
+                (onFilter)="onFilterChange($event.filteredValue)"
+                (selectionChange)="onScheduleSelectionChange($event)">
+
+                <ng-template pTemplate="caption">
+                    <div class="flex row justify-center">
+                        <h5 class="m-0">Manage Schedules</h5>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
+                        <div class="md:w-6/7 flex row gap-2">
+                            <p-button *ngIf="c" label="New" icon="pi pi-plus" severity="primary" class="mr-2"
+                                (onClick)="openNew(null)" />
+                            <p-button *ngIf="d" severity="secondary" label="Delete" icon="pi pi-trash" outlined
+                                (onClick)="deleteSelected()" [disabled]="!selectSlots || !selectSlots.length" />
+                        </div>
+                        <div class="md:w-1/7 flex row gap-2 justify-end">
+                            <p-iconfield>
+                                <p-inputicon styleClass="pi pi-search" />
+                                <input pInputText type="text" [(ngModel)]="filter" (input)="onGlobalFilter(dt)"
+                                    placeholder="Search..." />
+                                @if (filter && filter.length > 0) {
+                                <p-inputicon styleClass="pi pi-times cursor-pointer" class="mx-1" (click)="clear(dt)" />
+                                }
+                            </p-iconfield>
+                            <p-button severity="contrast" rounded="true" pTooltip="Clear Filters" tooltipPosition="top"
+                                icon="pi pi-filter-slash" (click)="clear(dt)" />
+                            <p-button icon="pi pi-refresh" severity="help" rounded="true" pTooltip="Reload"
+                                tooltipPosition="top" (click)="loadSlots()" />
+                            <p-button class="" icon="pi pi-upload" severity="info" rounded="true" pTooltip="Export"
+                                tooltipPosition="top" (onClick)="exportCSV1()" />
+                        </div>
+                    </div>
+                </ng-template>
+
+                <ng-template #header>
+                    <tr>
+                        <th pFrozenColumn style="width: 3rem" *ngIf="isAdmin() || isSchoolCoordinator()">
+                            <p-tableHeaderCheckbox />
+                        </th>
+                        <th pSortableColumn="dateSlot" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                Date
+                                <p-sortIcon field="dateSlot" />
+                                <p-columnFilter type="date" field="dateSlot" display="menu" placeholder="yyyy-MM-dd"></p-columnFilter>
+                            </div>
+                        </th>
+                        <th pSortableColumn="shiftName" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                Shift
+                                <p-columnFilter field="shiftName" matchMode="in" display="menu" [showMatchModes]="false"
+                                    [showOperator]="false" [showAddButton]="false">
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Shift Picker</span>
+                                        </div>
+                                    </ng-template>
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="shiftOption" optionLabel="shiftName"
+                                            optionValue="shiftName" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+                                </p-columnFilter>
+                            </div>
+                        </th>
+                        <th pSortableColumn="hospitalName" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                Hospital
+                                <p-columnFilter field="hospitalName" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Hospital Picker</span>
+                                        </div>
+                                    </ng-template>
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="hospitals"
+                                            optionLabel="hospitalName" optionValue="hospitalName" placeholder="Any"
+                                            class="w-full" (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+                                </p-columnFilter>
+                            </div>
+                        </th>
+                        <th pSortableColumn="sectionName" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                Section
+                                <p-columnFilter field="sectionName" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Section Picker</span>
+                                        </div>
+                                    </ng-template>
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="sections" optionLabel="sectionName"
+                                            optionValue="sectionName" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+                                </p-columnFilter>
+                            </div>
+                        </th>
+                        <th *ngIf="!isSchoolCoordinator() && !isClinicalInstructor()" pSortableColumn="schoolName" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                School
+                                <p-columnFilter field="schoolName" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">School Picker</span>
+                                        </div>
+                                    </ng-template>
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="schools" optionLabel="schoolName"
+                                            optionValue="schoolName" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+                                </p-columnFilter>
+                            </div>
+                        </th>
+                        <th pSortableColumn="status" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                Status
+                                <p-columnFilter field="slotStatus" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Status Picker</span>
+                                        </div>
+                                    </ng-template>
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="headStatuses" optionLabel="label"
+                                            optionValue="value" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+                                </p-columnFilter>
+                            </div>
+                        </th>
+                        <th pSortableColumn="date_created" style="min-width:10rem">
+                            Date Created
+                            <p-sortIcon field="date_created" />
+                        </th>
+                        <th *ngIf="isAdmin()" pSortableColumn="fullname" style="min-width:10rem">
+                            <div class="flex justify-between items-center">
+                                Created By
+                                <p-columnFilter field="fullname" matchMode="in" display="menu"
+                                    [showMatchModes]="false" [showOperator]="false" [showAddButton]="false">
+                                    <ng-template #header>
+                                        <div class="px-3 pt-3 pb-0">
+                                            <span class="font-bold">Coordinator Picker</span>
+                                        </div>
+                                    </ng-template>
+                                    <ng-template #filter let-value let-filter="filterCallback">
+                                        <p-multiSelect [ngModel]="value" [options]="coordinators" optionLabel="fullname"
+                                            optionValue="fullname" placeholder="Any" class="w-full"
+                                            (onChange)="filter($event.value)">
+                                        </p-multiSelect>
+                                    </ng-template>
+                                </p-columnFilter>
+                            </div>
+                        </th>
+                        <th style="min-width: 5rem">Action</th>
+                    </tr>
+                </ng-template>
+
+                <!-- GROUP HEADER: BookID + Resend Confirmation button -->
+                <ng-template #groupheader let-slot>
+                    <tr pRowGroupHeader>
+                        <td [attr.colspan]="isAdmin() ? 10 : 9">
+                            <div class="flex items-center justify-between w-full">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold">Booking: {{ slot.bookID }}</span>
+                                    <small class="text-gray-500">({{ slot.fullname }})</small>
+                                </div>
+                                @if (canResendConfirmation(slot.bookID)) {
+                                    <p-button
+                                        label="Resend Confirmation"
+                                        icon="pi pi-envelope"
+                                        severity="warn"
+                                        size="small"
+                                        [outlined]="true"
+                                        pTooltip="Confirmation link expired — resend to user"
+                                        tooltipPosition="top"
+                                        (onClick)="resendConfirmation(slot.bookID)">
+                                    </p-button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <ng-template pTemplate="body" let-slot>
+                    <tr>
+                        <td pFrozenColumn style="width: 3rem" *ngIf="isAdmin() || isSchoolCoordinator()">
+                            <p-tableCheckbox [value]="slot" />
+                        </td>
+                        <td>
+                            {{ slot.dateSlot | date: 'yyyy-MM-dd'}}
+                        </td>
+                        <td>
+                            {{ slot.shiftName }}
+                            <small class="block text-gray-500">
+                                ({{ formatTime(slot.startTime)}} - {{ formatTime(slot.endTime) }})
+                            </small>
+                        </td>
+                        <td>{{ slot.hospitalName }}</td>
+                        <td>{{ slot.sectionName }}
+                            <p-tag severity="info" class="p-5" [value]="slot.studentCount+' / ' + slot.allocation" [rounded]="true" />
+                        </td>
+                        <td *ngIf="!isSchoolCoordinator() && !isClinicalInstructor()">{{ slot.schoolName }}</td>
+                        <td>
+                            <p-tag [value]="getStatus(slot.slotStatus,'value')"
+                                [severity]="getStatus(slot.slotStatus,'severirty')" />
+                        </td>
+                        <td>{{ dateFormat(slot.date_Created) }}</td>
+                        <td *ngIf="isAdmin()"><small class="block text-gray-500">{{ slot.fullname }}</small></td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-button *ngIf="slot.slotStatus==0 && d" icon="pi pi-trash" severity="danger"
+                                    [rounded]="true" [outlined]="true" (click)="delete(slot)" />
+
+                                <p-button icon="pi pi-eye" severity="info"
+                                    [rounded]="true"
+                                    [outlined]="true"
+                                    pTooltip="View Details"
+                                    tooltipPosition="top"
+                                    (click)="onEventClick(slot)" />
+                                @if(slot.slotStatus === 1 && slot.studentCount > 0){
+                                    <p-button
+                                        icon="pi pi-list-check"
+                                        severity="info"
+                                        [rounded]="true"
+                                        [outlined]="true"
+                                        pTooltip="Attendance"
+                                        tooltipPosition="top"
+                                        (click)="openAttendance(slot)">
+                                    </p-button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <!-- LOADING BODY: skeleton rows -->
+                <ng-template pTemplate="loadingbody">
+                    <tr *ngFor="let _ of [1,2,3,4,5,6,7,8,9,10]">
+                        <td pFrozenColumn style="width: 3rem"><p-skeleton shape="circle" size="1.2rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
+                        <td>
+                            <p-skeleton width="8rem" height="1rem" />
+                            <p-skeleton width="5rem" height="0.8rem" class="mt-1" />
+                        </td>
+                        <td><p-skeleton width="7rem" height="1rem" /></td>
+                        <td><p-skeleton width="7rem" height="1rem" /></td>
+                        <td><p-skeleton width="5rem" height="1.4rem" borderRadius="1rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-skeleton shape="circle" size="2rem" />
+                                <p-skeleton shape="circle" size="2rem" />
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+
+
+            <!-- ////////////////////////////////////////////// -->
+            
             }@else{
             <div class="flex flex-col md:flex-col " [style]="{ height: 'calc(100vh - 18rem)'}">
                 <!-- <div class="flex justify-end gap-4 pl-4 py-3">

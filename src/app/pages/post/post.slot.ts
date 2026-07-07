@@ -360,7 +360,6 @@ export class Slot implements OnInit {
         this.dt.exportCSV();
     }
 
-
     getAllocationsByHospitalID(hospitalID: any) {
         this.allocations = []; // Clear previous allocations
         this.logger.printLogs('i', 'Selected Hospital ID : ', hospitalID);
@@ -422,7 +421,6 @@ export class Slot implements OnInit {
         }).format(date);
     }
 
-
     loadSlots() {
         this.api.getSlots().subscribe({
             next: (slots) => {
@@ -441,6 +439,7 @@ export class Slot implements OnInit {
             error: (err) => this.logger.printLogs('e', 'Failed to fetch slots', err)
         });
     }
+
 
     toggleWeekends() {
         this.calendarOptions().weekends = !this.calendarOptions().weekends // toggle the boolean!
@@ -745,6 +744,7 @@ export class Slot implements OnInit {
         }
 
     }
+
     createSchedule(request: any) {
         this.api.createBulkSlots(request).subscribe({
             next: () => {

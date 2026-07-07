@@ -58,7 +58,15 @@
                     <p
                         class="mt-3 text-sm font-medium
             text-orange-600 dark:text-orange-400">
-                        No Confirmation
+                        
+                        <span class="text-xl font-bold">
+                        {{ (data?.totalSlots || 0) > 0
+                        ? (data?.pendingSchedule / ((data?.totalSlots || 0))
+                        | percent:'1.0-0')
+                        : '0%' }}
+                        </span>
+
+                        schedule pending rate
                     </p>
                 </div>
 
@@ -127,7 +135,13 @@
                     <p
                         class="mt-3 text-sm font-medium
             text-blue-600 dark:text-blue-400">
-                        Confirmed
+                        <span class="text-xl font-bold">
+                        {{ (data?.totalSlots || 0) > 0
+                        ? (data?.confirmedSchedule / ((data?.totalSlots || 0))
+                        | percent:'1.0-0')
+                        : '0%' }}
+                        </span>
+                        schedule confirmed rate
                     </p>
                 </div>
 
@@ -195,7 +209,14 @@
                     <p
                         class="mt-3 text-sm font-medium
             text-green-600 dark:text-green-400">
-                        Student Appointed by Shift
+                        <span class="text-xl font-bold">
+                        <!-- Student Appointed by Shift -->
+                        {{ (data?.totalAppointedStudents || 0) > 0
+                        ? (data?.totalAppointedStudents / ((data?.totalSlots || 0) * 10)
+                        | percent:'1.0-0')
+                        : '0%' }}
+                        </span>
+                        appointed students rate
                     </p>
                 </div>
 
@@ -266,6 +287,12 @@
                         Potential Revenue:
                         <span class="font-semibold">
                             ₱ {{ data?.potentialRevenue | number }}
+                        </span>
+                        <span class="text-xl font-bold">
+                            ({{ (data?.potentialRevenue || 0) > 0
+                            ? (data?.actualRevenue / ((data?.potentialRevenue || 0))
+                            | percent:'1.0-0')
+                            : '0%' }})
                         </span>
                     </p>
                 </div>
@@ -340,7 +367,13 @@
                     <p
                         class="mt-3 text-sm font-medium
             text-orange-600 dark:text-orange-400">
-                        No Confirmation
+                        <span class="text-xl font-bold">
+                        {{ (data?.totalSlots || 0) > 0
+                        ? (data?.pendingSchedule / ((data?.totalSlots || 0))
+                        | percent:'1.0-0')
+                        : '0%' }}
+                        </span>
+                        schedule pending rate
                     </p>
                 </div>
 
@@ -409,7 +442,13 @@
                     <p
                         class="mt-3 text-sm font-medium
             text-blue-600 dark:text-blue-400">
-                        Confirmed
+                        <span class="text-xl font-bold">
+                        {{ (data?.totalSlots || 0) > 0
+                        ? (data?.confirmedSchedule / ((data?.totalSlots || 0))
+                        | percent:'1.0-0')
+                        : '0%' }}
+                        </span>
+                        schedule confirmed rate
                     </p>
                 </div>
 
@@ -477,7 +516,14 @@
                     <p
                         class="mt-3 text-sm font-medium
             text-green-600 dark:text-green-400">
-                        Student Appointed by Shift
+                        <span class="text-xl font-bold">
+                        <!-- Student Appointed by Shift -->
+                        {{ (data?.totalAppointedStudents || 0) > 0
+                        ? (data?.totalAppointedStudents / ((data?.totalSlots || 0) * 10)
+                        | percent:'1.0-0')
+                        : '0%' }}
+                        </span>
+                        appointed students rate
                     </p>
                 </div>
 
@@ -552,7 +598,13 @@
                     <p
                         class="mt-3 text-sm font-medium
             text-blue-600 dark:text-blue-400">
-                        Confirmed
+                        <span class="text-xl font-bold">
+                        {{ (data?.totalSlots || 0) > 0
+                        ? (data?.confirmedSchedule / ((data?.totalSlots || 0))
+                        | percent:'1.0-0')
+                        : '0%' }}
+                        </span>
+                        schedule confirmed rate
                     </p>
                 </div>
 
@@ -619,10 +671,13 @@
 
                     <p
                         class="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
+                        
+                        <span class="text-xl font-bold">
                         {{ (data?.totalAppointedStudents || 0) > 0
                         ? (data?.totalAttendances / data?.totalAppointedStudents
                         | percent:'1.0-0')
                         : '0%' }}
+                        </span>
                         attendance rate
                     </p>
                 </div>

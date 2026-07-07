@@ -663,6 +663,12 @@ export class ApiService {
     return this.handleRequest('post', `Slots/bulk/confirm/${force}`, { body: request, logAction: 'Confirming Slots' });
   }
 
+  
+  resendSlotConfirmation(bookID: string) {
+    this.logger.printLogs('i', ' On Resending Slot Confirmation', bookID);
+    return this.handleRequest<any[]>('post', 'Slots/resend-confirmation', { id: bookID, logAction: 'Resending Slot Confirmation' });
+  }
+
   createBulkSlots(slots: any) {
     return this.handleRequest('post', 'Slots/bulk', { body: slots, logAction: 'Creating Bulk Slots' });
   }
