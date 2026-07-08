@@ -10,6 +10,7 @@ interface User {
     fullname: string;
     rolename: string;
     onlineStatus: number; // 0 = Offline, 1 = Online, 2 = Away
+    lastActivity: string | null; // add this
 }
 
 @Component({
@@ -98,6 +99,15 @@ interface User {
 
                         <div class="text-xs text-surface-500">
                             {{ user.rolename }}
+                            <span *ngIf="user.onlineStatus === 1" class="text-green-600 ml-1">
+                                - active {{ getAwayDuration(user.lastActivity) }}
+                            </span>
+                            <span *ngIf="user.onlineStatus === 2" class="text-yellow-600 ml-1">
+                                - away {{ getAwayDuration(user.lastActivity) }}
+                            </span>
+                            <span *ngIf="user.onlineStatus === 0 && user.lastActivity" class="text-gray-400 ml-1">
+                                - last seen {{ getAwayDuration(user.lastActivity) }} ago
+                            </span>
                         </div>
                     </div>
 
@@ -170,7 +180,11 @@ export class FloatingUsers implements OnInit {
             // Sort: Online first, then Away, then Offline
             const approvedUsers = users.filter(u => u.status === 'A');
 
-            approvedUsers.sort((a, b) => b.onlineStatus - a.onlineStatus);
+            // approvedUsers.sort((a, b) => b.lastActivity - a.lastActivity);
+            approvedUsers.sort((a, b) => {
+                if (b.onlineStatus !== a.onlineStatus) return b.onlineStatus - a.onlineStatus;
+                return new Date(a.lastActivity).getTime() - new Date(b.lastActivity).getTime();
+            });
 
             this.logger.printLogs('i', 'User Status List', approvedUsers);
             this.users.set(approvedUsers);
@@ -206,4 +220,18 @@ export class FloatingUsers implements OnInit {
             user.rolename?.toLowerCase().includes(search)
         );
     });
+
+    getAwayDuration(lastActivity: string | null): string {
+        if (!lastActivity) return '';
+
+        const diffMs = Date.now() - new Date(lastActivity).getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+
+        if (diffMins < 1) return 'just now';
+        if (diffMins < 60) return `${diffMins}m`;
+
+        const hours = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+        return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    }
 }

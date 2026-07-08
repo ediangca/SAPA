@@ -11,7 +11,7 @@ import { LogsService } from './logs.service';
 export class HeartbeatService {
 
   private heartbeatSubscription?: Subscription;
-  private readonly HEARTBEAT_INTERVAL = 60000;
+  private readonly HEARTBEAT_INTERVAL = Environment.heartbeatIntervalMs ?? 60000;
   private router = inject(Router);
 
   constructor(private http: HttpClient, private logger: LogsService) { }

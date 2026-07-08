@@ -10,7 +10,7 @@ export class LogsService {
 
   printLogs(logType: string, label: string, log: any[] | any) {
 
-    if (Environment.production) {
+    if (!Environment.production) {
       switch (logType.toLowerCase()) {
         case 'i':
         case 'info':
