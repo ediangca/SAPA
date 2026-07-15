@@ -74,6 +74,18 @@ export class RecentSchedule implements OnInit, OnChanges {
 
     selectedEvent!: any;
 
+    schoolTrendData: any;
+    schoolTrendOptions: any;
+    trendGranularity: 'daily' | 'weekly' | 'monthly' = 'monthly';
+    granularityOptions = [
+        { label: 'Daily', value: 'daily' },
+        { label: 'Weekly', value: 'weekly' },
+        { label: 'Monthly', value: 'monthly' }
+    ];
+
+    schoolStudentTrendData: any;
+    schoolStudentTrendOptions: any;
+    studentTrendGranularity: 'daily' | 'weekly' | 'monthly' = 'monthly';
 
     constructor(
         private api: ApiService,
@@ -134,11 +146,22 @@ export class RecentSchedule implements OnInit, OnChanges {
         this.buildLinearByHospitalShift();
         this.buildPieBySchool();
         this.buildPieByHospital();
+        this.buildSchoolTrendChart();
+        this.buildSchoolStudentTrendChart();
         this.loading = false;
     }
 
+    onGranularityChange(event: any) {
+        this.trendGranularity = event.value;
+        this.buildSchoolTrendChart();
+    }
+    onStudentTrendGranularityChange(event: any) {
+        this.studentTrendGranularity = event.value;
+        this.buildSchoolStudentTrendChart();
+    }
+
     onYearChange(event: any) {
-        
+
         this.loading = true;
         const year = event.value;
         this.currentYear = year;
@@ -147,7 +170,7 @@ export class RecentSchedule implements OnInit, OnChanges {
         this.logger.printLogs('i', ' Selected Year', this.currentYear);
         this.yearChange.emit(year);
     }
-    
+
 
     buildChartFromSlots() {
 
@@ -641,6 +664,167 @@ export class RecentSchedule implements OnInit, OnChanges {
         };
     }
 
+    private getPeriodKey(dateStr: string, granularity: 'daily' | 'weekly' | 'monthly'): { key: string; label: string; sortDate: Date } {
+        const date = new Date(dateStr);
+
+        if (granularity === 'daily') {
+            const key = date.toISOString().slice(0, 10);
+            const label = date.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+            return { key, label, sortDate: new Date(date.getFullYear(), date.getMonth(), date.getDate()) };
+        }
+
+        if (granularity === 'weekly') {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = (day === 0 ? -6 : 1) - day; // normalize to Monday
+            d.setDate(d.getDate() + diff);
+            d.setHours(0, 0, 0, 0);
+            const key = d.toISOString().slice(0, 10);
+            const label = 'Wk of ' + d.toLocaleDateString('default', { month: 'short', day: 'numeric' });
+            return { key, label, sortDate: d };
+        }
+
+        // monthly — key includes year so Jan 2026 and Jan 2027 don't merge
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        // const label = date.toLocaleDateString('default', { month: 'short', year: 'numeric' });
+        const label = date.toLocaleDateString('default', { month: 'short' });
+        return { key, label, sortDate: new Date(date.getFullYear(), date.getMonth(), 1) };
+    }
+
+    buildSchoolTrendChart(granularity?: 'daily' | 'weekly' | 'monthly') {
+        const gran = granularity || this.trendGranularity;
+
+        const periodMap: Record<string, { label: string; sortDate: Date; schools: Record<string, number> }> = {};
+        const schoolSet = new Set<string>();
+
+        this.slots.forEach(slot => {
+            if (!slot.dateSlot || !slot.schoolName) return;
+
+            const school = abbreviateName(slot.schoolName);
+            schoolSet.add(school);
+
+            const { key, label, sortDate } = this.getPeriodKey(slot.dateSlot, gran);
+
+            if (!periodMap[key]) {
+                periodMap[key] = { label, sortDate, schools: {} };
+            }
+            periodMap[key].schools[school] = (periodMap[key].schools[school] || 0) + 1;
+        });
+
+        const sortedPeriods = Object.values(periodMap).sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
+
+        const labels = sortedPeriods.map(p => p.label);
+        const schools = Array.from(schoolSet);
+
+        const palette = ['#42A5F5', '#9CCC65', '#f73b7d', '#FFA726', '#AB47BC', '#26C6DA', '#8D6E63', '#78909C'];
+
+        const datasets = schools.map((school, i) => ({
+            label: school,
+            data: sortedPeriods.map(p => p.schools[school] || 0),
+            fill: false,
+            borderColor: palette[i % palette.length],
+            backgroundColor: palette[i % palette.length],
+            tension: 0.4
+        }));
+
+        this.initSchoolTrendChart(labels, datasets);
+    }
+
+    initSchoolTrendChart(labels: string[], datasets: any[]) {
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+        const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+        const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+        this.schoolTrendData = { labels, datasets };
+
+        this.schoolTrendOptions = {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: textColor } }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColorSecondary },
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: textColorSecondary, stepSize: 1 },
+                    grid: { color: surfaceBorder }
+                }
+            }
+        };
+    }
+
+    buildSchoolStudentTrendChart(granularity?: 'daily' | 'weekly' | 'monthly') {
+        const gran = granularity || this.studentTrendGranularity;
+
+        const periodMap: Record<string, { label: string; sortDate: Date; schools: Record<string, number> }> = {};
+        const schoolSet = new Set<string>();
+
+        this.slots.forEach(slot => {
+            if (!slot.dateSlot || !slot.schoolName) return;
+
+            const school = abbreviateName(slot.schoolName);
+            schoolSet.add(school);
+
+            const { key, label, sortDate } = this.getPeriodKey(slot.dateSlot, gran);
+
+            if (!periodMap[key]) {
+                periodMap[key] = { label, sortDate, schools: {} };
+            }
+
+            // 🔥 sum studentCount instead of counting slots
+            const count = Number(slot.studentCount) || 0;
+            periodMap[key].schools[school] = (periodMap[key].schools[school] || 0) + count;
+        });
+
+        const sortedPeriods = Object.values(periodMap).sort((a, b) => a.sortDate.getTime() - b.sortDate.getTime());
+
+        const labels = sortedPeriods.map(p => p.label);
+        const schools = Array.from(schoolSet);
+
+        const palette = ['#42A5F5', '#9CCC65', '#f73b7d', '#FFA726', '#AB47BC', '#26C6DA', '#8D6E63', '#78909C'];
+
+        const datasets = schools.map((school, i) => ({
+            label: school,
+            data: sortedPeriods.map(p => p.schools[school] || 0),
+            fill: false,
+            borderColor: palette[i % palette.length],
+            backgroundColor: palette[i % palette.length],
+            tension: 0.4
+        }));
+
+        this.initSchoolStudentTrendChart(labels, datasets);
+    }
+
+    initSchoolStudentTrendChart(labels: string[], datasets: any[]) {
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+        const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
+        const surfaceBorder = documentStyle.getPropertyValue('--surface-border');
+
+        this.schoolStudentTrendData = { labels, datasets };
+
+        this.schoolStudentTrendOptions = {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: textColor } }
+            },
+            scales: {
+                x: {
+                    ticks: { color: textColorSecondary },
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: textColorSecondary, stepSize: 1 },
+                    grid: { color: surfaceBorder }
+                }
+            }
+        };
+    }
 
     // PIE CHARTS
     buildPieBySchool() {

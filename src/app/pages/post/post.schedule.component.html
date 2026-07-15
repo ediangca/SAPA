@@ -1036,7 +1036,7 @@
 
             <div class="flex flex-wrap gap-2">
 
-                @if (canManageStudent(selectedEvent) && isFutureDate(selectedEvent.dateSlot)) {
+                @if ((canManageStudent(selectedEvent) && isFutureDate(selectedEvent.dateSlot)) || isSysAdmin()) {
                     <p-button
                         icon="pi pi-users"
                         label="Appoint Student"
@@ -1048,7 +1048,7 @@
                     </p-button>
                 }
 
-                @if (selectedEvent.slotStatus === 1 && isFutureDate(selectedEvent.dateSlot)) {
+                @if ((selectedEvent.slotStatus === 1 && isFutureDate(selectedEvent.dateSlot)) || isSysAdmin()) {
                     <p-button
                         icon="pi pi-user-minus"
                         label="Remove All Appointed Students"
@@ -1584,7 +1584,7 @@
     <ng-template pTemplate="footer" to>
         <!-- Add only available -->
         
-        @if (canManageStudent(selectedEvent) && isFutureDate(selectedEvent.dateSlot)) {
+        @if ((canManageStudent(selectedEvent) && isFutureDate(selectedEvent.dateSlot)) || isSysAdmin()) {
             <p-button label="Save" icon="pi pi-save" (onClick)="saveAssignStudentStudent()">
             </p-button>
         }

@@ -1,697 +1,185 @@
+<!-- ============================================================= -->
+<!-- Reusable stat card template -->
+<!-- ============================================================= -->
+<ng-template #statCard
+    let-label="label"
+    let-value="value"
+    let-rate="rate"
+    let-rateLabel="rateLabel"
+    let-icon="icon"
+    let-color="color">
 
+    <div class="group relative overflow-hidden rounded-3xl
+      border border-white/30 dark:border-white/10
+      bg-white/40 dark:bg-white/5
+      backdrop-blur-2xl backdrop-saturate-150
+      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
+      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
+      transition-all duration-500
+      hover:-translate-y-2
+      p-6"
+        [ngClass]="{
+          'hover:shadow-[0_8px_40px_rgba(255,165,0,0.20)] dark:hover:shadow-[0_8px_40px_rgba(255,165,0,0.15)]': color === 'orange',
+          'hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)] dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]': color === 'blue',
+          'hover:shadow-[0_8px_40px_rgba(34,197,94,0.20)] dark:hover:shadow-[0_8px_40px_rgba(34,197,94,0.15)]': color === 'green',
+          'hover:shadow-[0_8px_40px_rgba(168,85,247,0.20)] dark:hover:shadow-[0_8px_40px_rgba(168,85,247,0.15)]': color === 'purple'
+        }">
 
-<!-- ------------------------------------------------------------------------------------------------------------------------------------- -->
+        <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-white/5 dark:from-white/5 dark:to-white/[0.02]"></div>
 
-<!-- ------isAdmin------ -->
- 
-<div class="relative grid grid-cols-12 gap-6 mb-6"
-    *ngIf="isAdmin()">
+        <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl transition-all duration-500 group-hover:scale-125"
+            [ngClass]="{
+              'bg-orange-400/20 dark:bg-orange-500/10': color === 'orange',
+              'bg-blue-400/20 dark:bg-blue-500/10': color === 'blue',
+              'bg-green-400/20 dark:bg-green-500/10': color === 'green',
+              'bg-purple-400/20 dark:bg-purple-500/10': color === 'purple'
+            }"></div>
 
-    <!-- ===================== -->
+        <div class="relative flex items-start justify-between">
+            <div>
+                <span class="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 font-semibold">
+                    {{ label }}
+                </span>
+
+                <h2 class="mt-4 text-4xl font-bold tracking-tight text-gray-800 dark:text-white">
+                    {{ value }}
+                </h2>
+
+                <p class="mt-3 text-sm font-medium"
+                    [ngClass]="{
+                      'text-orange-600 dark:text-orange-400': color === 'orange',
+                      'text-blue-600 dark:text-blue-400': color === 'blue',
+                      'text-green-600 dark:text-green-400': color === 'green',
+                      'text-purple-700 dark:text-purple-300': color === 'purple'
+                    }">
+                    <span class="text-xl font-bold">{{ rate }}</span> {{ rateLabel }}
+                </p>
+            </div>
+
+            <div class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0 border"
+                [ngClass]="{
+                  'bg-gradient-to-br from-orange-400/30 to-orange-500/10 dark:from-orange-400/20 dark:to-orange-500/5 border-orange-300/30 dark:border-orange-400/20': color === 'orange',
+                  'bg-gradient-to-br from-blue-400/30 to-blue-500/10 dark:from-blue-400/20 dark:to-blue-500/5 border-blue-300/30 dark:border-blue-400/20': color === 'blue',
+                  'bg-gradient-to-br from-green-400/30 to-green-500/10 dark:from-green-400/20 dark:to-green-500/5 border-green-300/30 dark:border-green-400/20': color === 'green',
+                  'bg-gradient-to-br from-purple-400/30 to-purple-500/10 dark:from-purple-400/20 dark:to-purple-500/5 border-purple-300/30 dark:border-purple-400/20': color === 'purple'
+                }">
+                <i class="pi text-lg"
+                    [ngClass]="[icon,
+                      color === 'orange' ? 'text-orange-500 dark:text-orange-300' :
+                      color === 'blue'   ? 'text-blue-500 dark:text-blue-300' :
+                      color === 'green'  ? 'text-green-500 dark:text-green-300' :
+                                            'text-purple-500 dark:text-purple-300']"></i>
+            </div>
+        </div>
+    </div>
+</ng-template>
+
+<!-- ============================================================= -->
+<!-- Cards row — flex-wrap balances width based on what's *ngIf-visible -->
+<!-- ============================================================= -->
+<div class="flex flex-wrap gap-6 mb-6">
+
     <!-- Pending Schedule -->
-    <!-- ===================== -->
-    <div
-        class="col-span-12 sm:col-span-6 xl:col-span-3"
-        data-aos="zoom-in-up"
-        data-aos-duration="700"
-        data-aos-delay="100">
-        <div
-            class="group relative overflow-hidden rounded-3xl
-      border border-white/30 dark:border-white/10
-      bg-white/40 dark:bg-white/5
-      backdrop-blur-2xl backdrop-saturate-150
-      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
-      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
-      transition-all duration-500
-      hover:-translate-y-2
-      hover:shadow-[0_8px_40px_rgba(255,165,0,0.20)]
-      dark:hover:shadow-[0_8px_40px_rgba(255,165,0,0.15)]
-      p-6">
-            <!-- Overlay -->
-            <div
-                class="absolute inset-0
-        bg-gradient-to-br
-        from-white/20 to-white/5
-        dark:from-white/5 dark:to-white/[0.02]"></div>
-
-            <!-- Glow -->
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 rounded-full
-        bg-orange-400/20 dark:bg-orange-500/10
-        blur-3xl transition-all duration-500
-        group-hover:scale-125"></div>
-
-            <div class="relative flex items-start justify-between">
-                <div>
-                    <span
-                        class="text-xs uppercase tracking-[0.2em]
-            text-gray-500 dark:text-gray-400
-            font-semibold">
-                        Pending Schedule
-                    </span>
-
-                    <h2
-                        class="mt-4 text-4xl font-bold tracking-tight
-            text-gray-800 dark:text-white">
-                        {{ data?.pendingSchedule }}
-                    </h2>
-
-                    <p
-                        class="mt-3 text-sm font-medium
-            text-orange-600 dark:text-orange-400">
-                        
-                        <span class="text-xl font-bold">
-                        {{ (data?.totalSlots || 0) > 0
-                        ? (data?.pendingSchedule / ((data?.totalSlots || 0))
-                        | percent:'1.0-0')
-                        : '0%' }}
-                        </span>
-
-                        schedule pending rate
-                    </p>
-                </div>
-
-                <div
-                    class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
-                    bg-gradient-to-br from-orange-400/30 to-orange-500/10
-                    dark:from-orange-400/20 dark:to-orange-500/5
-                    border border-orange-300/30 dark:border-orange-400/20">
-                    <i
-                        class="pi pi-calendar-minus text-orange-500 dark:text-orange-300 text-lg"></i>
-                </div>
-            </div>
-        </div>
+    <div *ngIf="isAdmin() || isSchoolCoordinator() || isSupervisor() || isClinicalInstructor()"
+        class="flex-1 min-w-[260px]"
+        data-aos="zoom-in-up" data-aos-duration="700" data-aos-delay="100">
+        <ng-container *ngTemplateOutlet="statCard; context: {
+            label: 'Pending Schedule',
+            value: data?.pendingSchedule,
+            rate: (data?.totalSlots || 0) > 0 ? (data?.pendingSchedule / (data?.totalSlots || 0) | percent:'1.0-0') : '0%',
+            rateLabel: 'schedule pending rate',
+            icon: 'pi-calendar-minus',
+            color: 'orange'
+        }"></ng-container>
     </div>
 
-    <!-- ===================== -->
-    <!-- Confirmed Schedule -->
-    <!-- ===================== -->
-    <div
-        class="col-span-12 sm:col-span-6 xl:col-span-3"
-        data-aos="zoom-in-up"
-        data-aos-duration="700"
-        data-aos-delay="200">
-
-        <div
-            class="group relative overflow-hidden rounded-3xl
-      border border-white/30 dark:border-white/10
-      bg-white/40 dark:bg-white/5
-      backdrop-blur-2xl backdrop-saturate-150
-      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
-      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
-      transition-all duration-500
-      hover:-translate-y-2
-      hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
-      dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]
-      p-6">
-            <!-- Overlay -->
-            <div
-                class="absolute inset-0
-        bg-gradient-to-br
-        from-white/20 to-white/5
-        dark:from-white/5 dark:to-white/[0.02]"></div>
-
-            <!-- Glow -->
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 rounded-full
-        bg-blue-400/20 dark:bg-blue-500/10
-        blur-3xl transition-all duration-500
-        group-hover:scale-125"></div>
-
-            <div class="relative flex items-start justify-between">
-                <div>
-                    <span
-                        class="text-xs uppercase tracking-[0.2em]
-            text-gray-500 dark:text-gray-400
-            font-semibold">
-                        Confirmed Schedule
-                    </span>
-
-                    <h2
-                        class="mt-4 text-4xl font-bold tracking-tight
-            text-gray-800 dark:text-white">
-                        {{ data?.confirmedSchedule }}
-                    </h2>
-
-                    <p
-                        class="mt-3 text-sm font-medium
-            text-blue-600 dark:text-blue-400">
-                        <span class="text-xl font-bold">
-                        {{ (data?.totalSlots || 0) > 0
-                        ? (data?.confirmedSchedule / ((data?.totalSlots || 0))
-                        | percent:'1.0-0')
-                        : '0%' }}
-                        </span>
-                        schedule confirmed rate
-                    </p>
-                </div>
-
-                <div
-                    class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
-                    bg-gradient-to-br from-blue-400/30 to-blue-500/10
-                    dark:from-blue-400/20 dark:to-blue-500/5
-                    border border-blue-300/30 dark:border-blue-400/20">
-                    <i
-                        class="pi pi-calendar-plus text-blue-500 dark:text-blue-300 text-lg"></i>
-                </div>
-            </div>
-        </div>
+    <!-- Confirmed Schedule (always visible) -->
+    <div class="flex-1 min-w-[260px]"
+        data-aos="zoom-in-up" data-aos-duration="700" data-aos-delay="200">
+        <ng-container *ngTemplateOutlet="statCard; context: {
+            label: 'Confirmed Schedule',
+            value: data?.confirmedSchedule,
+            rate: (data?.totalSlots || 0) > 0 ? (data?.confirmedSchedule / (data?.totalSlots || 0) | percent:'1.0-0') : '0%',
+            rateLabel: 'schedule confirmed rate',
+            icon: 'pi-calendar-plus',
+            color: 'blue'
+        }"></ng-container>
     </div>
 
-    <!-- ===================== -->
-    <!-- Students -->
-    <!-- ===================== -->
-    <div
-        class="col-span-12 sm:col-span-6 xl:col-span-3"
-        data-aos="zoom-in-up"
-        data-aos-duration="700"
-        data-aos-delay="300">
-        <div
-            class="group relative overflow-hidden rounded-3xl
-      border border-white/30 dark:border-white/10
-      bg-white/40 dark:bg-white/5
-      backdrop-blur-2xl backdrop-saturate-150
-      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
-      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
-      transition-all duration-500
-      hover:-translate-y-2
-      hover:shadow-[0_8px_40px_rgba(34,197,94,0.20)]
-      dark:hover:shadow-[0_8px_40px_rgba(34,197,94,0.15)]
-      p-6">
-            <!-- Overlay -->
-            <div
-                class="absolute inset-0
-        bg-gradient-to-br
-        from-white/20 to-white/5
-        dark:from-white/5 dark:to-white/[0.02]"></div>
-
-            <!-- Glow -->
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 rounded-full
-        bg-green-400/20 dark:bg-green-500/10
-        blur-3xl transition-all duration-500
-        group-hover:scale-125"></div>
-
-            <div class="relative flex items-start justify-between">
-                <div>
-                    <span
-                        class="text-xs uppercase tracking-[0.2em]
-            text-gray-500 dark:text-gray-400
-            font-semibold">
-                        Appointed Students
-                    </span>
-
-                    <h2
-                        class="mt-4 text-4xl font-bold tracking-tight
-            text-gray-800 dark:text-white">
-                        {{ data?.totalAppointedStudents }}
-                    </h2>
-
-                    <p
-                        class="mt-3 text-sm font-medium
-            text-green-600 dark:text-green-400">
-                        <span class="text-xl font-bold">
-                        <!-- Student Appointed by Shift -->
-                        {{ (data?.totalAppointedStudents || 0) > 0
-                        ? (data?.totalAppointedStudents / ((data?.totalSlots || 0) * 10)
-                        | percent:'1.0-0')
-                        : '0%' }}
-                        </span>
-                        appointed students rate
-                    </p>
-                </div>
-
-                <div
-                    class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
-                    bg-gradient-to-br from-green-400/30 to-green-500/10
-                    dark:from-green-400/20 dark:to-green-500/5
-                    border border-green-300/30 dark:border-green-400/20">
-                    <i
-                        class="pi pi-users text-green-500 dark:text-green-300 text-lg"></i>
-                </div>
-            </div>
-        </div>
+    <!-- Appointed Students -->
+    <div *ngIf="isAdmin() || isSchoolCoordinator() || isSupervisor() || isClinicalInstructor()"
+        class="flex-1 min-w-[260px]"
+        data-aos="zoom-in-up" data-aos-duration="700" data-aos-delay="300">
+        <ng-container *ngTemplateOutlet="statCard; context: {
+            label: 'Appointed Students',
+            value: data?.totalAppointedStudents,
+            rate: (data?.totalAppointedStudents || 0) > 0 ? (data?.totalAppointedStudents / ((data?.totalSlots || 0) * 10) | percent:'1.0-0') : '0%',
+            rateLabel: 'appointed students rate',
+            icon: 'pi-users',
+            color: 'green'
+        }"></ng-container>
     </div>
 
-    <!-- ===================== -->
     <!-- Revenue -->
-    <!-- ===================== -->
-    <div
-        class="col-span-12 sm:col-span-6 xl:col-span-3"
-        data-aos="zoom-in-up"
-        data-aos-duration="700"
-        data-aos-delay="400">
-        <div
-            class="group relative overflow-hidden rounded-3xl
-      border border-white/30 dark:border-white/10
-      bg-white/40 dark:bg-white/5
-      backdrop-blur-xl backdrop-saturate-150
-      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
-      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
-      transition-all duration-500
-      hover:-translate-y-2
-      hover:shadow-[0_8px_40px_rgba(168,85,247,0.20)]
-      dark:hover:shadow-[0_8px_40px_rgba(168,85,247,0.15)]
-      p-6">
-            <!-- Overlay -->
-            <div
-                class="absolute inset-0
-        bg-gradient-to-br
-        from-white/20 to-white/5
-        dark:from-white/5 dark:to-white/[0.02]"></div>
-
-            <!-- Glow -->
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 rounded-full
-        bg-purple-400/20 dark:bg-purple-500/10
-        blur-3xl transition-all duration-500
-        group-hover:scale-125"></div>
+    <div *ngIf="isAdmin()"
+        class="flex-1 min-w-[260px]"
+        data-aos="zoom-in-up" data-aos-duration="700" data-aos-delay="400">
+        <div class="group relative overflow-hidden rounded-3xl
+          border border-white/30 dark:border-white/10
+          bg-white/40 dark:bg-white/5
+          backdrop-blur-xl backdrop-saturate-150
+          shadow-[0_8px_32px_rgba(0,0,0,0.10)]
+          dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
+          transition-all duration-500
+          hover:-translate-y-2
+          hover:shadow-[0_8px_40px_rgba(168,85,247,0.20)]
+          dark:hover:shadow-[0_8px_40px_rgba(168,85,247,0.15)]
+          p-6">
+            <div class="absolute inset-0 bg-gradient-to-br from-white/20 to-white/5 dark:from-white/5 dark:to-white/[0.02]"></div>
+            <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-purple-400/20 dark:bg-purple-500/10 blur-3xl transition-all duration-500 group-hover:scale-125"></div>
 
             <div class="relative flex items-start justify-between">
                 <div>
-                    <span
-                        class="text-xs uppercase tracking-[0.2em]
-            text-gray-500 dark:text-gray-400
-            font-semibold">
-                        Revenue
+                    <span class="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400 font-semibold">
+                        Estimate Revenue
                     </span>
 
-                    <h2
-                        class="mt-4 text-3xl font-bold tracking-tight
-            text-gray-800 dark:text-white">
+                    <h2 class="mt-4 text-3xl font-bold tracking-tight text-gray-800 dark:text-white">
                         ₱ {{ data?.actualRevenue | number }}
                     </h2>
 
-                    <p
-                        class="mt-3 text-sm
-            text-purple-700 dark:text-purple-300">
+                    <p class="mt-3 text-sm text-purple-700 dark:text-purple-300">
                         Potential Revenue:
-                        <span class="font-semibold">
-                            ₱ {{ data?.potentialRevenue | number }}
-                        </span>
+                        <span class="font-semibold">₱ {{ data?.potentialRevenue | number }}</span>
                         <span class="text-xl font-bold">
                             ({{ (data?.potentialRevenue || 0) > 0
-                            ? (data?.actualRevenue / ((data?.potentialRevenue || 0))
-                            | percent:'1.0-0')
-                            : '0%' }})
+                                ? (data?.actualRevenue / (data?.potentialRevenue || 0) | percent:'1.0-0')
+                                : '0%' }})
                         </span>
                     </p>
                 </div>
 
-                <div
-                    class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
+                <div class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
                     bg-gradient-to-br from-purple-400/30 to-purple-500/10
                     dark:from-purple-400/20 dark:to-purple-500/5
                     border border-purple-300/30 dark:border-purple-400/20">
-                    <i
-                        class="pi pi-chart-line text-purple-500 dark:text-purple-300 text-lg"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ------isSchoolCoordinator---isSupervisor---isClinicalInstructor------ -->
-
-<div class="grid grid-cols-12 gap-3 mb-4"
-    *ngIf="isSchoolCoordinator() || isSupervisor() || isClinicalInstructor() || isSysAdmin()">
-
-    <!-- ===================== -->
-    <!-- Pending Schedule -->
-    <!-- ===================== -->
-    <div
-        class="col-span-12 sm:col-span-6 xl:col-span-4"
-        data-aos="zoom-in-up"
-        data-aos-duration="700"
-        data-aos-delay="100">
-        <div
-            class="group relative overflow-hidden rounded-3xl
-      border border-white/30 dark:border-white/10
-      bg-white/40 dark:bg-white/5
-      backdrop-blur-2xl backdrop-saturate-150
-      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
-      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
-      transition-all duration-500
-      hover:-translate-y-2
-      hover:shadow-[0_8px_40px_rgba(255,165,0,0.20)]
-      dark:hover:shadow-[0_8px_40px_rgba(255,165,0,0.15)]
-      p-6">
-            <!-- Overlay -->
-            <div
-                class="absolute inset-0
-        bg-gradient-to-br
-        from-white/20 to-white/5
-        dark:from-white/5 dark:to-white/[0.02]"></div>
-
-            <!-- Glow -->
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 rounded-full
-        bg-orange-400/20 dark:bg-orange-500/10
-        blur-3xl transition-all duration-500
-        group-hover:scale-125"></div>
-
-            <div class="relative flex items-start justify-between">
-                <div>
-                    <span
-                        class="text-xs uppercase tracking-[0.2em]
-            text-gray-500 dark:text-gray-400
-            font-semibold">
-                        Pending Schedule
-                    </span>
-
-                    <h2
-                        class="mt-4 text-4xl font-bold tracking-tight
-            text-gray-800 dark:text-white">
-                        {{ data?.pendingSchedule }}
-                    </h2>
-
-                    <p
-                        class="mt-3 text-sm font-medium
-            text-orange-600 dark:text-orange-400">
-                        <span class="text-xl font-bold">
-                        {{ (data?.totalSlots || 0) > 0
-                        ? (data?.pendingSchedule / ((data?.totalSlots || 0))
-                        | percent:'1.0-0')
-                        : '0%' }}
-                        </span>
-                        schedule pending rate
-                    </p>
-                </div>
-
-                <div
-                    class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
-                    bg-gradient-to-br from-orange-400/30 to-orange-500/10
-                    dark:from-orange-400/20 dark:to-orange-500/5
-                    border border-orange-300/30 dark:border-orange-400/20">
-                    <i
-                        class="pi pi-calendar-minus text-orange-500 dark:text-orange-300 text-lg"></i>
+                    <i class="pi pi-chart-line text-purple-500 dark:text-purple-300 text-lg"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ===================== -->
-    <!-- Confirmed Schedule -->
-    <!-- ===================== -->
-    <div
-        class="col-span-12 sm:col-span-6 xl:col-span-4"
-        data-aos="zoom-in-up"
-        data-aos-duration="700"
-        data-aos-delay="200">
-
-        <div
-            class="group relative overflow-hidden rounded-3xl
-      border border-white/30 dark:border-white/10
-      bg-white/40 dark:bg-white/5
-      backdrop-blur-2xl backdrop-saturate-150
-      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
-      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
-      transition-all duration-500
-      hover:-translate-y-2
-      hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
-      dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]
-      p-6">
-            <!-- Overlay -->
-            <div
-                class="absolute inset-0
-        bg-gradient-to-br
-        from-white/20 to-white/5
-        dark:from-white/5 dark:to-white/[0.02]"></div>
-
-            <!-- Glow -->
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 rounded-full
-        bg-blue-400/20 dark:bg-blue-500/10
-        blur-3xl transition-all duration-500
-        group-hover:scale-125"></div>
-
-            <div class="relative flex items-start justify-between">
-                <div>
-                    <span
-                        class="text-xs uppercase tracking-[0.2em]
-            text-gray-500 dark:text-gray-400
-            font-semibold">
-                        Confirmed Schedule
-                    </span>
-
-                    <h2
-                        class="mt-4 text-4xl font-bold tracking-tight
-            text-gray-800 dark:text-white">
-                        {{ data?.confirmedSchedule }}
-                    </h2>
-
-                    <p
-                        class="mt-3 text-sm font-medium
-            text-blue-600 dark:text-blue-400">
-                        <span class="text-xl font-bold">
-                        {{ (data?.totalSlots || 0) > 0
-                        ? (data?.confirmedSchedule / ((data?.totalSlots || 0))
-                        | percent:'1.0-0')
-                        : '0%' }}
-                        </span>
-                        schedule confirmed rate
-                    </p>
-                </div>
-
-                <div
-                    class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
-                    bg-gradient-to-br from-blue-400/30 to-blue-500/10
-                    dark:from-blue-400/20 dark:to-blue-500/5
-                    border border-blue-300/30 dark:border-blue-400/20">
-                    <i
-                        class="pi pi-calendar-plus text-blue-500 dark:text-blue-300 text-lg"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===================== -->
-    <!-- Students -->
-    <!-- ===================== -->
-    <div
-        class="col-span-12 sm:col-span-6 xl:col-span-4"
-        data-aos="zoom-in-up"
-        data-aos-duration="700"
-        data-aos-delay="300">
-        <div
-            class="group relative overflow-hidden rounded-3xl
-      border border-white/30 dark:border-white/10
-      bg-white/40 dark:bg-white/5
-      backdrop-blur-2xl backdrop-saturate-150
-      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
-      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
-      transition-all duration-500
-      hover:-translate-y-2
-      hover:shadow-[0_8px_40px_rgba(34,197,94,0.20)]
-      dark:hover:shadow-[0_8px_40px_rgba(34,197,94,0.15)]
-      p-6">
-            <!-- Overlay -->
-            <div
-                class="absolute inset-0
-        bg-gradient-to-br
-        from-white/20 to-white/5
-        dark:from-white/5 dark:to-white/[0.02]"></div>
-
-            <!-- Glow -->
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 rounded-full
-        bg-green-400/20 dark:bg-green-500/10
-        blur-3xl transition-all duration-500
-        group-hover:scale-125"></div>
-
-            <div class="relative flex items-start justify-between">
-                <div>
-                    <span
-                        class="text-xs uppercase tracking-[0.2em]
-            text-gray-500 dark:text-gray-400
-            font-semibold">
-                        Appointed Students
-                    </span>
-
-                    <h2
-                        class="mt-4 text-4xl font-bold tracking-tight
-            text-gray-800 dark:text-white">
-                        {{ data?.totalAppointedStudents }}
-                    </h2>
-
-                    <p
-                        class="mt-3 text-sm font-medium
-            text-green-600 dark:text-green-400">
-                        <span class="text-xl font-bold">
-                        <!-- Student Appointed by Shift -->
-                        {{ (data?.totalAppointedStudents || 0) > 0
-                        ? (data?.totalAppointedStudents / ((data?.totalSlots || 0) * 10)
-                        | percent:'1.0-0')
-                        : '0%' }}
-                        </span>
-                        appointed students rate
-                    </p>
-                </div>
-
-                <div
-                    class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
-                    bg-gradient-to-br from-green-400/30 to-green-500/10
-                    dark:from-green-400/20 dark:to-green-500/5
-                    border border-green-300/30 dark:border-green-400/20">
-                    <i
-                        class="pi pi-users text-green-500 dark:text-green-300 text-lg"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- ------isIntern---isSysAdmin------ -->
-
-<div class="grid grid-cols-12 gap-3 mb-4" *ngIf="isIntern() || isSysAdmin()">
-
-    <!-- ===================== -->
-    <!-- Confirmed Schedule -->
-    <!-- ===================== -->
-    <div
-        class="col-span-12 sm:col-span-6 xl:col-span-6"
-        data-aos="zoom-in-up"
-        data-aos-duration="700"
-        data-aos-delay="200">
-
-        <div
-            class="group relative overflow-hidden rounded-3xl
-      border border-white/30 dark:border-white/10
-      bg-white/40 dark:bg-white/5
-      backdrop-blur-2xl backdrop-saturate-150
-      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
-      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
-      transition-all duration-500
-      hover:-translate-y-2
-      hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
-      dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]
-      p-6">
-            <!-- Overlay -->
-            <div
-                class="absolute inset-0
-        bg-gradient-to-br
-        from-white/20 to-white/5
-        dark:from-white/5 dark:to-white/[0.02]"></div>
-
-            <!-- Glow -->
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 rounded-full
-        bg-blue-400/20 dark:bg-blue-500/10
-        blur-3xl transition-all duration-500
-        group-hover:scale-125"></div>
-
-            <div class="relative flex items-start justify-between">
-                <div>
-                    <span
-                        class="text-xs uppercase tracking-[0.2em]
-            text-gray-500 dark:text-gray-400
-            font-semibold">
-                        Confirmed Schedule
-                    </span>
-
-                    <h2
-                        class="mt-4 text-4xl font-bold tracking-tight
-            text-gray-800 dark:text-white">
-                        {{ data?.confirmedSchedule }}
-                    </h2>
-
-                    <p
-                        class="mt-3 text-sm font-medium
-            text-blue-600 dark:text-blue-400">
-                        <span class="text-xl font-bold">
-                        {{ (data?.totalSlots || 0) > 0
-                        ? (data?.confirmedSchedule / ((data?.totalSlots || 0))
-                        | percent:'1.0-0')
-                        : '0%' }}
-                        </span>
-                        schedule confirmed rate
-                    </p>
-                </div>
-
-                <div
-                    class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
-                    bg-gradient-to-br from-blue-400/30 to-blue-500/10
-                    dark:from-blue-400/20 dark:to-blue-500/5
-                    border border-blue-300/30 dark:border-blue-400/20">
-                    <i
-                        class="pi pi-calendar-plus text-blue-500 dark:text-blue-300 text-lg"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ===================== -->
     <!-- Attendance -->
-    <!-- ===================== -->
-    <div
-        class="col-span-12 sm:col-span-6 xl:col-span-6"
-        data-aos="zoom-in-up"
-        data-aos-duration="700"
-        data-aos-delay="300">
-        <div
-            class="group relative overflow-hidden rounded-3xl
-      border border-white/30 dark:border-white/10
-      bg-white/40 dark:bg-white/5
-      backdrop-blur-2xl backdrop-saturate-150
-      shadow-[0_8px_32px_rgba(0,0,0,0.10)]
-      dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
-      transition-all duration-500
-      hover:-translate-y-2
-      hover:shadow-[0_8px_40px_rgba(34,197,94,0.20)]
-      dark:hover:shadow-[0_8px_40px_rgba(34,197,94,0.15)]
-      p-6">
-            <!-- Overlay -->
-            <div
-                class="absolute inset-0
-        bg-gradient-to-br
-        from-white/20 to-white/5
-        dark:from-white/5 dark:to-white/[0.02]"></div>
-
-            <!-- Glow -->
-            <div
-                class="absolute -top-10 -right-10 w-32 h-32 rounded-full
-        bg-green-400/20 dark:bg-green-500/10
-        blur-3xl transition-all duration-500
-        group-hover:scale-125"></div>
-
-            <div class="relative flex items-start justify-between">
-                <div>
-                    <span
-                        class="text-xs uppercase tracking-[0.2em]
-            text-gray-500 dark:text-gray-400
-            font-semibold">
-                        Total Attendance
-                    </span>
-
-                    <h2
-                        class="mt-4 text-4xl font-bold tracking-tight
-            text-gray-800 dark:text-white">
-                        {{ data?.totalAttendances }}
-                    </h2>
-
-                    <p
-                        class="mt-3 text-sm font-medium text-green-600 dark:text-green-400">
-                        
-                        <span class="text-xl font-bold">
-                        {{ (data?.totalAppointedStudents || 0) > 0
-                        ? (data?.totalAttendances / data?.totalAppointedStudents
-                        | percent:'1.0-0')
-                        : '0%' }}
-                        </span>
-                        attendance rate
-                    </p>
-                </div>
-
-                <div
-                    class="flex items-center justify-center w-11 h-11 rounded-xl shrink-0
-                    bg-gradient-to-br from-green-400/30 to-green-500/10
-                    dark:from-green-400/20 dark:to-green-500/5
-                    border border-green-300/30 dark:border-green-400/20">
-                    <i
-                        class="pi pi-users text-green-500 dark:text-green-300 text-lg"></i>
-                </div>
-            </div>
-        </div>
+    <div *ngIf="isSysAdmin() || isIntern()"
+        class="flex-1 min-w-[260px]"
+        data-aos="zoom-in-up" data-aos-duration="700" data-aos-delay="300">
+        <ng-container *ngTemplateOutlet="statCard; context: {
+            label: 'Total Attendance',
+            value: data?.totalAttendances,
+            rate: (data?.totalAppointedStudents || 0) > 0 ? (data?.totalAttendances / data?.totalAppointedStudents | percent:'1.0-0') : '0%',
+            rateLabel: 'attendance rate',
+            icon: 'pi-users',
+            color: 'green'
+        }"></ng-container>
     </div>
 </div>

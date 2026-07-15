@@ -929,13 +929,6 @@ export class ApiService {
     );
   }
 
-  // getAttendanceBySlots(slotIDs: string[]): Observable<any[]> {
-  //   return this.handleRequest<any[]>('post', 'attendance/by-slots', {
-  //     body: slotIDs,
-  //     logAction: 'Fetching Attendance By Slots'
-  //   });
-  // }
-
   getAttendanceBySlots(slotIDs: string[]): Observable<any[]> {
     return this.http.post<any[]>(`${this.apiUrl}attendance/by-slots`, slotIDs).pipe(
       tap(res => this.logger.printLogs('i', 'RAW getAttendanceBySlots', res)),
@@ -950,6 +943,11 @@ export class ApiService {
       })
     );
   }
+
+  deleteAttendance(id: number) {
+    return this.handleRequest('delete', 'Attendance', { id, logAction: 'Deleting Attendance' });
+  }
+
 
 
   /*----------------------- SETTINGS -----------------------*/

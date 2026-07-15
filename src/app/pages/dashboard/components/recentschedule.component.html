@@ -138,8 +138,14 @@
                     <p-skeleton height="250px"></p-skeleton>
                 </div>
             </div>
-
             <!-- LINE CHART 2 -->
+            <div class="col-span-12 xl:col-span-6">
+                <div class="card space-y-4">
+                    <p-skeleton width="80%" height="1.5rem"></p-skeleton>
+                    <p-skeleton height="250px"></p-skeleton>
+                </div>
+            </div>
+            <!-- LINE CHART 3 -->
             <div class="col-span-12 xl:col-span-6">
                 <div class="card space-y-4">
                     <p-skeleton width="80%" height="1.5rem"></p-skeleton>
@@ -176,7 +182,6 @@
                 </div>
             </div>
 
-            
             <!-- PIE 2 -->
             <div class="col-span-12">
                 <div class="card space-y-4">
@@ -273,57 +278,135 @@
 
 <div class="grid grid-cols-12 gap-4" *ngIf="!loading">
 
+    <!-- Bar & Plot Charts -->
     <div class="col-span-12 lg:col-span-12 xl:col-span-8">
 
         <div class="grid grid-cols-12 gap-4">
 
-            <div class="col-span-12 lg:col-span-12 xl:col-span-12">
+            <div
+                class="col-span-12 lg:col-span-12 xl:col-span-12 group relative overflow-hidden rounded-3xl
+            border border-white/30 dark:border-white/10
+            bg-white/40 dark:bg-white/5
+            backdrop-blur-2xl backdrop-saturate-150
+            shadow-[0_8px_32px_rgba(0,0,0,0.10)]
+            dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
+            transition-all duration-500
+            hover:-translate-y-2
+            hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
+            dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]">
 
-                <div class="card">
+                <!-- Overlay -->
+                <div class="absolute inset-0
+                            bg-gradient-to-br
+                            from-white/20 to-white/5
+                            dark:from-white/5 dark:to-white/[0.02]"></div>
 
-                    <!-- @if(isAdmin() || isSchoolCoordinator()){ -->
-                    <div class="font-semibold text-xl">Trend Hospital Zone by
-                        shift as of {{ currentYear }}</div>
+                <!-- Glow -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full
+                            bg-blue-400/20 dark:bg-blue-500/10
+                            blur-3xl transition-all duration-500
+                            group-hover:scale-125"></div>
+
+                <div
+                    class="card relative !bg-transparent !shadow-none rounded-3xl p-6">
+
+                    <div class="font-semibold text-xl">
+                        Trend Hospital Zone by shift as of {{ currentYear }}
+                    </div>
 
                     <ng-container
                         *ngIf="barHospitalStackData?.datasets?.[0]?.data?.length > 0; else emptyBarHospital">
-
                         <p-chart
                             type="bar"
                             [data]="barHospitalStackData"
                             [options]="barHospitalStackOptions">
                         </p-chart>
-
                     </ng-container>
 
                     <ng-template #emptyBarHospital>
                         <div
                             class="text-center text-gray-500 h-[200px] flex flex-col items-center justify-center">
                             <i class="pi pi-chart-bar text-4xl mb-2"></i>
-                            <div>No data available for {{ currentYear
-                                }}</div>
+                            <div>No data available for {{ currentYear }}</div>
                         </div>
                     </ng-template>
 
-                    <!-- } -->
-
-                    <!-- @if(isAdmin() || isSupervisor() || isSchoolCoordinator()){ -->
-                    <div class="font-semibold text-xl mt-10"> Trend Department
-                        by
-                        Shift as of {{ currentYear }}</div>
+                    <div class="font-semibold text-xl mt-10">
+                        Trend Department by Shift as of {{ currentYear }}
+                    </div>
 
                     <ng-container
                         *ngIf="barSectionData?.datasets?.[0]?.data?.length > 0; else emptyBarSection">
-
                         <p-chart
                             type="bar"
                             [data]="barSectionData"
                             [options]="barSectionOptions">
                         </p-chart>
-
                     </ng-container>
 
                     <ng-template #emptyBarSection>
+                        <div
+                            class="text-center text-gray-500 h-[200px] flex flex-col items-center justify-center">
+                            <i class="pi pi-chart-bar text-4xl mb-2"></i>
+                            <div>No data available for {{ currentYear }}</div>
+                        </div>
+                    </ng-template>
+                    <!-- } -->
+
+                </div>
+            </div>
+
+            <div *ngIf="isAdmin()"
+                class="col-span-12 lg:col-span-12 xl:col-span-12 group relative overflow-hidden rounded-3xl
+                border border-white/30 dark:border-white/10
+                bg-white/40 dark:bg-white/5
+                backdrop-blur-2xl backdrop-saturate-150
+                shadow-[0_8px_32px_rgba(0,0,0,0.10)]
+                dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
+                transition-all duration-500
+                hover:-translate-y-2
+                hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
+                dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]">
+
+                <!-- Overlay -->
+                <div class="absolute inset-0
+                            bg-gradient-to-br
+                            from-white/20 to-white/5
+                            dark:from-white/5 dark:to-white/[0.02]"></div>
+
+                <!-- Glow -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full
+                            bg-blue-400/20 dark:bg-blue-500/10
+                            blur-3xl transition-all duration-500
+                            group-hover:scale-125"></div>
+
+                <div
+                    class="card relative !bg-transparent !shadow-none rounded-3xl p-6">
+
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="font-semibold text-xl">
+                            Schedule Trend by School as of {{ currentYear }}
+                        </div>
+
+                        <p-select
+                            [options]="granularityOptions"
+                            [(ngModel)]="trendGranularity"
+                            optionLabel="label"
+                            optionValue="value"
+                            (onChange)="onGranularityChange($event)">
+                        </p-select>
+                    </div>
+
+                    <ng-container
+                        *ngIf="schoolTrendData?.datasets?.[0]?.data?.length > 0; else emptyScheduleTrendSection">
+                        <p-chart
+                            type="line"
+                            [data]="schoolTrendData"
+                            [options]="schoolTrendOptions">
+                        </p-chart>
+                    </ng-container>
+
+                    <ng-template #emptyScheduleTrendSection>
                         <div
                             class="text-center text-gray-500 h-[200px] flex flex-col items-center justify-center">
                             <i class="pi pi-chart-bar text-4xl mb-2"></i>
@@ -332,16 +415,68 @@
                         </div>
                     </ng-template>
 
-                    <!-- } -->
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="font-semibold text-xl">
+                            Appointed Students by School as of {{ currentYear }}
+                        </div>
 
+                        <p-select
+                            [options]="granularityOptions"
+                            [(ngModel)]="studentTrendGranularity"
+                            optionLabel="label"
+                            optionValue="value"
+                            (onChange)="onStudentTrendGranularityChange($event)">
+                        </p-select>
+                    </div>
+
+                    <ng-container
+                        *ngIf="schoolStudentTrendData?.datasets?.[0]?.data?.length > 0; else emptyStudentScheduleTrendSection">
+                        <p-chart
+                            type="line"
+                            [data]="schoolStudentTrendData"
+                            [options]="schoolStudentTrendOptions">
+                        </p-chart>
+                    </ng-container>
+
+                    <ng-template #emptyStudentScheduleTrendSection>
+                        <div
+                            class="text-center text-gray-500 h-[200px] flex flex-col items-center justify-center">
+                            <i class="pi pi-chart-bar text-4xl mb-2"></i>
+                            <div>No data available for {{ currentYear
+                                }}</div>
+                        </div>
+                    </ng-template>
                 </div>
 
             </div>
 
             <div
                 *ngIf="isAdmin() && linearHospitalData?.datasets?.[0]?.data?.length > 0"
-                class="col-span-12 lg:col-span-12 xl:col-span-6">
-                <div class="card">
+                class="col-span-12 lg:col-span-12 xl:col-span-6 rounded-3xl
+                        border border-white/30 dark:border-white/10
+                        bg-white/40 dark:bg-white/5
+                        backdrop-blur-2xl backdrop-saturate-150
+                        shadow-[0_8px_32px_rgba(0,0,0,0.10)]
+                        dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
+                        transition-all duration-500
+                        hover:-translate-y-2
+                        hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
+                        dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]">
+
+                <!-- Overlay -->
+                <div class="absolute inset-0
+                            bg-gradient-to-br
+                            from-white/20 to-white/5
+                            dark:from-white/5 dark:to-white/[0.02]"></div>
+
+                <!-- Glow -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full
+                            bg-blue-400/20 dark:bg-blue-500/10
+                            blur-3xl transition-all duration-500
+                            group-hover:scale-125"></div>
+
+                <div
+                    class="card relative !bg-transparent !shadow-none rounded-3xl p-6">
                     <div class="font-semibold text-xl"> Trend Shift by
                         Hospital
                         as
@@ -356,12 +491,35 @@
             </div>
 
             <div
-                *ngIf="isAdmin()  && linearSchoolData?.datasets?.[0]?.data?.length > 0"
-                class="col-span-12 lg:col-span-12 xl:col-span-6">
-                <div class="card">
-                    <div class="font-semibold text-xl">Trend Shift by
-                        School as
-                        of {{ currentYear }}</div>
+                *ngIf="isAdmin() && linearSchoolData?.datasets?.[0]?.data?.length > 0"
+                class="col-span-12 lg:col-span-12 xl:col-span-6 group relative overflow-hidden rounded-3xl
+                        border border-white/30 dark:border-white/10
+                        bg-white/40 dark:bg-white/5
+                        backdrop-blur-2xl backdrop-saturate-150
+                        shadow-[0_8px_32px_rgba(0,0,0,0.10)]
+                        dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
+                        transition-all duration-500
+                        hover:-translate-y-2
+                        hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
+                        dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]">
+
+                <!-- Overlay -->
+                <div class="absolute inset-0
+                            bg-gradient-to-br
+                            from-white/20 to-white/5
+                            dark:from-white/5 dark:to-white/[0.02]"></div>
+
+                <!-- Glow -->
+                <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full
+                            bg-blue-400/20 dark:bg-blue-500/10
+                            blur-3xl transition-all duration-500
+                            group-hover:scale-125"></div>
+
+                <div
+                    class="card relative !bg-transparent !shadow-none rounded-3xl p-6">
+                    <div class="font-semibold text-xl">
+                        Trend Shift by School as of {{ currentYear }}
+                    </div>
 
                     <p-chart
                         type="line"
@@ -371,85 +529,179 @@
                 </div>
             </div>
 
-
         </div>
 
     </div>
 
+    <!-- Pie Charts -->
     <div class="col-span-12 lg:col-span-12 xl:col-span-4">
 
         <div class="grid grid-cols-12 gap-4">
 
+            <!-- School/Hospital Distribution -->
             <div class="col-span-12 lg:col-span-12 xl:col-span-12">
-                <div class="card">
-                    <div class="font-semibold text-xl">
-                        {{isAdmin() || isSupervisor() ? 'School' : 'Hospital'}}
-                        Distribution as of {{ currentYear }}
-                    </div>
+                <div class="group relative overflow-hidden rounded-3xl
+                border border-white/30 dark:border-white/10
+                bg-white/40 dark:bg-white/5
+                backdrop-blur-2xl backdrop-saturate-150
+                shadow-[0_8px_32px_rgba(0,0,0,0.10)]
+                dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
+                transition-all duration-500
+                hover:-translate-y-2
+                hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
+                dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]">
 
-                    <div class="relative w-full flex justify-center">
+                    <!-- Overlay -->
+                    <div class="absolute inset-0
+                    bg-gradient-to-br
+                    from-white/20 to-white/5
+                    dark:from-white/5 dark:to-white/[0.02]"></div>
 
-                        <p-chart
-                            type="pie"
-                            [data]="pieSchoolData"
-                            [options]="pieSchoolOptions">
-                        </p-chart>
+                    <!-- Glow -->
+                    <div
+                        class="absolute -top-10 -right-10 w-40 h-40 rounded-full
+                    bg-blue-400/20 dark:bg-blue-500/10
+                    blur-3xl transition-all duration-500
+                    group-hover:scale-125"></div>
 
-                        <div *ngIf="!pieSchoolData?.datasets?.[0]?.data?.length"
-                            class="absolute inset-0 flex flex-col items-center justify-center bg-white/70 dark:bg-black/40 rounded">
-
-                            <i class="pi pi-chart-pie text-3xl mb-2"></i>
-                            <span>No data for {{ currentYear }}</span>
-
+                    <div
+                        class="card relative !bg-transparent !shadow-none rounded-3xl p-6">
+                        <div
+                            class="font-semibold text-xl text-gray-800 dark:text-white">
+                            {{ isAdmin() || isSupervisor() ? 'School' :
+                            'Hospital' }}
+                            Distribution as of {{ currentYear }}
                         </div>
 
-                    </div>
-                </div>
-            </div>
+                        <div class="relative w-full flex justify-center">
 
-            <div class="col-span-12 lg:col-span-12 xl:col-span-12">
-                <div class="card">
-                    <div class="font-semibold text-xl">
-                        Section Distribution as of {{ currentYear }}
-                    </div>
+                            <p-chart
+                                type="pie"
+                                [data]="pieSchoolData"
+                                [options]="pieSchoolOptions">
+                            </p-chart>
 
-                    <div class="relative w-full flex justify-center">
+                            <div
+                                *ngIf="!pieSchoolData?.datasets?.[0]?.data?.length"
+                                class="absolute inset-0 flex flex-col items-center justify-center
+                                   bg-white/70 dark:bg-black/40 rounded-3xl
+                                   text-gray-800 dark:text-white">
 
-                        <p-chart
-                            type="pie"
-                            [data]="pieHospitalData"
-                            [options]="pieHospitalOptions">
-                        </p-chart>
+                                <i class="pi pi-chart-pie text-3xl mb-2"></i>
+                                <span>No data for {{ currentYear }}</span>
 
-                        <div *ngIf="!pieSchoolData?.datasets?.[0]?.data?.length"
-                            class="absolute inset-0 flex flex-col items-center justify-center bg-white/70 dark:bg-black/40 rounded">
-
-                            <i class="pi pi-chart-pie text-3xl mb-2"></i>
-                            <span>No data for {{ currentYear }}</span>
+                            </div>
 
                         </div>
-
                     </div>
                 </div>
             </div>
 
-            
+            <!-- Section Distribution -->
             <div class="col-span-12 lg:col-span-12 xl:col-span-12">
+                <div class="group relative overflow-hidden rounded-3xl
+                border border-white/30 dark:border-white/10
+                bg-white/40 dark:bg-white/5
+                backdrop-blur-2xl backdrop-saturate-150
+                shadow-[0_8px_32px_rgba(0,0,0,0.10)]
+                dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
+                transition-all duration-500
+                hover:-translate-y-2
+                hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
+                dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]">
 
-                <div class="card">
-                    <div class="font-semibold text-xl pb-5">
-                        User Orientation Video
-                    </div>
-                    <div style="left: 0px; width: 480px; height: 270px; position: relative;">
-                        <iframe src="https://video.pictory.ai/embed/20260511005354686186ccf6135e940609f913ee0ac7733c0/20260511075953893Rgd2YJQuiiQvXyA"
-                        title="EmpoweredUsersStrong.mp4" style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen>
-                        </iframe>
+                    <!-- Overlay -->
+                    <div class="absolute inset-0
+                    bg-gradient-to-br
+                    from-white/20 to-white/5
+                    dark:from-white/5 dark:to-white/[0.02]"></div>
+
+                    <!-- Glow -->
+                    <div
+                        class="absolute -top-10 -right-10 w-40 h-40 rounded-full
+                    bg-blue-400/20 dark:bg-blue-500/10
+                    blur-3xl transition-all duration-500
+                    group-hover:scale-125"></div>
+
+                    <div
+                        class="card relative !bg-transparent !shadow-none rounded-3xl p-6">
+                        <div
+                            class="font-semibold text-xl text-gray-800 dark:text-white">
+                            Section Distribution as of {{ currentYear }}
+                        </div>
+
+                        <div class="relative w-full flex justify-center">
+
+                            <p-chart
+                                type="pie"
+                                [data]="pieHospitalData"
+                                [options]="pieHospitalOptions">
+                            </p-chart>
+
+                            <!-- 🔥 fixed: was checking pieSchoolData, now correctly checks pieHospitalData -->
+                            <div
+                                *ngIf="!pieHospitalData?.datasets?.[0]?.data?.length"
+                                class="absolute inset-0 flex flex-col items-center justify-center
+                                   bg-white/70 dark:bg-black/40 rounded-3xl
+                                   text-gray-800 dark:text-white">
+
+                                <i class="pi pi-chart-pie text-3xl mb-2"></i>
+                                <span>No data for {{ currentYear }}</span>
+
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- User Orientation Video -->
+            <!-- <div class="col-span-12 lg:col-span-12 xl:col-span-12">
+                <div class="group relative overflow-hidden rounded-3xl
+                border border-white/30 dark:border-white/10
+                bg-white/40 dark:bg-white/5
+                backdrop-blur-2xl backdrop-saturate-150
+                shadow-[0_8px_32px_rgba(0,0,0,0.10)]
+                dark:shadow-[0_8px_32px_rgba(0,0,0,0.45)]
+                transition-all duration-500
+                hover:-translate-y-2
+                hover:shadow-[0_8px_40px_rgba(59,130,246,0.20)]
+                dark:hover:shadow-[0_8px_40px_rgba(59,130,246,0.15)]">
+
+                    <div class="absolute inset-0
+                    bg-gradient-to-br
+                    from-white/20 to-white/5
+                    dark:from-white/5 dark:to-white/[0.02]"></div>
+
+                    <div
+                        class="absolute -top-10 -right-10 w-40 h-40 rounded-full
+                    bg-blue-400/20 dark:bg-blue-500/10
+                    blur-3xl transition-all duration-500
+                    group-hover:scale-125"></div>
+
+                    <div
+                        class="card relative !bg-transparent !shadow-none rounded-3xl p-6">
+                        <div
+                            class="font-semibold text-xl pb-5 text-gray-800 dark:text-white">
+                            User Orientation Video
+                        </div>
+                        <div
+                            style="left: 0px; width: 480px; height: 270px; position: relative;">
+                            <iframe
+                                src="https://video.pictory.ai/embed/20260511005354686186ccf6135e940609f913ee0ac7733c0/20260511075953893Rgd2YJQuiiQvXyA"
+                                title="EmpoweredUsersStrong.mp4"
+                                style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
 
         </div>
     </div>
+
     <!--     
     <div class="card">
         <div
