@@ -134,7 +134,7 @@
                                 </p-columnFilter>
                             </div>
                         </th>
-                        <th pSortableColumn="hospitalName" style="min-width:10rem">
+                        <th *ngIf="!isSupervisor()" pSortableColumn="hospitalName" style="min-width:10rem">
                             <div class="flex justify-between items-center">
                                 Hospital
                                 <p-columnFilter field="hospitalName" matchMode="in" display="menu"
@@ -178,7 +178,7 @@
                                 </p-columnFilter>
                             </div>
                         </th>
-                        <th *ngIf="!isSchoolCoordinator() && !isClinicalInstructor()" pSortableColumn="schoolName" style="min-width:10rem">
+                        <th *ngIf="isAdmin() || isSupervisor()" pSortableColumn="schoolName" style="min-width:10rem">
                             <div class="flex justify-between items-center">
                                 School
                                 <p-columnFilter field="schoolName" matchMode="in" display="menu"
@@ -267,11 +267,11 @@
                                 ({{ formatTime(slot.startTime)}} - {{ formatTime(slot.endTime) }})
                             </small>
                         </td>
-                        <td>{{ slot.hospitalName }}</td>
+                        <td *ngIf="!isSupervisor()">{{ slot.hospitalName }}</td>
                         <td>{{ slot.sectionName }}
                             <p-tag severity="info" class="p-5" [value]="slot.studentCount+' / ' + slot.allocation" [rounded]="true" />
                         </td>
-                        <td *ngIf="!isSchoolCoordinator() && !isClinicalInstructor()">{{ slot.schoolName }}</td>
+                        <td *ngIf="isAdmin() || isSupervisor()">{{ slot.schoolName }}</td>
                         <td>
                             <p-tag [value]="getStatus(slot.slotStatus,'value')"
                                 [severity]="getStatus(slot.slotStatus,'severirty')" />
@@ -1048,7 +1048,7 @@
                     </p-button>
                 }
 
-                @if ((selectedEvent.slotStatus === 1 && isFutureDate(selectedEvent.dateSlot)) || isSysAdmin()) {
+                @if ((isAdmin() && selectedEvent.slotStatus === 1 && isFutureDate(selectedEvent.dateSlot)) || isSysAdmin()) {
                     <p-button
                         icon="pi pi-user-minus"
                         label="Remove All Appointed Students"
@@ -1071,7 +1071,7 @@
                 </p-button>
                 }
 
-                @if (selectedEvent.slotStatus == 1 && !isWithinTwoWeeks(selectedEvent.dateSlot)) {
+                @if (isSchoolCoordinator() && selectedEvent.slotStatus === 1 && !isWithinTwoWeeks(selectedEvent.dateSlot)) {
                     <p-button
                         icon="pi pi-file-export"
                         label="Request to Cancel"
@@ -1292,7 +1292,7 @@
                         </p-columnFilter>
                     </div>
                 </th>
-                <th pSortableColumn="hospitalName" style="min-width:10rem">
+                <th *ngIf="!isSupervisor()" pSortableColumn="hospitalName" style="min-width:10rem">
                     <div class="flex justify-between items-center">
                         Hospital
                         <p-columnFilter field="hospitalName" matchMode="in" display="menu" [showMatchModes]="false"
@@ -1314,7 +1314,7 @@
                         </p-columnFilter>
                     </div>
                 </th>
-                <th *ngIf="isAdmin" pSortableColumn="schoolName" style="min-width:10rem">
+                <th *ngIf="isAdmin() || isSupervisor()" pSortableColumn="schoolName" style="min-width:10rem">
                     <div class="flex justify-between items-center">
                         School(s)
                         <p-columnFilter field="schoolName" matchMode="in" display="menu" [showMatchModes]="false"
@@ -1421,9 +1421,9 @@
                     </small>
                 </td>
 
-                <td>{{ slot.hospitalName }}</td>
+                <td *ngIf="!isSupervisor()">{{ slot.hospitalName }}</td>
 
-                <td *ngIf="isAdmin">{{ slot.schoolName }}</td>
+                <td  *ngIf="isAdmin() || isSupervisor()">{{ slot.schoolName }}</td>
 
                 <td>{{ slot.sectionName }}
                     

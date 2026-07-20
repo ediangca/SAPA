@@ -1,5 +1,5 @@
 export const Environment = {
-  production: true, //false for development, true for production
+  production: false, //false for development, true for production
   appName: "SAPA",
   heartbeatIntervalMs : 60000, // 60 seconds
   // apiUrl: "http:///localhost/sapa/api/", //Local Live
