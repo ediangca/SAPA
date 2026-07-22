@@ -19,6 +19,10 @@
                         <div class="flex row">
                             <p-button label="New" icon="pi pi-plus" severity="secondary" class="mr-2"
                                 (onClick)="openNew()" />
+                    
+                                    <button pButton label="Loading" icon="pi pi-spinner-dotted pi-spin" (click)="save()" >
+                                        <i class="fa-solid fa-atom fa-spin" style="font-size: 1rem"></i>
+                                    </button>
                             <!-- <p-button severity="secondary" label="Delete" icon="pi pi-trash" outlined
                                 (onClick)="deleteSelected()" [disabled]="!selectUsers || !selectUsers.length" /> -->
                         </div>
@@ -209,10 +213,10 @@
                     <div class="flex flex-row gap-6 items-start mt-2">
 
                     <!-- QR Code -->
-                    <div *ngIf="isAdmin() || isClinicalInstructor() || isIntern()" class="shrink-0 text-center cursor-pointer" (click)="openQrZoom()">
-                        <qrcode
+                    <div *ngIf="user.userID && (isAdmin() || isClinicalInstructor() || isIntern())" class="shrink-0 text-center cursor-pointer" (click)="openQrZoom()">
+                        <qrcode 
                             [qrdata]="user.userID"
-                            [width]="120"
+                            [width]="120"`
                             [errorCorrectionLevel]="'M'"
                             cssClass="bg-white p-2 rounded shadow"></qrcode>
                     </div>
