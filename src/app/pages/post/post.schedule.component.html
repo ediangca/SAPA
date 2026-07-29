@@ -1048,7 +1048,7 @@
                     </p-button>
                 }
 
-                @if ((isAdmin() && selectedEvent.slotStatus === 1 && isFutureDate(selectedEvent.dateSlot)) || isSysAdmin()) {
+                @if ((isAdmin() && selectedEvent.slotStatus === 1 && isFutureDate(selectedEvent.dateSlot)) || isSysAdmin() && selectedEvent.studentCount > 0) {
                     <p-button
                         icon="pi pi-user-minus"
                         label="Remove All Appointed Students"
@@ -1059,7 +1059,7 @@
                     </p-button>
                 }
 
-                @if(selectedEvent.slotStatus === 1){
+                @if(selectedEvent.slotStatus === 1 && selectedEvent.studentCount > 0){
                 <p-button
                     label="Attendance"
                     icon="pi pi-list-check"
