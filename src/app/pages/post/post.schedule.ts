@@ -332,9 +332,9 @@ export class Schedule implements OnInit, OnChanges {
 
     ngOnInit() {
         this.initForm()
-        this.initDate();
         this.initData();
         this.initCols();
+        this.initDate();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -353,12 +353,6 @@ export class Schedule implements OnInit, OnChanges {
             userID: ['', Validators.required],
             CIID: ['', Validators.required]
         });
-    }
-
-    initDate() {
-        const today = new Date();
-        this.minDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7);
-        return this.minDate;
     }
 
     initData() {
@@ -420,6 +414,7 @@ export class Schedule implements OnInit, OnChanges {
             return true;
         });
     }
+    
 
     initPrivileges() {
         const moduleID = 'MOD0008';
@@ -446,6 +441,17 @@ export class Schedule implements OnInit, OnChanges {
         // });
         this.loadSlots();
         this.buildSubComponent();
+    }
+
+    
+    initDate() {
+        const today = new Date();
+
+        this.minDate = this.isAdmin()
+            ? new Date(today.getFullYear(), today.getMonth(), today.getDate())
+            : new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7);
+
+        return this.minDate;
     }
 
     // then, given those routes please help proceed with my logic to play with bar section,
@@ -569,7 +575,7 @@ export class Schedule implements OnInit, OnChanges {
             eventDisplay: 'block',
             lazyFetching: true,
             selectable: true,
-            ...(this.tokenPayload.role === 'UGR0004' ? {} : {
+            ...(this.isClinicalInstructor() || this.isSupervisor() || this.isIntern() ? {} : {
                 customButtons: {
                     myCustomButton: {
                         text: 'New Schedule',
@@ -584,6 +590,10 @@ export class Schedule implements OnInit, OnChanges {
             })
             ,
             selectAllow: (selectInfo) => {
+                if (this.isAdmin()) {
+                    return true; // admins can pick any date
+                }
+
                 const minAllowed = new Date();
                 minAllowed.setDate(minAllowed.getDate() + 7);
                 minAllowed.setHours(0, 0, 0, 0);
@@ -617,7 +627,7 @@ export class Schedule implements OnInit, OnChanges {
                 minAllowedDate.setDate(today.getDate() + 7);
 
                 // Block: past, today, and < 1 week from today
-                if (cellDate < minAllowedDate) {
+                if (!this.isAdmin() && (cellDate < minAllowedDate)) {
                     info.el.style.backgroundColor = '#f5f5f5';   // light gray
                     // info.el.style.opacity = '0.55';
                     // info.el.style.pointerEvents = 'none';        // optional
@@ -1186,7 +1196,7 @@ export class Schedule implements OnInit, OnChanges {
 
         const minAllowedDate = this.initDate();
 
-        if (this.printDateRange.length && this.printDateRange.some(d => d < minAllowedDate)) {
+        if (!this.isAdmin() && this.printDateRange.length && this.printDateRange.some(d => d < minAllowedDate)) {
             this.showErrorAlert(
                 'Invalid Date',
                 'You can only create a schedule 1 week from today.',

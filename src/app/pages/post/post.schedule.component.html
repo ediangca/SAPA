@@ -581,6 +581,22 @@
                                         (click)="openAttendance(slot)">
                                     </p-button>
                                 }
+                                <!-- @if (canRequestCancel(slot) && !isWithinTwoWeeks(slot.dateSlot)) { -->
+                                @if (slot.slotStatus === 1  && (isSysAdmin() || isSchoolCoordinator() ) && !isWithinTwoWeeks(slot.dateSlot)) {
+                                <!-- STUDENT: Request Cancel -->
+                                <p-button icon="pi pi-file-export" severity="warn" [rounded]="true" [outlined]="true"
+                                    pTooltip="Request to Cancel" tooltipPosition="top" (click)="changeStatus(3, slot)">
+                                </p-button>
+                                <!-- } @else if (canApproveCancel(slot)) { -->
+                                } @else if (slot.slotStatus === 3 && isAdmin()) {
+                                <!-- ADMIN / COORDINATOR: Approve Cancel -->
+                                <p-button icon="pi pi-check" severity="danger" [rounded]="true" [outlined]="true"
+                                    pTooltip="Confirm Cancel Request" tooltipPosition="top" (click)="changeStatus(4, slot)">
+                                </p-button>
+                                <p-button icon="pi pi-file-import" severity="danger" [rounded]="true" [outlined]="true"
+                                    pTooltip="Revoke Cancel Request" tooltipPosition="top" (click)="changeStatus(1, slot)">
+                                </p-button>
+                                }
                             </div>
                         </td>
                     </tr>
@@ -1445,6 +1461,17 @@
                     <p-button icon="pi pi-eye" severity="info" [rounded]="true" [outlined]="true"
                     (click)="onEventClick(slot)" />
 
+                    @if(slot.slotStatus === 1 && slot.studentCount > 0){
+                        <p-button
+                            icon="pi pi-list-check"
+                            severity="info"
+                            [rounded]="true"
+                            [outlined]="true"
+                            pTooltip="Attendance"
+                            tooltipPosition="top"
+                            (click)="openAttendance(slot)">
+                        </p-button>
+                    }
                     <!-- @if (canRequestCancel(slot) && !isWithinTwoWeeks(slot.dateSlot)) { -->
                     @if (slot.slotStatus === 1  && (isSysAdmin() || isSchoolCoordinator() ) && !isWithinTwoWeeks(slot.dateSlot)) {
                     <!-- STUDENT: Request Cancel -->
