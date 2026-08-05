@@ -179,6 +179,7 @@ export class Billing implements OnInit {
                 //     amount: this.computeAmount(x)
                 // }));
                 this.billingItems = res
+                    .filter(x => x.slotStatus === 1)
                     .map(x => ({
                         ...x,
 
