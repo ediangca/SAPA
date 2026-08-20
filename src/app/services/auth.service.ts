@@ -34,9 +34,18 @@ export class AuthService {
     private toast: NgToastService, private heartbeatService: HeartbeatService,
     // private errorHandler: HttpErrorHandler
   ) {
-    this.tokenPayload = this.getTokenPayloadFromToken();
+    // this.tokenPayload = this.getTokenPayloadFromToken();
+
+    this.initTokenPayload();
   }
 
+  private initTokenPayload(): void {
+    const token = localStorage.getItem('token');
+    if (!token || this.jwtHelper.isTokenExpired(token)) return; // ✅ hard stop
+
+    this.tokenPayload = this.jwtHelper.decodeToken(token);
+    this.store.setTokenPayload(this.tokenPayload);
+  }
 
   registerUser(userAccount: any): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}UserAccount/Create/`, userAccount)
@@ -150,6 +159,7 @@ export class AuthService {
     this.store.setTokenPayload(payload);
 
     return this.store.getUser().pipe(
+      take(1),
       switchMap(user => {
         if (user) {
           return of(payload);
@@ -287,9 +297,12 @@ export class AuthService {
   exit() {
     localStorage.clear();
     this.heartbeatService.stop();
-    this.store.clearStore();
-    this.heartbeatService.stop();
-    this.router.navigate(['login']);
+    // this.store.clearStore();
+    // this.router.navigate(['login']);
+    this.router.navigate(['login']).then(() => {
+      // ✅ DOM is torn down first, THEN store emits
+      this.store.clearStore();
+    });
   }
 
   storeLocal(result: any) {
@@ -305,19 +318,32 @@ export class AuthService {
     // }
   }
 
+  // getToken(): string | null {
+  //   // return localStorage.getItem('token');
+  //   return localStorage.getItem('token') || this.tokenPayload.token;
+  // }
+
+  // getUserID(): string | null {
+  //   // return localStorage.getItem('userID');
+  //   this.logger.printLogs('i', 'User Payload - UserID', this.tokenPayload.userID);
+  //   return localStorage.getItem('userID') || this.tokenPayload.userID;
+  // }
+
+  // getRoleID(): string | null {
+  //   return localStorage.getItem('roleID') || this.tokenPayload.role;
+  // }
+
   getToken(): string | null {
-    // return localStorage.getItem('token');
-    return localStorage.getItem('token') || this.tokenPayload.token;
+    return localStorage.getItem('token') ?? this.tokenPayload?.token ?? null;
   }
 
   getUserID(): string | null {
-    // return localStorage.getItem('userID');
-    this.logger.printLogs('i', 'User Payload - UserID', this.tokenPayload.userID);
-    return localStorage.getItem('userID') || this.tokenPayload.userID;
+    this.logger.printLogs('i', 'User Payload - UserID', this.tokenPayload?.userID);
+    return localStorage.getItem('userID') ?? this.tokenPayload?.userID ?? null;
   }
 
   getRoleID(): string | null {
-    return localStorage.getItem('roleID') || this.tokenPayload.role;
+    return localStorage.getItem('roleID') ?? this.tokenPayload?.role ?? null;
   }
 
   isAuthenticated(): boolean {

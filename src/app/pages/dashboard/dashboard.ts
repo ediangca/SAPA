@@ -110,7 +110,8 @@ export class Dashboard implements OnInit, OnDestroy {
                 filter(Boolean),
                 tap(p => this.tokenPayload = p),
                 switchMap(() => this.store.getPrivilegesLoaded()),
-                switchMap(() => this.store.getUser().pipe(take(1)))
+                switchMap(() => this.store.getUser().pipe(take(1))),
+                takeUntil(this.destroy$)
             )
             .subscribe((user) => {
                 this.user = user;
@@ -142,7 +143,7 @@ export class Dashboard implements OnInit, OnDestroy {
     loadDashboard() {
 
         if (!this.tokenPayload) return;
-        
+
         const roleId = this.tokenPayload.role;
         const userId = this.tokenPayload.nameid;
 

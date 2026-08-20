@@ -72,22 +72,35 @@ import { RippleModule } from 'primeng/ripple';
              </div>
            </div>
 
-           <!-- Image -->
-           <div
-             class="lg:w-1/2 relative flex items-center justify-center"
-             data-aos="fade-left"
-             [style.transform]="'translateY(' + imageParallaxOffset + 'px)'"
-             style="will-change: transform; transition: transform 0.05s linear;"
-           >
-             <img
-               src="assets/images/health-care-personel.png"
-               alt="Healthcare team"
-               class="w-full max-w-lg object-contain drop-shadow-2xl"
-             />
-           </div>
+            <!-- Image -->
+            <div
+              class="lg:w-1/2 relative flex items-center justify-center"
+              data-aos="fade-left"
+              [style.transform]="'translateY(' + imageParallaxOffset + 'px)'"
+              style="will-change: transform; transition: transform 0.05s linear;"
+            >
+              <!-- Healthcare Personnel - Background -->
+              <img
+                src="assets/images/health-care-personel.png"
+                alt="Healthcare team"
+                class="relative z-0 w-full max-w-lg object-contain drop-shadow-2xl"
+              />
+
+              <!-- 3D Animated Logo - Above -->
+              <div class="absolute z-20 logo-glow">
+                <img
+                  src="assets/images/3D-logo.gif"
+                  alt="SAP Application"
+                  class="w-40 h-40 lg:w-75 lg:h-75 object-contain pointer-events-none"
+                />
+              </div>
+            </div>
+
          </div>
        </section>
-    `
+    `,
+
+  styleUrl: './css/banner.css',
 })
 
 export class BannerWidget {

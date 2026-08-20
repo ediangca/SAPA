@@ -1,4 +1,4 @@
-import { Component, inject, input, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, input, signal, computed, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { StyleClassModule } from 'primeng/styleclass';
@@ -156,7 +156,7 @@ interface User {
     `
 })
 
-export class FloatingUsers implements OnInit {
+export class FloatingUsers implements OnInit, OnDestroy {
 
     private api = inject(ApiService);
     private logger = inject(LogsService);
@@ -166,9 +166,18 @@ export class FloatingUsers implements OnInit {
     users = signal<User[]>([]);
     searchTerm = signal('');
 
+    private pollingHandle?: ReturnType<typeof setInterval>;
+
     ngOnInit() {
         this.loadUsers();
-        setInterval(() => this.loadUsers(), 10000);
+        this.pollingHandle = setInterval(() => this.loadUsers(), 10000);
+    }
+
+    ngOnDestroy() {
+        if (this.pollingHandle) {
+            clearInterval(this.pollingHandle);                // ✅ clear it
+            this.pollingHandle = undefined;
+        }
     }
 
     togglePanel() {

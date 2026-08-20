@@ -13,6 +13,7 @@ export class HeartbeatService {
   private heartbeatSubscription?: Subscription;
   private readonly HEARTBEAT_INTERVAL = Environment.heartbeatIntervalMs ?? 60000;
   private router = inject(Router);
+  private isStopped = false;
 
   constructor(private http: HttpClient, private logger: LogsService) { }
 
@@ -30,6 +31,8 @@ export class HeartbeatService {
   }
 
   private sendHeartbeat(): void {
+    if (this.isStopped) return
+
     this.http.post(
       `${Environment.apiUrl}Auth/heartbeat`,
       {}
@@ -40,6 +43,7 @@ export class HeartbeatService {
 
 
         if (err.status === 401) {
+
           this.forceLogout();
         }
       }
@@ -59,6 +63,7 @@ export class HeartbeatService {
 
   stop(): void {
     if (this.heartbeatSubscription) {
+      this.isStopped = true;
       this.heartbeatSubscription.unsubscribe();
       this.heartbeatSubscription = undefined;
       // console.log('Heartbeat stopped');

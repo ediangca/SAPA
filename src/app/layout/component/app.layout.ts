@@ -83,21 +83,6 @@ export class AppLayout implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        /*
-        combineLatest([
-            this.store.getUser(),
-            this.store.getPrivileges()
-        ])
-            .pipe(
-                filter(([user, priv]) => !!user && priv.length > 0), // both ready
-                take(1)
-            )
-            .subscribe(([user, priv]) => {
-                if (!!user && priv.length > 0) {
-                    this.logger.printLogs('i', 'Privileges FULLY LOADEDzzzzzzzzzz ✔', user);
-                }
-            });
-            */
         this.user = this.store.getCurrentUser();
         this.logger.printLogs('i', 'Footer current user', this.user);
     }

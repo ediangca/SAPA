@@ -122,9 +122,18 @@ export class Login {
                         error: (err: any) => {
                             this.isLoading = false;
                             this.logger.printLogs('e', 'Access Denied', err);
-                            Swal.fire('Access Denied!', err, 'warning');
-                            this.form.reset();
-                            this.usernameInput.nativeElement.focus();
+
+                            const message =
+                                typeof err === 'string'
+                                    ? err
+                                    : err?.error?.message
+                                    ?? err?.message
+                                    ?? 'Invalid username or password.';
+
+                            Swal.fire('Access Denied!', message, 'warning').then(() => {
+                                this.form.reset();
+                                this.usernameInput?.nativeElement?.focus();
+                            });
                         }
                     });
 

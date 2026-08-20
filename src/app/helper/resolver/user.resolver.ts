@@ -10,17 +10,19 @@ import { catchError, map } from 'rxjs/operators';
 })
 export class UserResolver implements Resolve<string | null> { // Updated type to include null
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
-  resolve(route: ActivatedRouteSnapshot): Observable<string | null> { // Updated type to include null
+  resolve(route: ActivatedRouteSnapshot): Observable<string | null> {
+    if (!this.auth.isAuthenticated()) {
+      this.router.navigate(['/login']);
+      return of(null);
+    }
+
     return this.auth.getTokenPayloadFromToken().pipe(
       map(user => {
-        if (user) {
-          return user;
-        } else {
-          this.router.navigate(['/login']); // Redirect if no username
-          return null; // Return null if no username
-        }
+        if (user) return user;
+        this.router.navigate(['/login']);
+        return null;
       }),
       catchError(() => {
         this.router.navigate(['/login']);
@@ -30,5 +32,5 @@ export class UserResolver implements Resolve<string | null> { // Updated type to
   }
 
 
-  
+
 }

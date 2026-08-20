@@ -87,6 +87,7 @@ export class StoreService {
   loadPrivileges() {
     this.getUser()
       .pipe(
+        take(1),
         switchMap((user) =>
           user
             ? this.api.getPrivelegeByRole(user.roleID)

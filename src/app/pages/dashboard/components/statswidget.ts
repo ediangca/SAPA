@@ -23,17 +23,6 @@ export class StatsWidget implements OnInit {
 
     }
     ngOnInit(): void {
-        // this.store.getUserPayload()
-        //     .pipe(
-        //         filter(Boolean),
-        //         tap(p => this.tokenPayload = p),
-        //         switchMap(() => this.store.getPrivilegesLoaded()),
-        //         switchMap(() => this.store.getUser().pipe(take(1)))
-        //     )
-        //     .subscribe((user) => {
-        //         this.user = user;
-        //         this.logger.printLogs('i', ' User', this.user);
-        //     });
     }
 
 
