@@ -218,13 +218,22 @@ export class Dashboard implements OnInit, OnDestroy {
 
         this.logger.printLogs('i', 'All Slots', data);
 
-        this.recentSchedules = data.filter(slot => slot.slotStatus === 1)
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+
+        this.recentSchedules = data
+            .filter(slot => {
+                if (slot.slotStatus !== 1) return false;
+
+                const scheduleDate = new Date(slot.date);
+                return scheduleDate <= today;
+            })
             .sort((a, b) =>
-                new Date(b.date_created).getTime() -
-                new Date(a.date_created).getTime()
+                new Date(b.date).getTime() -
+                new Date(a.date).getTime()
             )
             .slice(0, 10);
-
+            
         this.logger.printLogs('i', 'Recent Schedules', this.recentSchedules);
     }
 

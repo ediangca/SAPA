@@ -49,6 +49,7 @@ import { PickListModule } from 'primeng/picklist';
 import { BadgeModule } from 'primeng/badge';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DividerModule } from 'primeng/divider';
+import { StepsModule } from 'primeng/steps';
 import { Billing } from './billing.component';
 
 
@@ -162,6 +163,7 @@ const ROLE_PERMISSIONS: Record<string, number[]> = {
         ChipModule,
         PickListModule,
         DividerModule,
+        StepsModule,
         Tooltip,
         Billing
     ],
@@ -201,6 +203,7 @@ export class Schedule implements OnInit, OnChanges {
     exportColumns!: ExportColumn[];
 
     cols!: Column[];
+    multiAssignmentcols!: Column[];
     headStatuses: any[] = [];
     headHospitals: any[] = [];
     headSections: any[] = [];
@@ -217,6 +220,19 @@ export class Schedule implements OnInit, OnChanges {
     CIID: any | null;
     manageStudentDialog: boolean = false;
     isSlotEditable: boolean = true;
+
+    // ===========================
+    // Multi-Schedule Assignment
+    // ===========================
+    multiAssignDialog: boolean = false;
+    multiAssignStep: 1 | 2 | 3 = 1;
+    multiAssignLoading: boolean = false;
+    multiAssignSaving: boolean = false;
+    multiAssignSlots: any[] = [];
+    selectedMultiSlots: any[] = [];
+    multiAssignStudents: { userID: string; fullname: string }[] = [];
+    selectedMultiStudents: { userID: string; fullname: string }[] = [];
+    multiAssignPreview: { slot: any; students: { userID: string; fullname: string }[] }[] = [];
 
     billingDialogVisible = false;
 
@@ -540,6 +556,14 @@ export class Schedule implements OnInit, OnChanges {
             { field: 'slotStatus', header: 'Status' },
             { field: 'fullname', header: 'Created By' },
             { field: 'date_created', header: 'Date Created' },
+        ];
+
+        this.multiAssignmentcols = [
+            { field: 'dateSlot', header: 'Date Slot' },
+            { field: 'shiftName', header: 'Shift' },
+            { field: 'hospitalName', header: 'Hospital' },
+            { field: 'sectionName', header: 'Section' },
+            { field: 'schoolName', header: 'School' }
         ];
 
         this.headStatuses = [{ label: 'Unposted | Unconfirmed', value: 0, color: 'contrast' },
@@ -2341,6 +2365,212 @@ export class Schedule implements OnInit, OnChanges {
         this.sourceStudent.set([]);
         this.targetStudent.set([]);
         this.manageStudentDialog = false;
+    }
+
+    // ===========================
+    // Multi-Schedule Assignment
+    // ===========================
+    openMultiAssign() {
+        this.multiAssignStep = 1;
+        this.multiAssignSlots = [];
+        this.selectedMultiSlots = [];
+        this.multiAssignStudents = [];
+        this.selectedMultiStudents = [];
+        this.multiAssignPreview = [];
+        this.multiAssignLoading = false;
+        this.multiAssignSaving = false;
+        this.multiAssignDialog = true;
+        this.loadMultiAssignSlots();
+    }
+
+    loadMultiAssignSlots() {
+        this.multiAssignLoading = true;
+
+        // Same role-based visibility as the main schedule list
+        const request$ = (this.isAdmin() || this.isSysAdmin())
+            ? this.api.getSlots()
+            : this.isSchoolCoordinator()
+                ? this.api.getSlotsByUserID(this.tokenPayload.nameid)
+                : this.api.getSlots();
+
+        request$.subscribe({
+            next: (slots: any[]) => {
+                // Only confirmed schedules can receive assignments
+                this.multiAssignSlots = (slots || []).filter((s: any) => s.slotStatus === SLOT_STATUS.CONFIRM);
+                this.multiAssignLoading = false;
+            },
+            error: (err: any) => {
+                this.multiAssignLoading = false;
+                this.multiAssignSlots = [];
+                this.logger.printLogs('e', 'Failed to fetch slots (multi-assign)', err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load schedules.', life: 3000 });
+            }
+        });
+    }
+
+    loadMultiAssignStudents() {
+        this.multiAssignLoading = true;
+
+        this.api.getUsers().subscribe({
+            next: (users: any[]) => {
+                // Admins may pick from every school; coordinators are scoped
+                // to the schools of the schedules they selected in step 1.
+                const pickedSchoolIDs = new Set(
+                    (this.selectedMultiSlots || []).map((s: any) => s.schoolID).filter(Boolean)
+                );
+                const isAdminTier = this.isAdmin() || this.isSysAdmin();
+
+                this.multiAssignStudents = (users || [])
+                    .filter((u: any) =>
+                        u.roleID === 'UGR0004' &&                         // STUDENT
+                        u.status === 'A' &&                               // Approved only
+                        (isAdminTier || pickedSchoolIDs.has(u.schoolID))
+                    )
+                    .map((u: any) => ({
+                        userID: u.userID,
+                        fullname: `${u.lastname}, ${u.firstname} ${u.middlename || ''}`.trim()
+                    }));
+
+                this.multiAssignLoading = false;
+            },
+            error: (err: any) => {
+                this.multiAssignLoading = false;
+                this.multiAssignStudents = [];
+                this.logger.printLogs('e', 'Failed to fetch users (multi-assign)', err);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to load students.', life: 3000 });
+            }
+        });
+    }
+
+    goToMultiStep(step: number) {
+        const target = step as 1 | 2 | 3;
+
+        if (target === 2) {
+            if (!this.selectedMultiSlots || this.selectedMultiSlots.length === 0) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'No Schedules Selected',
+                    detail: 'Please select at least one schedule first.',
+                    life: 3000
+                });
+                return;
+            }
+            this.multiAssignStep = 2;
+            if (this.multiAssignStudents.length === 0) {
+                this.loadMultiAssignStudents();
+            }
+            return;
+        }
+
+        if (target === 3) {
+            if (!this.selectedMultiStudents || this.selectedMultiStudents.length === 0) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'No Students Selected',
+                    detail: 'Please select at least one student first.',
+                    life: 3000
+                });
+                return;
+            }
+            this.buildMultiAssignPreview();
+            this.multiAssignStep = 3;
+            return;
+        }
+
+        this.multiAssignStep = target;
+    }
+
+    buildMultiAssignPreview() {
+        // One row per selected schedule; every row starts with the full
+        // student selection, which can then be trimmed per schedule.
+        this.multiAssignPreview = this.selectedMultiSlots.map(slot => ({
+            slot,
+            students: [...this.selectedMultiStudents]
+        }));
+    }
+
+    multiAssignPreviewValid(): boolean {
+        return this.multiAssignPreview.length > 0 &&
+            this.multiAssignPreview.every(row => row.students.length > 0);
+    }
+
+    removeStudentFromRow(row: { slot: any; students: { userID: string; fullname: string }[] }, userID: string) {
+        row.students = row.students.filter(s => s.userID !== userID);
+    }
+
+    saveMultiAssign() {
+        if (!this.multiAssignPreviewValid()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Nothing To Assign',
+                detail: 'Every schedule needs at least one student.',
+                life: 3000
+            });
+            return;
+        }
+
+        const totalStudents = this.multiAssignPreview.reduce((sum, row) => sum + row.students.length, 0);
+        const slotCount = this.multiAssignPreview.length;
+
+        this.confirmationService.confirm({
+            header: 'Multi-Schedule Assignment',
+            message: `Assign ${totalStudents} student(s) across ${slotCount} schedule(s)?`,
+            icon: 'pi pi-users',
+            accept: () => {
+                const payload = {
+                    assignments: this.multiAssignPreview.map(row => ({
+                        slotID: row.slot.slotID,
+                        userIDs: row.students.map(s => s.userID)
+                    }))
+                };
+
+                this.multiAssignSaving = true;
+
+                this.api.bulkAssignAppointedStudentsBySlots(payload).subscribe({
+                    next: (res: any) => {
+                        this.multiAssignSaving = false;
+                        this.onCloseMultiAssign();
+                        this.loadSlots();
+
+                        const already = (res?.results || []).reduce((sum: number, r: any) => sum + (r.alreadyAssigned || 0), 0);
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Assignments Saved',
+                            detail: `${res?.totalInserted ?? 0} new record(s)${already > 0 ? `, ${already} already assigned (skipped)` : ''}.`,
+                            life: 4000
+                        });
+                    },
+                    error: (err: any) => {
+                        this.multiAssignSaving = false;
+                        this.logger.printLogs('e', 'Multi-assign failed', err);
+
+                        let detail = err?.error?.message || 'Failed to save assignments.';
+                        if (Array.isArray(err?.error?.invalid) && err.error.invalid.length > 0) {
+                            detail = err.error.invalid
+                                .map((v: any) => `${v.slotID}: ${v.reason}${v.allowed != null ? ` (allowed ${v.allowed}, requested ${v.requested})` : ''}`)
+                                .join('\n');
+                        }
+
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Assignment Failed',
+                            detail,
+                            life: 6000
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    onCloseMultiAssign() {
+        this.multiAssignDialog = false;
+        this.multiAssignStep = 1;
+        this.multiAssignSlots = [];
+        this.selectedMultiSlots = [];
+        this.multiAssignStudents = [];
+        this.selectedMultiStudents = [];
+        this.multiAssignPreview = [];
     }
 
     onCloseManagAttendance() {

@@ -849,6 +849,18 @@ export class ApiService {
     );
   }
 
+  // Multi-Schedule Assignment: one request, several slots, add-only
+  bulkAssignAppointedStudentsBySlots(payload: { assignments: { slotID: string; userIDs: string[] }[] }) {
+    return this.handleRequest<any>(
+      'post',
+      'AppointedStudents/bulk-multi-slot',
+      {
+        body: payload,
+        logAction: 'Bulk Assign Students To Multiple Slots'
+      }
+    );
+  }
+
   // PUT: api/AppointedStudents/{id}
   updateAppointedStudent(id: string, payload: any) {
     return this.handleRequest<any>(

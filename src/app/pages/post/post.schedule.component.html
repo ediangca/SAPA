@@ -41,6 +41,10 @@
                                 (onClick)="openNew(null)" />
                             <p-button *ngIf="d" severity="secondary" label="Delete" icon="pi pi-trash" outlined
                                 (onClick)="deleteSelected()" [disabled]="!selectSlots || !selectSlots.length" />
+                            <p-button *ngIf="isAdmin() || isSysAdmin() || isSchoolCoordinator()" label="Multi-Assign"
+                                icon="pi pi-users" severity="success" outlined class="mr-2"
+                                pTooltip="Assign students to multiple confirmed schedules" tooltipPosition="top"
+                                (onClick)="openMultiAssign()" />
 
                         </div>
                         <div class="md:w-1/7 flex row gap-2 justify-end">
@@ -354,6 +358,10 @@
                                 (onClick)="openNew(null)" />
                             <p-button *ngIf="d" severity="secondary" label="Delete" icon="pi pi-trash" outlined
                                 (onClick)="deleteSelected()" [disabled]="!selectSlots || !selectSlots.length" />
+                            <p-button *ngIf="isAdmin() || isSysAdmin() || isSchoolCoordinator()" label="Multi-Assign"
+                                icon="pi pi-users" severity="success" outlined class="mr-2"
+                                pTooltip="Assign students to multiple confirmed schedules" tooltipPosition="top"
+                                (onClick)="openMultiAssign()" />
                         </div>
                         <div class="md:w-1/7 flex row gap-2 justify-end">
                             <p-iconfield>
@@ -582,7 +590,7 @@
                                     </p-button>
                                 }
                                 <!-- @if (canRequestCancel(slot) && !isWithinTwoWeeks(slot.dateSlot)) { -->
-                                @if (slot.slotStatus === 1  && (isSysAdmin() || isSchoolCoordinator() ) && !isWithinTwoWeeks(slot.dateSlot)) {
+                                @if (slot.slotStatus === 1  && (isSysAdmin() || (isSchoolCoordinator() && !isWithinTwoWeeks(slot.dateSlot)))) {
                                 <!-- STUDENT: Request Cancel -->
                                 <p-button icon="pi pi-file-export" severity="warn" [rounded]="true" [outlined]="true"
                                     pTooltip="Request to Cancel" tooltipPosition="top" (click)="changeStatus(3, slot)">
@@ -2364,3 +2372,532 @@
 </p-dialog>
 
 <p-confirmdialog [style]="{ width: '450px' }">
+</p-confirmdialog>
+
+<!-- MULTI-SCHEDULE ASSIGNMENT DIALOG -->
+<p-dialog header="Multi-Schedule Assignment" [(visible)]="multiAssignDialog" [modal]="true" [closable]="true"
+    [dismissableMask]="false" [style]="{ width: '90%', minWidth: '380px', maxWidth: '1100px', maxHeight: '768' }"
+    contentStyleClass="flex flex-col" resizable="true">
+
+    <p-steps [model]="[{ label: 'Schedules' }, { label: 'Students' }, { label: 'Preview' }]" [readonly]="true"
+        [activeIndex]="multiAssignStep - 1" class="mb-3" />
+
+    <!-- STEP 1: Schedules -->
+    @if (multiAssignStep === 1) {
+    <p-table  #multiAssignTable [value]="multiAssignSlots" [(selection)]="selectedMultiSlots"
+    dataKey="slotID" [rows]="100" [columns]="multiAssignmentcols" [loading]="multiAssignLoading"
+    [globalFilterFields]="[
+        'dateSlot',
+        'shiftName',
+        'hospitalName',
+        'sectionName',
+        'schoolName'
+    ]" [paginator]="true" [rowHover]="true" [showGridlines]="true" scrollable="true" scrollHeight="calc(100vh - 28rem)"
+    paginatorDropdownAppendTo="body" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Schedules"
+    [showCurrentPageReport]="true" emptyMessage="No confirmed schedules found." [rowsPerPageOptions]="[100, 500, 1000, 2000]">
+    <!-- HEADER -->
+    <ng-template #header>
+        <tr>
+
+            <!-- SELECT ALL -->
+            <th style="width: 3rem">
+                <p-tableHeaderCheckbox />
+            </th>
+
+            <!-- DATE -->
+            <th pSortableColumn="dateSlot" style="min-width: 10rem">
+                <div class="flex justify-between items-center">
+                    Date
+
+                    <p-sortIcon field="dateSlot" />
+
+                    <p-columnFilter
+                        type="date"
+                        field="dateSlot"
+                        display="menu"
+                        placeholder="yyyy-MM-dd">
+                    </p-columnFilter>
+                </div>
+            </th>
+
+            <!-- SHIFT -->
+            <th pSortableColumn="shiftName" style="min-width: 10rem">
+                <div class="flex justify-between items-center">
+                    Shift
+
+                    <p-sortIcon field="shiftName" />
+
+                    <p-columnFilter
+                        field="shiftName"
+                        matchMode="in"
+                        display="menu"
+                        [showMatchModes]="false"
+                        [showOperator]="false"
+                        [showAddButton]="false">
+
+                        <ng-template #header>
+                            <div class="px-3 pt-3 pb-0">
+                                <span class="font-bold">
+                                    Shift Picker
+                                </span>
+                            </div>
+                        </ng-template>
+
+                        <ng-template
+                            #filter
+                            let-value
+                            let-filter="filterCallback">
+
+                            <p-multiSelect
+                                [ngModel]="value"
+                                [options]="shiftOption"
+                                optionLabel="shiftName"
+                                optionValue="shiftName"
+                                placeholder="Any"
+                                class="w-full"
+                                (onChange)="filter($event.value)">
+                            </p-multiSelect>
+
+                        </ng-template>
+
+                    </p-columnFilter>
+                </div>
+            </th>
+
+            <!-- HOSPITAL -->
+            <th pSortableColumn="hospitalName" style="min-width: 10rem">
+                <div class="flex justify-between items-center">
+                    Hospital
+
+                    <p-sortIcon field="hospitalName" />
+
+                    <p-columnFilter
+                        field="hospitalName"
+                        matchMode="in"
+                        display="menu"
+                        [showMatchModes]="false"
+                        [showOperator]="false"
+                        [showAddButton]="false">
+
+                        <ng-template #header>
+                            <div class="px-3 pt-3 pb-0">
+                                <span class="font-bold">
+                                    Hospital Picker
+                                </span>
+                            </div>
+                        </ng-template>
+
+                        <ng-template
+                            #filter
+                            let-value
+                            let-filter="filterCallback">
+
+                            <p-multiSelect
+                                [ngModel]="value"
+                                [options]="hospitals"
+                                optionLabel="hospitalName"
+                                optionValue="hospitalName"
+                                placeholder="Any"
+                                class="w-full"
+                                (onChange)="filter($event.value)">
+                            </p-multiSelect>
+
+                        </ng-template>
+
+                    </p-columnFilter>
+                </div>
+            </th>
+
+            <!-- SCHOOL -->
+            <th *ngIf="isSysAdmin()" pSortableColumn="schoolName" style="min-width: 10rem">
+                <div class="flex justify-between items-center">
+                    School
+
+                    <p-sortIcon field="schoolName" />
+
+                    <p-columnFilter
+                        field="schoolName"
+                        matchMode="in"
+                        display="menu"
+                        [showMatchModes]="false"
+                        [showOperator]="false"
+                        [showAddButton]="false">
+
+                        <ng-template #header>
+                            <div class="px-3 pt-3 pb-0">
+                                <span class="font-bold">
+                                    School Picker
+                                </span>
+                            </div>
+                        </ng-template>
+
+                        <ng-template
+                            #filter
+                            let-value
+                            let-filter="filterCallback">
+
+                            <p-multiSelect
+                                [ngModel]="value"
+                                [options]="schools"
+                                optionLabel="schoolName"
+                                optionValue="schoolName"
+                                placeholder="Any"
+                                class="w-full"
+                                (onChange)="filter($event.value)">
+                            </p-multiSelect>
+
+                        </ng-template>
+
+                    </p-columnFilter>
+                </div>
+            </th>
+
+            <!-- SECTION -->
+            <th pSortableColumn="sectionName" style="min-width: 10rem">
+                <div class="flex justify-between items-center">
+                    Section
+
+                    <p-sortIcon field="sectionName" />
+
+                    <p-columnFilter
+                        field="sectionName"
+                        matchMode="in"
+                        display="menu"
+                        [showMatchModes]="false"
+                        [showOperator]="false"
+                        [showAddButton]="false">
+
+                        <ng-template #header>
+                            <div class="px-3 pt-3 pb-0">
+                                <span class="font-bold">
+                                    Section Picker
+                                </span>
+                            </div>
+                        </ng-template>
+
+                        <ng-template
+                            #filter
+                            let-value
+                            let-filter="filterCallback">
+
+                            <p-multiSelect
+                                [ngModel]="value"
+                                [options]="sections"
+                                optionLabel="sectionName"
+                                optionValue="sectionName"
+                                placeholder="Any"
+                                class="w-full"
+                                (onChange)="filter($event.value)">
+                            </p-multiSelect>
+
+                        </ng-template>
+
+                    </p-columnFilter>
+                </div>
+            </th>
+
+            <!-- CAPACITY -->
+            <th
+                pSortableColumn="allocation"
+                style="min-width: 8rem">
+
+                <div class="flex justify-between items-center">
+                    Capacity
+                    <p-sortIcon field="allocation" />
+                </div>
+
+            </th>
+
+        </tr>
+    </ng-template>
+
+
+    <!-- BODY -->
+    <ng-template pTemplate="body" let-slot>
+        <tr>
+
+            <!-- CHECKBOX -->
+            <td>
+                <p-tableCheckbox [value]="slot" />
+            </td>
+
+            <!-- DATE -->
+            <td>
+                {{ slot.dateSlot | date:'yyyy-MM-dd' }}
+            </td>
+
+            <!-- SHIFT -->
+            <td>
+                {{ slot.shiftName }}
+
+                <small class="block text-gray-500">
+                    ({{ slot.startTime }} – {{ slot.endTime }})
+                </small>
+            </td>
+
+            <!-- HOSPITAL -->
+            <td>
+                {{ slot.hospitalName }}
+
+            </td>
+
+            <!-- SCHOOL -->
+            <td *ngIf="isSysAdmin()">
+                {{ slot.schoolName }}
+            </td>
+
+            <!-- SECTION -->
+            <td>
+                {{ slot.sectionName }}
+            </td>
+
+            <!-- CAPACITY -->
+            <td>
+                {{ slot.allocation }}
+            </td>
+
+        </tr>
+    </ng-template>
+
+
+    <!-- LOADING BODY -->
+    <ng-template pTemplate="loadingbody">
+        <tr *ngFor="let _ of [1,2,3,4,5,6,7,8,9,10]">
+
+            <td style="width: 3rem">
+                <p-skeleton
+                    shape="circle"
+                    size="1.2rem" />
+            </td>
+
+            <td>
+                <p-skeleton
+                    width="6rem"
+                    height="1rem" />
+            </td>
+
+            <td>
+                <p-skeleton
+                    width="8rem"
+                    height="1rem" />
+
+                <p-skeleton
+                    width="5rem"
+                    height="0.8rem"
+                    class="mt-1" />
+            </td>
+
+            <td>
+                <p-skeleton
+                    width="7rem"
+                    height="1rem" />
+            </td>
+
+            <td>
+                <p-skeleton
+                    width="7rem"
+                    height="1rem" />
+            </td>
+
+            <td>
+                <p-skeleton
+                    width="7rem"
+                    height="1rem" />
+            </td>
+
+            <td>
+                <p-skeleton
+                    width="6rem"
+                    height="1rem" />
+            </td>
+
+        </tr>
+    </ng-template>
+
+</p-table>
+
+    }
+
+
+    @if (multiAssignStep === 2) {
+    <p-table
+    #multiAssignStudentsTable
+    [value]="multiAssignStudents"
+    [(selection)]="selectedMultiStudents"
+    dataKey="userID"
+    [rows]="10"
+    [loading]="multiAssignLoading"
+    [globalFilterFields]="['userID', 'fullname']"
+    [paginator]="true"
+    [rowHover]="true"
+    [showGridlines]="true"
+    scrollable="true"
+    scrollHeight="24rem"
+    paginatorDropdownAppendTo="body"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Students"
+    [showCurrentPageReport]="true"
+    emptyMessage="No eligible students found."
+    [rowsPerPageOptions]="[10, 25, 50, 100]"
+>
+
+    <!-- HEADER -->
+    <ng-template #header>
+        <tr>
+
+            <!-- SELECT ALL -->
+            <th style="width: 3rem">
+                <p-tableHeaderCheckbox />
+            </th>
+
+            <!-- STUDENT ID -->
+            <th
+                pSortableColumn="userID"
+                style="min-width: 10rem"
+            >
+                <div class="flex justify-between items-center">
+                    Student ID
+
+                    <p-sortIcon field="userID" />
+
+                    <p-columnFilter
+                        field="userID"
+                        type="text"
+                        display="menu"
+                        placeholder="Search Student ID"
+                    />
+                </div>
+            </th>
+
+            <!-- FULLNAME -->
+            <th
+                pSortableColumn="fullname"
+                style="min-width: 16rem"
+            >
+                <div class="flex justify-between items-center">
+                    Fullname
+
+                    <p-sortIcon field="fullname" />
+
+                    <p-columnFilter
+                        field="fullname"
+                        type="text"
+                        display="menu"
+                        placeholder="Search fullname"
+                    />
+                </div>
+            </th>
+
+        </tr>
+    </ng-template>
+
+
+    <!-- BODY -->
+    <ng-template pTemplate="body" let-student>
+        <tr>
+
+            <!-- CHECKBOX -->
+            <td>
+                <p-tableCheckbox [value]="student" />
+            </td>
+
+            <!-- STUDENT ID -->
+            <td>
+                {{ student.userID }}
+            </td>
+
+            <!-- FULLNAME -->
+            <td>
+                {{ student.fullname }}
+            </td>
+
+        </tr>
+    </ng-template>
+
+
+    <!-- LOADING BODY / SKELETON -->
+    <ng-template pTemplate="loadingbody">
+        <tr *ngFor="let _ of [1,2,3,4,5,6,7,8,9,10]">
+
+            <!-- CHECKBOX -->
+            <td style="width: 3rem">
+                <p-skeleton
+                    shape="circle"
+                    size="1.2rem"
+                />
+            </td>
+
+            <!-- STUDENT ID -->
+            <td>
+                <p-skeleton
+                    width="6rem"
+                    height="1rem"
+                />
+            </td>
+
+            <!-- FULLNAME -->
+            <td>
+                <p-skeleton
+                    width="12rem"
+                    height="1rem"
+                />
+            </td>
+
+        </tr>
+    </ng-template>
+
+</p-table>
+    }
+
+    <!-- STEP 3: Preview -->
+    @if (multiAssignStep === 3) {
+    <p-table [value]="multiAssignPreview" dataKey="slot.slotID" [rowHover]="true" [showGridlines]="true"
+        scrollable="true" scrollHeight="24rem" emptyMessage="No schedules selected.">
+                
+        <ng-template #header>
+            <tr>
+                <th>Schedule</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Hospital</th>
+                <th>Selected Students</th>
+                <th>Assigned / Cap</th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-row>
+            <tr>
+                <td>{{ row.slot.slotID }}</td>
+                <td>{{ row.slot.dateSlot | date: 'MMM dd, yyyy' }}</td>
+                <td>{{ row.slot.shiftName }} ({{ row.slot.startTime }}–{{ row.slot.endTime }})</td>
+                <td>{{ row.slot.hospitalName }} <span class="text-500">({{ row.slot.sectionName }})</span></td>
+                <td>
+                    @if (row.students.length === 0) {
+                    <span class="italic text-red-500">No students</span>
+                    } @else {
+                    <div class="flex flex-wrap gap-1">
+                        @for (s of row.students; track s.userID) {
+                        <p-chip [label]="s.fullname" [removable]="true" (onRemove)="removeStudentFromRow(row, s.userID)"
+                            styleClass="text-xs" />
+                        }
+                    </div>
+                    }
+                </td>
+                <td [class.font-bold]="row.students.length > row.slot.allocation"
+                    [class.text-red-500]="row.students.length > row.slot.allocation">
+                    {{ row.students.length }} / {{ row.slot.allocation }}
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+    }
+
+    <ng-template pTemplate="footer">
+        <p-button *ngIf="multiAssignStep > 1" label="Back" icon="pi pi-arrow-left" [outlined]="true"
+            severity="secondary" (onClick)="goToMultiStep(multiAssignStep - 1)" />
+        <p-button *ngIf="multiAssignStep < 3" label="Next" icon="pi pi-arrow-right" iconPos="right"
+            (onClick)="goToMultiStep(multiAssignStep + 1)" />
+        <p-button *ngIf="multiAssignStep === 3" label="Save Assignment" icon="pi pi-check"
+            severity="success" [disabled]="!multiAssignPreviewValid()" (onClick)="saveMultiAssign()" />
+        <p-button label="Close" icon="pi pi-times" [text]="true" severity="secondary"
+            (onClick)="onCloseMultiAssign()" />
+    </ng-template>
+</p-dialog>
