@@ -36,6 +36,7 @@ import { AppMenuitem } from '@/layout/component/app.menuitem';
 import { RouterModule } from '@angular/router';
 import { filter, switchMap, take, tap } from 'rxjs';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { SkeletonModule } from 'primeng/skeleton';
 
 interface Column {
     field: string;
@@ -78,6 +79,7 @@ interface ExportColumn {
         IconFieldModule,
         ConfirmDialogModule,
         ReactiveFormsModule,
+        SkeletonModule,
         FormsModule,
         RouterModule,
     ],
@@ -116,6 +118,7 @@ export class Student implements OnInit {
     tokenPayload: any | null;
 
     roles: any | [];
+    public loading: boolean = false;
 
     emailPattern: string = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
 
@@ -284,6 +287,7 @@ export class Student implements OnInit {
 
 
     loadStudents() {
+        this.loading = true;
         this.api.getUsers().subscribe({
             next: (users) => {
                 if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
@@ -305,10 +309,14 @@ export class Student implements OnInit {
                     // });
                 }
 
+                this.loading = false;
                 this.forPrintExport.set(this.users());
             }
             ,
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+            error: (err) => {
+                this.logger.printLogs('e', 'Failed to fetch users', err);
+                this.loading = false;
+            },
         });
     }
 

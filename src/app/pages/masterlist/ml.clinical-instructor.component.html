@@ -4,6 +4,7 @@
     <div class="md:w-4/5">
         <div class="card"  [style]="{ height: 'calc(100vh - 12rem)'}">
             <p-table #dt [value]="users()" [rows]="100" [columns]="cols" [paginator]="true" [showGridlines]="true"
+                [loading]="loading"
                 [globalFilterFields]="['userID', 'fullname', 'email', 'status', 'date_Created']" [tableStyle]="{ 'min-width': '75rem'}"
                 [(selection)]="selectUsers" [rowHover]="true" dataKey="userID"
                 currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Clinical Instructors"
@@ -109,7 +110,8 @@
                         <th *ngIf="r || s" style="min-width: 5rem">Action</th>
                     </tr>
                 </ng-template>
-                <ng-template #body let-user>
+                
+                <ng-template pTemplate="body"  let-user>
                     <tr>
                         <td style="width: 3rem" *ngIf="r || s" >
                             <p-tableCheckbox [value]="user" />
@@ -141,9 +143,12 @@
                                 pTooltip="Edit" tooltipPosition="top" [rounded]="true" [outlined]="true"
                                     (click)="edit(user)" />
 
-                                @if ((user.status == 'U' || user.email_Verified_At == null) && s) {
+                                @if ((user.status == 'U' || user.email_Verified_At == null) && d) {
                                     <p-button *ngIf="d"  class="mr-2 hover:animate-bounce" icon="pi pi-trash" severity="danger" pTooltip="Delete" tooltipPosition="top"
                                     [rounded]="true" [outlined]="true" (click)="delete(user)" />
+                                }
+
+                                @if ((user.status == 'U' || user.email_Verified_At == null) && s) {
                                     <p-button class="mr-2 hover:animate-bounce" icon="fa fa-paper-plane" severity="info" pTooltip="Resend Verification"
                                     tooltipPosition="top" [rounded]="true" [outlined]="true" (click)="resendVerification(user)" />
                                 }@else if(user.status === 'P' && s){
@@ -154,6 +159,28 @@
                                 <p-button *ngIf="r && user.status === 'A'" class="mr-2 hover:animate-bounce transition-colors" icon="pi pi-calendar" severity="info"   
                                 pTooltip="Schedule" tooltipPosition="top" [rounded]="true" [outlined]="true"
                                     (click)="showSchedule(user)" />
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+
+                <!-- LOADING BODY: skeleton rows -->
+                <ng-template pTemplate="loadingbody">
+                    <tr *ngFor="let _ of [1,2,3,4,5,6,7,8,9,10]">
+                        <td pFrozenColumn style="width: 3rem"><p-skeleton shape="circle" size="1.2rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
+                        <td>
+                            <p-skeleton width="8rem" height="1rem" />
+                            <p-skeleton width="5rem" height="0.8rem" class="mt-1" />
+                        </td>
+                        <td><p-skeleton width="7rem" height="1rem" /></td>
+                        <td><p-skeleton width="7rem" height="1rem" /></td>
+                        <td><p-skeleton width="7rem" height="1rem" /></td>
+                        <td><p-skeleton width="6rem" height="1rem" /></td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-skeleton shape="circle" size="2rem" />
+                                <p-skeleton shape="circle" size="2rem" />
                             </div>
                         </td>
                     </tr>

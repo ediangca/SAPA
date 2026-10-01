@@ -103,6 +103,7 @@ export class Users implements OnInit {
 
     model: MenuItem[] = [];
     tokenPayload: any | null;
+    public loading: boolean = false;
 
     roles: any | [];
     headStatuses: any[] = [];
@@ -283,8 +284,8 @@ export class Users implements OnInit {
     onGlobalFilter(table: Table) {
         table.filterGlobal(this.filter, 'contains');
     }
-    
-     isSysAdmin(): boolean {
+
+    isSysAdmin(): boolean {
         return this.tokenPayload.role === 'UGR0001';
     }
 
@@ -307,7 +308,7 @@ export class Users implements OnInit {
     isSupervisor(): boolean {
         return this.tokenPayload.role === 'UGR0005';
     }
-    
+
 
     clear(table: Table,) {
         this.filter = ''
@@ -552,12 +553,20 @@ export class Users implements OnInit {
     }
 
     loadUsers() {
+        this.loading = true;
         this.api.getUsers().subscribe({
             next: (users) => {
                 this.users.set(users)
                 this.forPrintExport.set(users);
+                this.loading = false;
             },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+            error: (err) => {
+                this.logger.printLogs('e', 'Failed to fetch users', err);
+                this.loading = false;
+            },
+            complete: () => {
+                this.loading = false;
+            }
         });
     }
 

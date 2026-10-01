@@ -2725,19 +2725,17 @@
     [value]="multiAssignStudents"
     [(selection)]="selectedMultiStudents"
     dataKey="userID"
-    [rows]="10"
+    [rows]="100"
     [loading]="multiAssignLoading"
     [globalFilterFields]="['userID', 'fullname']"
     [paginator]="true"
     [rowHover]="true"
     [showGridlines]="true"
-    scrollable="true"
-    scrollHeight="24rem"
+    scrollable="true" scrollHeight="calc(100vh - 28rem)"
     paginatorDropdownAppendTo="body"
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords} Students"
     [showCurrentPageReport]="true"
-    emptyMessage="No eligible students found."
-    [rowsPerPageOptions]="[10, 25, 50, 100]"
+    emptyMessage="No eligible students found." [rowsPerPageOptions]="[100, 500, 1000, 2000]"
 >
 
     <!-- HEADER -->
@@ -2851,11 +2849,11 @@
     <!-- STEP 3: Preview -->
     @if (multiAssignStep === 3) {
     <p-table [value]="multiAssignPreview" dataKey="slot.slotID" [rowHover]="true" [showGridlines]="true"
-        scrollable="true" scrollHeight="24rem" emptyMessage="No schedules selected.">
+        scrollable="true" scrollHeight="calc(100vh - 28rem)" emptyMessage="No schedules selected.">
                 
         <ng-template #header>
             <tr>
-                <th>Schedule</th>
+                <th *ngIf="isSysAdmin()">Schedule</th>
                 <th>Date</th>
                 <th>Time</th>
                 <th>Hospital</th>
@@ -2865,7 +2863,7 @@
         </ng-template>
         <ng-template #body let-row>
             <tr>
-                <td>{{ row.slot.slotID }}</td>
+                <td *ngIf="isSysAdmin()">{{ row.slot.slotID }}</td>
                 <td>{{ row.slot.dateSlot | date: 'MMM dd, yyyy' }}</td>
                 <td>{{ row.slot.shiftName }} ({{ row.slot.startTime }}–{{ row.slot.endTime }})</td>
                 <td>{{ row.slot.hospitalName }} <span class="text-500">({{ row.slot.sectionName }})</span></td>

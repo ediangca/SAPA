@@ -135,6 +135,7 @@ export class ClinicalInstructor implements OnInit {
 
     shiftOption: any[] = [];
 
+    public loading: boolean = false;
     loadingSchedules = false;
 
     minDate!: Date;
@@ -222,9 +223,9 @@ export class ClinicalInstructor implements OnInit {
                 this.logger.printLogs('i', ' User', this.user);
                 this.initPrivileges();
                 this.buildSubComponent();
+                this.loadClinicalInstructors()
                 this.loadRoles();
                 this.loadSchools();
-                this.loadClinicalInstructors()
                 this.loadHospitals();
                 this.loadSections();
                 this.loadShifts();
@@ -361,6 +362,7 @@ export class ClinicalInstructor implements OnInit {
     }
 
     loadClinicalInstructors() {
+        this.loading = true;
         this.api.getUsers().subscribe({
             next: (users) => {
                 if (this.tokenPayload.role === 'UGR0001' || this.tokenPayload.role === 'UGR0002') {
@@ -373,9 +375,13 @@ export class ClinicalInstructor implements OnInit {
                     this.logger.printLogs('i', 'Clinical Instructors loaded under School', this.loggedUser.schoolID)
                 }
 
+                this.loading = false;
                 this.forPrintExport.set(this.users());
             },
-            error: (err) => this.logger.printLogs('e', 'Failed to fetch users', err)
+            error: (err) => {
+                this.logger.printLogs('e', 'Failed to fetch users', err)
+                this.loading = false;
+            },
         });
 
     }
